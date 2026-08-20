@@ -65,9 +65,8 @@ These three run in CI from the first commit, not from M5. The config files they 
 (`phpunit.xml.dist`, `phpstan.neon.dist`, `.php-cs-fixer.dist.php`) are part of M1
 scaffolding — see `PLAN.md` §5 for the intended layout.
 
-After touching `docs/`, rebuild the book (`mdbook build docs`) and check that no
-internal link or heading anchor broke; `SUMMARY.md` drifting from the files on disk
-only surfaces at build time.
+After touching `docs/`, rebuild the book (`mdbook build docs`) — `SUMMARY.md`
+drifting from the files on disk only surfaces at build time.
 
 Write the test for the behavior before implementing it. A passing test is the only
 hard evidence that generated code does what it looked like it did.
