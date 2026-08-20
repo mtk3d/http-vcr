@@ -1,0 +1,49 @@
+{
+    "name": "mtk3d/http-vcr",
+    "description": "Record and replay HTTP interactions for fast, deterministic tests — built on PSR-7/PSR-17/PSR-18, not curl monkey-patching.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["testing", "http", "vcr", "psr-18", "psr-7", "cassette", "mock"],
+    "require": {
+        "php": "^8.2",
+        "psr/http-message": "^2.0",
+        "psr/http-client": "^1.0",
+        "psr/http-factory": "^1.0",
+        "symfony/console": "^6.4 || ^7.0 || ^8.0",
+        "nikic/php-parser": "^5.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5 || ^12.0 || ^13.0",
+        "guzzlehttp/guzzle": "^7.0",
+        "symfony/http-client": "^7.0 || ^8.0",
+        "symfony/yaml": "^6.4 || ^7.0 || ^8.0",
+        "nyholm/psr7": "^1.8",
+        "laminas/laminas-diactoros": "^3.0",
+        "phpstan/phpstan": "^2.0",
+        "friendsofphp/php-cs-fixer": "^3.0"
+    },
+    "suggest": {
+        "guzzlehttp/guzzle": "To use the Guzzle HandlerStack middleware bridge (Bridge/Guzzle/VcrMiddleware) — plain GuzzleHttp\\Client already works via PSR-18 without this",
+        "symfony/http-client": "To use the native Symfony HttpClientInterface bridge (Bridge/Symfony/VcrHttpClient) — Psr18Client already works via PSR-18 without this",
+        "symfony/yaml": "To use the YAML cassette serializer instead of the default JSON one",
+        "nyholm/psr7": "A PSR-17 factory implementation, used to rebuild replayed responses — any PSR-17 implementation works (guzzlehttp/psr7 and laminas/laminas-diactoros are detected too)",
+        "phpunit/phpunit": "^10.0 || ^11.0 || ^12.0 || ^13.0 — to use the #[UseCassette] attribute and the InteractsWithCassettes trait (Bridge/PHPUnit); the attribute needs the Extension API, added in PHPUnit 10",
+        "mtk3d/laravel-http-vcr": "Zero-setup integration for a Laravel app — auto-registered service provider, Http facade interception, vcr:* artisan commands. Requires Laravel 11+"
+    },
+    "bin": ["bin/http-vcr"],
+    "autoload": {
+        "psr-4": {
+            "HttpVcr\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "HttpVcr\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

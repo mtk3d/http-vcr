@@ -1,0 +1,24 @@
+[book]
+title = "http-vcr"
+description = "Record and replay HTTP interactions for fast, deterministic PHP tests — a PSR-18 decorator, not curl monkey-patching."
+authors = ["Mateusz Cholewka"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "book"
+
+[output.html]
+site-url = "/http-vcr/"
+default-theme = "light"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/mtk3d/http-vcr"
+edit-url-template = "https://github.com/mtk3d/http-vcr/edit/master/docs/{path}"
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.search]
+enable = true
+limit-results = 20

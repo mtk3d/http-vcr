@@ -1,0 +1,9 @@
+/vendor/
+/.phpunit.cache/
+/docs/book/
+.phpunit.result.cache
+.php-cs-fixer.cache
+.DS_Store
+
+# Cassette session lock files (never committed — see docs/src/reference/cassette-format.md)
+*.cassette-lock
