@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr\Cassette;
 
+use Closure;
 use HttpVcr\Environment;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Exception\RecordingNotAllowedException;
@@ -15,6 +16,7 @@ use HttpVcr\Persistence\CassettePersisterInterface;
 use HttpVcr\Persistence\SidecarBodies;
 use HttpVcr\Persistence\SupportsSessionLocking;
 use HttpVcr\RecordMode;
+use HttpVcr\SecretScanner;
 use HttpVcr\Serializer\CassetteSerializerInterface;
 use Psr\Clock\ClockInterface;
 
@@ -48,6 +50,11 @@ final class CassetteManager
     /** @var array<int, int> */
     private array $played = [];
 
+    /** @var list<Interaction> */
+    private array $recordedHere = [];
+
+    private bool $warned = false;
+
     public function __construct(
         private readonly string $name,
         private readonly CassettePersisterInterface $persister,
@@ -61,6 +68,8 @@ final class CassetteManager
         private readonly int $inlineBodyLimit = 1_048_576,
         public readonly HookRegistry $hooks = new HookRegistry(),
         public readonly RedactionHooks $redaction = new RedactionHooks(),
+        private readonly ?SecretScanner $scanner = null,
+        private readonly ?Closure $warn = null,
     ) {
         $this->cassette = new Cassette();
 
@@ -188,6 +197,8 @@ final class CassetteManager
         $this->cassette = $this->readFromDisk()->withInteraction($interaction);
         $this->persist();
 
+        $this->recordedHere[] = $interaction;
+
         // What this session recorded is not something this session then replays: a retry
         // loop under recording has to reach the real API each time round, or the cassette
         // would hold one response where the code asked for several.
@@ -254,6 +265,43 @@ final class CassetteManager
     public function close(): void
     {
         $this->releaseLock();
+        $this->reportSecrets();
+    }
+
+    /**
+     * Runs what this session recorded past the secret heuristic and says what it found.
+     *
+     * Only what this session recorded: a cassette re-read every run would repeat warnings
+     * about content already looked at and knowingly accepted, and after a fortnight nobody
+     * reads those. It never fails anything either — the cassette is already written, and
+     * the point is to put the finding in front of someone while the context is fresh.
+     */
+    private function reportSecrets(): void
+    {
+        if ($this->scanner === null || $this->warned || $this->recordedHere === []) {
+            return;
+        }
+
+        $this->warned = true;
+        $findings = [];
+
+        foreach ($this->recordedHere as $interaction) {
+            $findings = array_merge($findings, $this->scanner->scan($interaction));
+        }
+
+        if ($findings === []) {
+            return;
+        }
+
+        $warning = SecretScanner::warning($this->location(), count($this->recordedHere), $findings);
+
+        if ($this->warn !== null) {
+            ($this->warn)($warning);
+
+            return;
+        }
+
+        file_put_contents('php://stderr', $warning);
     }
 
     private function open(): void

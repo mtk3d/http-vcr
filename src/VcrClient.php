@@ -88,6 +88,7 @@ final class VcrClient implements ClientInterface
             $repeatablePlayback,
             $locked,
             $inlineBodyLimit ?? $config->inlineBodyLimit(),
+            scanner: $config->scanRecordingsForSecrets() ? new SecretScanner() : null,
         );
     }
 
@@ -107,6 +108,7 @@ final class VcrClient implements ClientInterface
         ?ResponseFactoryInterface $responseFactory = null,
         ?StreamFactoryInterface $streamFactory = null,
         ?ClockInterface $clock = null,
+        ?bool $scanRecordingsForSecrets = null,
     ): void {
         Config::replaceGlobal(Config::create(
             $cassetteDirectory,
@@ -116,6 +118,7 @@ final class VcrClient implements ClientInterface
             $responseFactory,
             $streamFactory,
             $clock,
+            scanRecordingsForSecrets: $scanRecordingsForSecrets,
         ));
     }
 

@@ -221,6 +221,10 @@ final class RedactionTest extends TestCase
 
     public function testAnIncludedHeaderIsStoredAsSentAndTellsRequestsApartAgain(): void
     {
+        // This cassette is meant to hold a real credential, so the automatic scan would be
+        // right about it and has nothing to add — the opt-out exists for exactly this.
+        VcrClient::configure(scanRecordingsForSecrets: false);
+
         $matchers = [new MethodMatcher(), new UriMatcher(), new HeadersMatcher(['Authorization'])];
 
         $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'), matchers: $matchers);

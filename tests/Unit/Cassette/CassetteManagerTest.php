@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr\Tests\Unit\Cassette;
 
+use Closure;
 use DateTimeImmutable;
 use HttpVcr\Cassette\Cassette;
 use HttpVcr\Cassette\CassetteManager;
@@ -17,6 +18,7 @@ use HttpVcr\Matching\MethodMatcher;
 use HttpVcr\Matching\QueryStringMatcher;
 use HttpVcr\Matching\UriMatcher;
 use HttpVcr\RecordMode;
+use HttpVcr\SecretScanner;
 use HttpVcr\Serializer\JsonCassetteSerializer;
 use HttpVcr\Tests\Support\InMemoryCassettePersister;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -97,6 +99,96 @@ final class CassetteManagerTest extends TestCase
         self::assertSame('2026-08-21T10:00:00+00:00', $interaction->recordedAt->format('c'));
     }
 
+    public function testASessionThatRecordedASecretWarnsWhenItCloses(): void
+    {
+        $warnings = [];
+        $manager = $this->manager(
+            new InMemoryCassettePersister(),
+            scanner: new SecretScanner(),
+            warn: static function (string $warning) use (&$warnings): void {
+                $warnings[] = $warning;
+            },
+        );
+
+        $manager->record(
+            new RecordedRequest('POST', 'https://example.com/token'),
+            new RecordedResponse(200, [], '{"key":"tk_live_9f8e7d6c5b4a3210FEDCBA"}'),
+        );
+        $manager->close();
+
+        self::assertCount(1, $warnings);
+        self::assertStringContainsString('response.body (/key)', $warnings[0]);
+    }
+
+    public function testTheWarningIsPrintedOnceEvenIfTheSessionIsClosedTwice(): void
+    {
+        $warnings = [];
+        $manager = $this->manager(
+            new InMemoryCassettePersister(),
+            scanner: new SecretScanner(),
+            warn: static function (string $warning) use (&$warnings): void {
+                $warnings[] = $warning;
+            },
+        );
+
+        $manager->record(
+            new RecordedRequest('POST', 'https://example.com/token'),
+            new RecordedResponse(200, [], '{"key":"tk_live_9f8e7d6c5b4a3210FEDCBA"}'),
+        );
+        $manager->close();
+        $manager->close();
+
+        self::assertCount(1, $warnings);
+    }
+
+    /**
+     * Warning about content already looked at and knowingly accepted would make the warning
+     * worthless within a fortnight.
+     */
+    public function testASessionThatOnlyReplayedSaysNothing(): void
+    {
+        $warnings = [];
+        $persister = $this->persisterHolding([
+            Interaction::recorded(
+                new RecordedRequest('GET', 'https://example.com/a'),
+                new RecordedResponse(200, [], '{"key":"tk_live_9f8e7d6c5b4a3210FEDCBA"}'),
+                new DateTimeImmutable('2026-08-21T10:00:00+00:00'),
+            ),
+        ]);
+
+        $manager = $this->manager(
+            $persister,
+            scanner: new SecretScanner(),
+            warn: static function (string $warning) use (&$warnings): void {
+                $warnings[] = $warning;
+            },
+        );
+
+        $manager->play(new RecordedRequest('GET', 'https://example.com/a'));
+        $manager->close();
+
+        self::assertSame([], $warnings);
+    }
+
+    public function testTheScanIsSkippedEntirelyWhenTheProjectTurnedItOff(): void
+    {
+        $warnings = [];
+        $manager = $this->manager(
+            new InMemoryCassettePersister(),
+            warn: static function (string $warning) use (&$warnings): void {
+                $warnings[] = $warning;
+            },
+        );
+
+        $manager->record(
+            new RecordedRequest('POST', 'https://example.com/token'),
+            new RecordedResponse(200, [], '{"key":"tk_live_9f8e7d6c5b4a3210FEDCBA"}'),
+        );
+        $manager->close();
+
+        self::assertSame([], $warnings);
+    }
+
     public function testAFullyLockedCassetteUnderForcedRecordingReportsThatNothingHappened(): void
     {
         $persister = $this->persisterHolding([
@@ -161,6 +253,8 @@ final class CassetteManagerTest extends TestCase
         InMemoryCassettePersister $persister,
         array $environment = [],
         bool $locked = false,
+        ?SecretScanner $scanner = null,
+        ?Closure $warn = null,
     ): CassetteManager {
         return new CassetteManager(
             'session',
@@ -172,6 +266,8 @@ final class CassetteManagerTest extends TestCase
             RecordMode::RecordIfAbsent,
             false,
             $locked,
+            scanner: $scanner,
+            warn: $warn,
         );
     }
 

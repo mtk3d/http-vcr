@@ -43,6 +43,7 @@ final class Config
         private readonly ?StreamFactoryInterface $streamFactory,
         private readonly ?ClockInterface $clock,
         private readonly ?int $inlineBodyLimit,
+        private readonly ?bool $scanRecordingsForSecrets,
     ) {
     }
 
@@ -58,6 +59,7 @@ final class Config
         ?StreamFactoryInterface $streamFactory = null,
         ?ClockInterface $clock = null,
         ?int $inlineBodyLimit = null,
+        ?bool $scanRecordingsForSecrets = null,
     ): self {
         return new self(
             $cassetteDirectory,
@@ -68,6 +70,7 @@ final class Config
             $streamFactory,
             $clock,
             $inlineBodyLimit,
+            $scanRecordingsForSecrets,
         );
     }
 
@@ -134,6 +137,17 @@ final class Config
     public function inlineBodyLimit(): int
     {
         return $this->inlineBodyLimit ?? 1_048_576;
+    }
+
+    /**
+     * Whether a session that recorded anything checks what it wrote for credentials (§3.4).
+     * On by default, and switched off only here rather than through an environment
+     * variable: silencing a warning about secrets belongs in the repository, where a code
+     * review can see it.
+     */
+    public function scanRecordingsForSecrets(): bool
+    {
+        return $this->scanRecordingsForSecrets ?? true;
     }
 
     public function clock(): ClockInterface
