@@ -51,6 +51,15 @@ $guzzle->requestAsync('...');   // recorded / replayed
 
 If a codebase already has other middleware on its `HandlerStack` (retry, logging), push `VcrMiddleware` onto that same stack — it doesn't replace or duplicate any of it, it's just one more layer.
 
+### Where it sits among other middleware
+
+Guzzle applies a handler stack from the bottom up, so push order decides which side of the cassette each middleware ends up on:
+
+- pushed **before** `VcrMiddleware` (including everything `HandlerStack::create()` brings along — redirects, `http_errors`, cookies) — sits above it and treats a replayed response exactly like one off the wire;
+- pushed **after** it — sits between the cassette and the transport, so it only ever sees requests that are actually being recorded.
+
+Retry and logging usually belong above; anything that signs or instruments the real connection belongs below.
+
 ### Where the real request goes
 
 The middleware doesn't let `VcrClient` use its own inner client for recording. It wraps the **next handler in the stack** as a PSR-18 client and hands that over per request:
