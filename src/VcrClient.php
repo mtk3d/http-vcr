@@ -29,7 +29,6 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
-use Psr\Http\Message\StreamInterface;
 
 /**
  * A PSR-18 client that replays a cassette instead of making requests — and records one
@@ -118,7 +117,7 @@ final class VcrClient implements ClientInterface
 
     public function sendRequest(RequestInterface $request): ResponseInterface
     {
-        $incoming = $this->snapshot($request);
+        [$request, $incoming] = $this->snapshot($request);
         $interaction = $this->cassette->play($incoming);
 
         if ($interaction?->response !== null) {
@@ -195,10 +194,12 @@ final class VcrClient implements ClientInterface
             throw $exception;
         }
 
+        [$response, $body] = $this->buffer($response);
+
         $this->cassette->record($incoming, new RecordedResponse(
             $response->getStatusCode(),
             $this->headers($response),
-            $this->read($response->getBody()),
+            $body,
         ));
 
         return $response;
@@ -232,14 +233,21 @@ final class VcrClient implements ClientInterface
         ));
     }
 
-    private function snapshot(RequestInterface $request): RecordedRequest
+    /**
+     * @return array{RequestInterface, RecordedRequest} the request to carry on with, which
+     *                                                  is a new object when its body had to
+     *                                                  be buffered, and its snapshot
+     */
+    private function snapshot(RequestInterface $request): array
     {
-        return new RecordedRequest(
+        [$request, $body] = $this->buffer($request);
+
+        return [$request, new RecordedRequest(
             $request->getMethod(),
             (string) $request->getUri(),
             $this->headers($request),
-            $this->read($request->getBody()),
-        );
+            $body,
+        )];
     }
 
     /**
@@ -271,21 +279,36 @@ final class VcrClient implements ClientInterface
     }
 
     /**
-     * A body is read once, at the edge, and everything downstream works on the string —
-     * a PSR-7 stream is mutable, so reading it twice is not the same as reading it once.
-     * A seekable stream is rewound afterwards, leaving the code under test the stream it
-     * had.
+     * A body is read once, at the edge, and everything downstream works on the string — a
+     * PSR-7 stream is mutable, so reading it twice is not the same as reading it once.
+     *
+     * A seekable stream is rewound afterwards and the message comes back unchanged. A
+     * stream that cannot be rewound is spent by the very act of recording it, so its
+     * content is buffered and put back as a fresh stream: without that substitution the
+     * inner client would send an empty body, or the code under test would receive a
+     * response it cannot read.
+     *
+     * @template T of MessageInterface
+     *
+     * @param T $message
+     *
+     * @return array{T, string}
      */
-    private function read(StreamInterface $stream): string
+    private function buffer(MessageInterface $message): array
     {
-        if (!$stream->isSeekable()) {
-            return $stream->getContents();
+        $stream = $message->getBody();
+
+        if ($stream->isSeekable()) {
+            $stream->rewind();
+            $content = $stream->getContents();
+            $stream->rewind();
+
+            return [$message, $content];
         }
 
-        $stream->rewind();
         $content = $stream->getContents();
-        $stream->rewind();
+        $buffered = $message->withBody($this->streamFactory->createStream($content));
 
-        return $content;
+        return [$buffered, $content];
     }
 }
