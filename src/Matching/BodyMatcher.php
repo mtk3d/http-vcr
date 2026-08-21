@@ -12,8 +12,6 @@ use HttpVcr\Cassette\RecordedRequest;
  */
 final class BodyMatcher implements RequestMatcherInterface, ExplainsMismatch
 {
-    private const EXCERPT_LENGTH = 60;
-
     public function matches(RecordedRequest $recorded, RecordedRequest $incoming): bool
     {
         return $recorded->body === $incoming->body;
@@ -34,19 +32,6 @@ final class BodyMatcher implements RequestMatcherInterface, ExplainsMismatch
             );
         }
 
-        return sprintf('expected "%s", got "%s"', $this->excerpt($recorded->body), $this->excerpt($incoming->body));
-    }
-
-    /**
-     * The first characters of a body, cut on a character boundary rather than a byte one —
-     * without reaching for mbstring, which the core deliberately doesn't depend on.
-     */
-    private function excerpt(string $body): string
-    {
-        if (preg_match('/^.{0,' . self::EXCERPT_LENGTH . '}/us', $body, $match) === 1) {
-            return $match[0] === $body ? $body : $match[0] . '…';
-        }
-
-        return strlen($body) > self::EXCERPT_LENGTH ? substr($body, 0, self::EXCERPT_LENGTH) . '…' : $body;
+        return sprintf('expected "%s", got "%s"', Excerpt::of($recorded->body), Excerpt::of($incoming->body));
     }
 }
