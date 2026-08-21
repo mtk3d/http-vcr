@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace HttpVcr\Console;
 
+use HttpVcr\Config;
 use Symfony\Component\Console\Application as ConsoleApplication;
+use Symfony\Component\Console\Input\InputDefinition;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * `vendor/bin/http-vcr` (§3.12).
@@ -26,5 +31,35 @@ final class Application extends ConsoleApplication
             new LockCommand(lock: true),
             new LockCommand(lock: false),
         ]);
+    }
+
+    /**
+     * Reading --config here rather than inside a command: the configuration has to be in
+     * place before anything asks Config::global() where the cassettes are, and every
+     * command asks.
+     */
+    public function doRun(InputInterface $input, OutputInterface $output): int
+    {
+        $path = $input->getParameterOption('--config');
+
+        if (is_string($path) && $path !== '') {
+            Config::useFile($path);
+        }
+
+        return parent::doRun($input, $output);
+    }
+
+    protected function getDefaultInputDefinition(): InputDefinition
+    {
+        $definition = parent::getDefaultInputDefinition();
+
+        $definition->addOption(new InputOption(
+            'config',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'The http-vcr.php to work from, instead of the one found by walking up from here',
+        ));
+
+        return $definition;
     }
 }

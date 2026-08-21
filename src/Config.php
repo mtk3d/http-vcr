@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace HttpVcr;
 
+use Closure;
 use DateInterval;
 use HttpVcr\Clock\SystemClock;
+use HttpVcr\Exception\MissingDependencyException;
 use HttpVcr\Matching\MethodMatcher;
 use HttpVcr\Matching\QueryStringMatcher;
 use HttpVcr\Matching\RequestMatcherInterface;
@@ -16,8 +18,10 @@ use HttpVcr\Scope\CassetteScopeResolverInterface;
 use HttpVcr\Scope\NullScopeResolver;
 use HttpVcr\Serializer\CassetteSerializerInterface;
 use HttpVcr\Serializer\JsonCassetteSerializer;
+use InvalidArgumentException;
 use LogicException;
 use Psr\Clock\ClockInterface;
+use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -32,6 +36,21 @@ use Psr\Http\Message\UriFactoryInterface;
  */
 final class Config
 {
+    private const FILE = 'http-vcr.php';
+
+    /**
+     * The clients looked for when nothing was configured, in order, each with what its
+     * constructor wants. Every one of them is a PSR-18 client a project testing HTTP would
+     * plausibly already have.
+     *
+     * @var array<string, string>
+     */
+    private const CLIENTS = [
+        'GuzzleHttp\Client' => 'nothing',
+        'Symfony\Component\HttpClient\Psr18Client' => 'psr-17 factories',
+        'Buzz\Client\FileGetContents' => 'a response factory',
+    ];
+
     private static ?self $global = null;
 
     private static bool $frozen = false;
@@ -40,6 +59,7 @@ final class Config
      * @param list<RequestMatcherInterface>    $defaultMatchers
      * @param array<string, callable(): mixed> $redact
      * @param array<string, Provider>          $providers
+     * @param list<string>                     $testDirectories
      */
     private function __construct(
         private readonly ?string $cassetteDirectory,
@@ -58,6 +78,8 @@ final class Config
         private readonly ?bool $scanRecordingsForSecrets,
         private readonly array $redact,
         private readonly array $providers,
+        private readonly array $testDirectories,
+        private readonly ?Closure $innerClientFactory,
     ) {
         $this->refuseAmbiguousProviders();
     }
@@ -68,6 +90,10 @@ final class Config
      *                                                          secret every cassette in the project
      *                                                          would otherwise have to redact itself
      * @param array<string, Provider>          $providers       named APIs, recognised by host (§3.12)
+     * @param list<string>                     $testDirectories where the CLI looks for the test
+     *                                                          files it scans; nothing else reads it
+     * @param (callable(): ClientInterface)|null $innerClientFactory the real client #[UseCassette]
+     *                                                              records through
      */
     public static function create(
         ?string $cassetteDirectory = null,
@@ -86,6 +112,8 @@ final class Config
         ?bool $scanRecordingsForSecrets = null,
         array $redact = [],
         array $providers = [],
+        array $testDirectories = [],
+        ?callable $innerClientFactory = null,
     ): self {
         return new self(
             $cassetteDirectory,
@@ -104,15 +132,91 @@ final class Config
             $scanRecordingsForSecrets,
             $redact,
             $providers,
+            $testDirectories,
+            $innerClientFactory === null ? null : $innerClientFactory(...),
         );
     }
 
+    /**
+     * The project's configuration, read from http-vcr.php the first time anything asks for
+     * it. Not finding a file is not an error — it means the defaults apply.
+     */
     public static function global(): self
     {
-        return self::$global ??= self::create();
+        return self::$global ??= self::discover((string) getcwd()) ?? self::create();
     }
 
     public static function replaceGlobal(self $config): void
+    {
+        self::refuseLateConfiguration();
+
+        // Field by field over whatever http-vcr.php said, rather than instead of it: these
+        // are two entrances to one configuration, and the call written in code wins over the
+        // file picked up in the background (§3.14).
+        self::$global = $config->over(self::global());
+    }
+
+    /**
+     * The configuration file named on the command line, in place of the discovered one
+     * (`vendor/bin/http-vcr --config=…`) — for a monorepo or any layout where walking up
+     * from the working directory finds the wrong project (§3.12).
+     */
+    public static function useFile(string $path): void
+    {
+        self::refuseLateConfiguration();
+
+        self::$global = self::loadFile($path);
+    }
+
+    /**
+     * Walks up from $directory looking for http-vcr.php, and stops at the directory holding
+     * composer.json whether or not it found one. That boundary is deliberate: on a shared CI
+     * runner or in a monorepo, a search that kept going would eventually reach $HOME and
+     * pick up a configuration belonging to something else entirely.
+     */
+    public static function discover(string $directory): ?self
+    {
+        while ($directory !== '') {
+            if (is_file($directory . '/' . self::FILE)) {
+                return self::loadFile($directory . '/' . self::FILE);
+            }
+
+            if (is_file($directory . '/composer.json')) {
+                return null;
+            }
+
+            $parent = dirname($directory);
+
+            if ($parent === $directory) {
+                return null;
+            }
+
+            $directory = $parent;
+        }
+
+        return null;
+    }
+
+    public static function loadFile(string $path): self
+    {
+        if (!is_file($path)) {
+            throw new InvalidArgumentException(sprintf('There is no configuration file at %s.', $path));
+        }
+
+        $config = require $path;
+
+        if (!$config instanceof self) {
+            throw new LogicException(sprintf(
+                '%s has to return HttpVcr\Config::create(...); it returned %s.',
+                $path,
+                get_debug_type($config),
+            ));
+        }
+
+        return $config;
+    }
+
+    private static function refuseLateConfiguration(): void
     {
         if (self::$frozen) {
             throw new LogicException(
@@ -121,8 +225,35 @@ final class Config
                 . 'tests in one process depend on the order they happen to run in.',
             );
         }
+    }
 
-        self::$global = $config;
+    /**
+     * This configuration laid over another, taking every field it actually declared.
+     */
+    private function over(self $base): self
+    {
+        return new self(
+            $this->cassetteDirectory ?? $base->cassetteDirectory,
+            $this->persister ?? $base->persister,
+            $this->serializer ?? $base->serializer,
+            $this->defaultMatchers !== [] ? $this->defaultMatchers : $base->defaultMatchers,
+            $this->strictMode ?? $base->strictMode,
+            $this->staleAfter ?? $base->staleAfter,
+            $this->scopeResolver ?? $base->scopeResolver,
+            $this->responseFactory ?? $base->responseFactory,
+            $this->streamFactory ?? $base->streamFactory,
+            $this->requestFactory ?? $base->requestFactory,
+            $this->uriFactory ?? $base->uriFactory,
+            $this->clock ?? $base->clock,
+            $this->inlineBodyLimit ?? $base->inlineBodyLimit,
+            $this->scanRecordingsForSecrets ?? $base->scanRecordingsForSecrets,
+            // Project-wide redaction rules add up rather than replace: a rule in the file
+            // and a rule in the bootstrap are both things the project asked for.
+            $this->redact + $base->redact,
+            $this->providers !== [] ? $this->providers : $base->providers,
+            $this->testDirectories !== [] ? $this->testDirectories : $base->testDirectories,
+            $this->innerClientFactory ?? $base->innerClientFactory,
+        );
     }
 
     /**
@@ -304,6 +435,70 @@ final class Config
     public function cassetteDirectory(): string
     {
         return $this->cassetteDirectory ?? self::projectRoot() . '/tests/Cassettes';
+    }
+
+    /**
+     * Where the CLI looks for the test files it scans — `tests/` under the project root by
+     * default, the same root rule as the cassette directory (§3.12).
+     *
+     * @return list<string>
+     */
+    public function testDirectories(): array
+    {
+        return $this->testDirectories !== [] ? $this->testDirectories : [self::projectRoot() . '/tests'];
+    }
+
+    /**
+     * The real client the PHPUnit bridge records through, since it builds VcrClient on the
+     * test's behalf and has to hand it a transport (§3.14).
+     *
+     * Same shape as the PSR-17 factories: what the project configured, then a closed
+     * detection list, then an exception naming what to install. A replaying test never
+     * touches this, so a missing client is only an error at the moment something records.
+     */
+    public function innerClient(): ClientInterface
+    {
+        if ($this->innerClientFactory !== null) {
+            $client = ($this->innerClientFactory)();
+
+            if (!$client instanceof ClientInterface) {
+                throw new LogicException(sprintf(
+                    'innerClientFactory has to return a PSR-18 client; it returned %s.',
+                    get_debug_type($client),
+                ));
+            }
+
+            return $client;
+        }
+
+        foreach (self::CLIENTS as $class => $arguments) {
+            if (class_exists($class)) {
+                return $this->construct($class, $arguments);
+            }
+        }
+
+        throw MissingDependencyException::noHttpClient(array_keys(self::CLIENTS));
+    }
+
+    /**
+     * The constructor arguments are chosen by what the class asked for rather than by its
+     * name, so nothing here names a class this installation may not have.
+     */
+    private function construct(string $class, string $arguments): ClientInterface
+    {
+        $factories = new Psr17FactoryResolver($this->psr17Factories());
+
+        $client = new $class(...match ($arguments) {
+            'a response factory' => [$factories->responseFactory()],
+            'psr-17 factories' => [null, $factories->responseFactory(), $factories->streamFactory()],
+            default => [],
+        });
+
+        if (!$client instanceof ClientInterface) {
+            throw MissingDependencyException::noHttpClient(array_keys(self::CLIENTS));
+        }
+
+        return $client;
     }
 
     private static function projectRoot(): string

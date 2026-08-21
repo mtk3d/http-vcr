@@ -12,12 +12,14 @@ use HttpVcr\Matching\UriMatcher;
 use HttpVcr\Persistence\FilesystemCassettePersister;
 use HttpVcr\Provider;
 use HttpVcr\Serializer\JsonCassetteSerializer;
+use HttpVcr\Tests\Support\FakeHttpClient;
 use HttpVcr\Tests\Support\InMemoryCassettePersister;
 use HttpVcr\VcrClient;
 use LogicException;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -102,6 +104,26 @@ final class ConfigTest extends TestCase
             'shopify' => new Provider(hosts: ['*.myshopify.com']),
             'one-shop' => new Provider(hosts: ['shop.myshopify.com']),
         ]);
+    }
+
+    public function testTestDirectoriesDefaultToTestsUnderTheProjectRoot(): void
+    {
+        self::assertSame([dirname(Config::create()->cassetteDirectory(), 2) . '/tests'], Config::create()->testDirectories());
+        self::assertSame(['/modules/billing/tests'], Config::create(testDirectories: ['/modules/billing/tests'])->testDirectories());
+    }
+
+    public function testTheClientToRecordThroughIsDetectedWhenTheProjectNamesNone(): void
+    {
+        self::assertInstanceOf(ClientInterface::class, Config::create()->innerClient());
+    }
+
+    public function testAConfiguredFactoryDecidesWhatRecordingGoesThrough(): void
+    {
+        $client = new FakeHttpClient();
+
+        $config = Config::create(innerClientFactory: static fn (): ClientInterface => $client);
+
+        self::assertSame($client, $config->innerClient());
     }
 
     public function testConfiguringAfterTheFirstClientExistsThrowsRatherThanQuietlyChangingDefaults(): void

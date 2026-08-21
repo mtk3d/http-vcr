@@ -137,7 +137,9 @@ final class VcrClient implements ClientInterface
      *
      * @param list<RequestMatcherInterface>    $defaultMatchers
      * @param array<string, callable(): mixed> $redact    project-wide redaction rules
-     * @param array<string, Provider>          $providers named APIs, recognised by host
+     * @param array<string, Provider>          $providers          named APIs, recognised by host
+     * @param list<string>                     $testDirectories    where the CLI scans for tests
+     * @param (callable(): ClientInterface)|null $innerClientFactory the client #[UseCassette] records through
      */
     public static function configure(
         ?string $cassetteDirectory = null,
@@ -155,6 +157,8 @@ final class VcrClient implements ClientInterface
         ?bool $scanRecordingsForSecrets = null,
         array $redact = [],
         array $providers = [],
+        array $testDirectories = [],
+        ?callable $innerClientFactory = null,
     ): void {
         Config::replaceGlobal(Config::create(
             $cassetteDirectory,
@@ -172,6 +176,8 @@ final class VcrClient implements ClientInterface
             scanRecordingsForSecrets: $scanRecordingsForSecrets,
             redact: $redact,
             providers: $providers,
+            testDirectories: $testDirectories,
+            innerClientFactory: $innerClientFactory,
         ));
     }
 
