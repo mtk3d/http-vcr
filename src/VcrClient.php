@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr;
 
+use DateInterval;
 use HttpVcr\Cassette\CassetteManager;
 use HttpVcr\Cassette\ErrorCategory;
 use HttpVcr\Cassette\Interaction;
@@ -56,6 +57,7 @@ final class VcrClient implements ClientInterface
         RecordMode $mode = RecordMode::RecordIfAbsent,
         array $matchers = [],
         ?StrictMode $strictMode = null,
+        ?DateInterval $staleAfter = null,
         private readonly bool $recordTransportErrors = false,
         private readonly bool $decodeCompressedResponse = true,
         ?int $inlineBodyLimit = null,
@@ -87,6 +89,7 @@ final class VcrClient implements ClientInterface
             Environment::fromSystem(),
             $mode,
             $strictMode ?? $config->strictMode(),
+            $staleAfter ?? $config->staleAfter(),
             $repeatablePlayback,
             $locked,
             $inlineBodyLimit ?? $config->inlineBodyLimit(),
@@ -113,6 +116,7 @@ final class VcrClient implements ClientInterface
         ?CassetteSerializerInterface $serializer = null,
         array $defaultMatchers = [],
         ?StrictMode $strictMode = null,
+        ?DateInterval $staleAfter = null,
         ?ResponseFactoryInterface $responseFactory = null,
         ?StreamFactoryInterface $streamFactory = null,
         ?ClockInterface $clock = null,
@@ -125,6 +129,7 @@ final class VcrClient implements ClientInterface
             $serializer,
             $defaultMatchers,
             $strictMode,
+            $staleAfter,
             $responseFactory,
             $streamFactory,
             $clock,

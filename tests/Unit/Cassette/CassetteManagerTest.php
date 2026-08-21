@@ -266,6 +266,7 @@ final class CassetteManagerTest extends TestCase
             new Environment($environment),
             RecordMode::RecordIfAbsent,
             StrictMode::None,
+            null,
             false,
             $locked,
             scanner: $scanner,

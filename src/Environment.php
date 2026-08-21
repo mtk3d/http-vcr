@@ -31,7 +31,15 @@ final class Environment
     {
         $variables = [];
 
-        foreach ([...self::CI_VARIABLES, 'VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE'] as $name) {
+        $names = [
+            ...self::CI_VARIABLES,
+            'VCR_ALLOW_RECORDING',
+            'VCR_ERASE_TAPE',
+            'VCR_ENFORCE_STALE_CHECK',
+            'VCR_IGNORE_STALE_CASSETTES',
+        ];
+
+        foreach ($names as $name) {
             $value = $_ENV[$name] ?? $_SERVER[$name] ?? getenv($name);
 
             if (is_string($value) && $value !== '') {
@@ -83,6 +91,26 @@ final class Environment
         return EraseTape::parse($this->variables['VCR_ERASE_TAPE'] ?? null);
     }
 
+    /**
+     * Whether crossing `staleAfter` should fail the test rather than only being reported
+     * (§3.7).
+     *
+     * Off by default, because a check against the clock is non-deterministic between runs:
+     * the same commit can pass in a merge-request pipeline and fail an hour later on the
+     * main branch purely because the threshold was crossed in between. A team that wants
+     * the forced re-record cadence anyway opts in — and can waive it for a single run,
+     * which is why the ignore switch outranks the enforce one rather than the other way
+     * round.
+     */
+    public function enforcesStaleCheck(): bool
+    {
+        if ($this->isTruthy('VCR_IGNORE_STALE_CASSETTES')) {
+            return false;
+        }
+
+        return $this->isTruthy('VCR_ENFORCE_STALE_CHECK');
+    }
+
     private function explicitRecordingPermission(): ?bool
     {
         $value = $this->variables['VCR_ALLOW_RECORDING'] ?? null;
@@ -97,13 +125,23 @@ final class Environment
     private function detectedCiVariable(): ?string
     {
         foreach (self::CI_VARIABLES as $name) {
-            $value = $this->variables[$name] ?? '';
-
-            if ($value !== '' && !in_array(strtolower($value), ['0', 'false'], true)) {
+            if ($this->isTruthy($name)) {
                 return $name;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Set to anything other than the two spellings of "no". `0`/`false` read as unset
+     * everywhere in the library, so a variable left in a pipeline config can be turned off
+     * without deleting the line.
+     */
+    private function isTruthy(string $name): bool
+    {
+        $value = $this->variables[$name] ?? '';
+
+        return $value !== '' && !in_array(strtolower($value), ['0', 'false'], true);
     }
 }

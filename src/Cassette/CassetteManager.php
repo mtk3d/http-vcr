@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace HttpVcr\Cassette;
 
 use Closure;
+use DateInterval;
 use HttpVcr\Environment;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Exception\RecordingNotAllowedException;
+use HttpVcr\Exception\StaleCassetteException;
 use HttpVcr\Exception\StrictModeViolationException;
 use HttpVcr\Hook\HookRegistry;
 use HttpVcr\Hook\RedactionHooks;
@@ -77,6 +79,7 @@ final class CassetteManager
         private readonly Environment $environment,
         private readonly RecordMode $mode = RecordMode::RecordIfAbsent,
         private readonly StrictMode $strictMode = StrictMode::None,
+        private readonly ?DateInterval $staleAfter = null,
         private readonly bool $repeatablePlayback = false,
         private readonly bool $locked = false,
         private readonly int $inlineBodyLimit = 1_048_576,
@@ -433,6 +436,33 @@ final class CassetteManager
         // means after the truncation, which is part of opening rather than something that
         // happens once the session is under way (§3.6).
         $this->baseline = count($this->cassette->interactions);
+
+        $this->refuseStaleCassette();
+    }
+
+    /**
+     * Crossing `staleAfter` is a report, not a failure — unless this run asked for it to be
+     * one (§3.7). Checked when the session opens, so a run that is going to be stopped is
+     * stopped before the code under test has half-finished on replayed data.
+     */
+    private function refuseStaleCassette(): void
+    {
+        if ($this->staleAfter === null || !$this->environment->enforcesStaleCheck()) {
+            return;
+        }
+
+        $staleness = new Staleness($this->clock);
+        $stale = $staleness->in($this->cassette, $this->staleAfter);
+
+        if ($stale !== []) {
+            throw StaleCassetteException::past(
+                $this->name,
+                $this->location(),
+                $stale,
+                $this->staleAfter,
+                $staleness,
+            );
+        }
     }
 
     private function openCassette(): void

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr;
 
+use DateInterval;
 use HttpVcr\Clock\SystemClock;
 use HttpVcr\Matching\MethodMatcher;
 use HttpVcr\Matching\QueryStringMatcher;
@@ -41,6 +42,7 @@ final class Config
         private readonly ?CassetteSerializerInterface $serializer,
         private readonly array $defaultMatchers,
         private readonly ?StrictMode $strictMode,
+        private readonly ?DateInterval $staleAfter,
         private readonly ?ResponseFactoryInterface $responseFactory,
         private readonly ?StreamFactoryInterface $streamFactory,
         private readonly ?ClockInterface $clock,
@@ -62,6 +64,7 @@ final class Config
         ?CassetteSerializerInterface $serializer = null,
         array $defaultMatchers = [],
         ?StrictMode $strictMode = null,
+        ?DateInterval $staleAfter = null,
         ?ResponseFactoryInterface $responseFactory = null,
         ?StreamFactoryInterface $streamFactory = null,
         ?ClockInterface $clock = null,
@@ -75,6 +78,7 @@ final class Config
             $serializer,
             $defaultMatchers,
             $strictMode,
+            $staleAfter,
             $responseFactory,
             $streamFactory,
             $clock,
@@ -148,6 +152,16 @@ final class Config
     public function strictMode(): StrictMode
     {
         return $this->strictMode ?? StrictMode::None;
+    }
+
+    /**
+     * How long a recording stays fresh, for every cassette in the project. Null means
+     * freshness isn't tracked at all — the correct opt-in default, since only the author of
+     * an integration knows how fast the API behind it moves (§3.7).
+     */
+    public function staleAfter(): ?DateInterval
+    {
+        return $this->staleAfter;
     }
 
     /**

@@ -7,6 +7,7 @@ VcrException
 ├── NoMatchingInteractionException
 │   └── CassetteNotFoundException
 ├── StrictModeViolationException
+├── StaleCassetteException
 ├── MissingEnvironmentVariableException
 ├── MissingDependencyException
 ├── RecordingNotAllowedException
@@ -21,6 +22,7 @@ VcrException
 | `NoMatchingInteractionException` | The cassette exists, but no still-unconsumed interaction matches the incoming request. See [Matching Requests](../concepts/matching.md#when-nothing-matches) for the message format. |
 | `CassetteNotFoundException` | There's no cassette file at all — either never recorded, or the [scope](../advanced/scoping.md) changed and no file exists for the new one. In the scope case the message also lists the scopes that *do* exist. |
 | `StrictModeViolationException` | [`AllPlayed` or `InOrder`](../advanced/strict-mode.md) wasn't satisfied when the cassette closed. |
+| `StaleCassetteException` | A cassette crossed its [`staleAfter`](../advanced/stale-after.md) threshold and `VCR_ENFORCE_STALE_CHECK` asked for that to be an error. Lists the interactions that outlived it, with the date each went stale. |
 | `MissingEnvironmentVariableException` | A variable listed in [`requiresEnv`](../integrations/phpunit.md#pre-validating-environment-variables) is empty at the moment a real request was about to be made. |
 | `MissingDependencyException` | No PSR-17 factory implementation could be found to rebuild responses with, or `#[UseCassette]` found no HTTP client to record through. Names the specific interface or class it looked for. Rare in practice — whichever HTTP client you use already brings a factory along. |
 | `RecordingNotAllowedException` | Something needed recording, but [`VCR_ALLOW_RECORDING=0`](environment.md) blocked it. The message says whether that `0` was set explicitly or inferred from CI detection, and from which variable. |

@@ -25,7 +25,7 @@ For teams that want it hard-enforced anyway:
 VCR_ENFORCE_STALE_CHECK=1 vendor/bin/phpunit
 ```
 
-This makes a stale cassette actually fail the test — a deliberate trade of some non-determinism for a forced re-record cadence. If this is turned on, set it identically in both merge-request and main-branch pipelines to avoid the two drifting apart.
+This makes a stale cassette actually fail the test, with a [`StaleCassetteException`](../reference/exceptions.md) naming the interactions that outlived the threshold — a deliberate trade of some non-determinism for a forced re-record cadence. The check happens when the cassette is opened, so a run that is going to stop stops before the code under test is halfway through on replayed data. If this is turned on, set it identically in both merge-request and main-branch pipelines to avoid the two drifting apart.
 
 For a one-off run that must pass regardless (a hotfix, say), override it:
 
