@@ -9,11 +9,18 @@ use HttpVcr\Clock\FrozenClock;
 use HttpVcr\Clock\SystemClock;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Clock\ClockInterface;
 
 #[CoversClass(SystemClock::class)]
 #[CoversClass(FrozenClock::class)]
 final class ClockTest extends TestCase
 {
+    public function testBothClocksArePsr20Clocks(): void
+    {
+        self::assertInstanceOf(ClockInterface::class, new SystemClock());
+        self::assertInstanceOf(ClockInterface::class, FrozenClock::at('2026-08-21T10:00:00+00:00'));
+    }
+
     public function testSystemClockReportsTheCurrentTimeInUtc(): void
     {
         $now = (new SystemClock())->now();

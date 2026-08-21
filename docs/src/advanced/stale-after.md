@@ -37,7 +37,7 @@ This treats every cassette as fresh, no matter what `recordedAt` says — see th
 
 ## Testing your own `staleAfter`
 
-"Now" comes from an injectable `Clock\ClockInterface`, defaulting to `SystemClock`. `FrozenClock` ships with the package for exactly this reason — it isn't just an internal test fixture:
+"Now" comes from an injectable PSR-20 clock (`Psr\Clock\ClockInterface`), defaulting to `SystemClock`. Any PSR-20 implementation works — Symfony's `MockClock`, `lcobucci/clock`, your own — and `FrozenClock` ships with the package so that testing this needs no extra dependency:
 
 ```php
 use HttpVcr\Clock\FrozenClock;

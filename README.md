@@ -8,7 +8,7 @@ Status: **in progress** — the record/replay core is built (`VcrClient`, the de
 
 See [PLAN.md § 1](./PLAN.md#1-pozycjonowanie) for the full comparison. Short version: php-vcr hooks curl/streams globally (fragile across Guzzle/curl versions), and `php-http/vcr-plugin` requires the httplug `PluginClient` stack. http-vcr targets any PSR-18 client directly, adds bidirectional redaction (request *and* response, without breaking replay matching), semantic JSON body matching, and an opt-in strict/sequential replay mode.
 
-The record/replay core depends on nothing but `psr/http-message`, `psr/http-client`, and `psr/http-factory`. The package additionally requires `symfony/console` and `nikic/php-parser` for its CLI; since http-vcr is installed as a dev dependency, neither reaches an application's production autoloader.
+The record/replay core depends on nothing but `psr/http-message`, `psr/http-client`, `psr/http-factory`, and `psr/clock`. The package additionally requires `symfony/console` and `nikic/php-parser` for its CLI; since http-vcr is installed as a dev dependency, neither reaches an application's production autoloader.
 
 ## License
 

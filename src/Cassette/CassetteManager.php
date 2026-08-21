@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace HttpVcr\Cassette;
 
-use HttpVcr\Clock\ClockInterface;
 use HttpVcr\Environment;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Exception\RecordingNotAllowedException;
@@ -15,6 +14,7 @@ use HttpVcr\Persistence\SidecarBodies;
 use HttpVcr\Persistence\SupportsSessionLocking;
 use HttpVcr\RecordMode;
 use HttpVcr\Serializer\CassetteSerializerInterface;
+use Psr\Clock\ClockInterface;
 
 /**
  * One cassette session: opening the file, deciding whether this run may record into it,

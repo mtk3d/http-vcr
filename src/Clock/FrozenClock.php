@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HttpVcr\Clock;
 
 use DateTimeImmutable;
+use Psr\Clock\ClockInterface;
 
 /**
  * A clock that stays where it was put.

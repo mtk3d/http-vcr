@@ -11,7 +11,7 @@ You need two things:
 
 That's the whole list. To hand a recorded response back to your code, http-vcr also needs a factory that builds response objects — but it takes that from the HTTP client library you already have (Guzzle ships one, Symfony's client pulls one in, and so on), so there is nothing extra to install, register, or pass in. In the unlikely case that nothing usable is found, http-vcr stops before the first request rather than partway through one, and `composer require --dev nyholm/psr7` settles it. If you'd rather supply your own, see the [VcrClient reference](../reference/vcr-client.md#psr-17-factories).
 
-The record/replay core depends only on the PSR interfaces themselves (`psr/http-message`, `psr/http-client`, `psr/http-factory`) — no Guzzle, no Symfony, no framework. The package also pulls in `symfony/console` and `nikic/php-parser`, used exclusively by the [CLI](../reference/cli.md); since http-vcr is a dev dependency, those never reach a production autoloader.
+The record/replay core depends only on the PSR interfaces themselves (`psr/http-message`, `psr/http-client`, `psr/http-factory`, `psr/clock`) — no Guzzle, no Symfony, no framework. The package also pulls in `symfony/console` and `nikic/php-parser`, used exclusively by the [CLI](../reference/cli.md); since http-vcr is a dev dependency, those never reach a production autoloader.
 
 ## Optional pieces
 

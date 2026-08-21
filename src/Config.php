@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace HttpVcr;
 
-use HttpVcr\Clock\ClockInterface;
 use HttpVcr\Clock\SystemClock;
 use HttpVcr\Matching\MethodMatcher;
 use HttpVcr\Matching\QueryStringMatcher;
@@ -15,6 +14,7 @@ use HttpVcr\Persistence\FilesystemCassettePersister;
 use HttpVcr\Serializer\CassetteSerializerInterface;
 use HttpVcr\Serializer\JsonCassetteSerializer;
 use LogicException;
+use Psr\Clock\ClockInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 

@@ -6,6 +6,7 @@ namespace HttpVcr\Clock;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use Psr\Clock\ClockInterface;
 
 /**
  * The default clock: the system time, in UTC.

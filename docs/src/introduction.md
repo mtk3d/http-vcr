@@ -28,7 +28,7 @@ That first run records without any extra setup on a developer machine, and refus
 | Protecting mutating requests from re-recording | none | none | locked interactions |
 | Refreshing one API's recordings when a test uses several | none (the file is the unit) | none | `[cassette]@[provider]` selector — the interaction is the unit, identified by request host |
 
-[^deps]: The record/replay core — everything a request actually passes through — depends only on `psr/http-message`, `psr/http-client`, and `psr/http-factory`. The package additionally requires `symfony/console` and `nikic/php-parser` for the `http-vcr` CLI; since http-vcr is installed as a dev dependency, neither ends up in an application's production autoloader.
+[^deps]: The record/replay core — everything a request actually passes through — depends only on `psr/http-message`, `psr/http-client`, `psr/http-factory`, and `psr/clock`. The package additionally requires `symfony/console` and `nikic/php-parser` for the `http-vcr` CLI; since http-vcr is installed as a dev dependency, neither ends up in an application's production autoloader.
 
 The short version: `php-vcr` hooks curl/streams globally, which is fragile across Guzzle/curl version changes. `php-http/vcr-plugin` requires buying into the httplug `PluginClient` stack. http-vcr targets PSR-18 directly — if your HTTP client already implements it, which most do, there is nothing else to install.
 

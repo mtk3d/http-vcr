@@ -33,8 +33,8 @@ verified fact turns out wrong, record the correction in place — do not quietly
 - **Target PHP 8.2 syntax.** The local interpreter is newer and CI runs 8.2–8.5, so
   anything 8.3+ (property hooks, asymmetric visibility, `new` in more places) compiles
   locally and breaks the lowest leg.
-- **The record/replay core depends on `psr/http-message`, `psr/http-client` and
-  `psr/http-factory`, and nothing else.** That promise is half the reason the library
+- **The record/replay core depends on `psr/http-message`, `psr/http-client`,
+  `psr/http-factory` and `psr/clock`, and nothing else.** That promise is half the reason the library
   exists (§1). `symfony/console` and `nikic/php-parser` are in `require` for the CLI
   only and must not be reachable from the request path. Any new dependency needs a
   decision in §7 first.

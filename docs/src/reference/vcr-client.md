@@ -44,7 +44,7 @@ public function withInner(ClientInterface $inner): self;
 | `scopeResolver` | `NullScopeResolver` | [Scoping](../advanced/scoping.md) — splits one cassette name across several files by API version. |
 | `persister` / `serializer` | from config | [Where and in what format](../advanced/storage-and-formats.md) cassettes are stored. |
 | `responseFactory` / `streamFactory` | detected | PSR-17, used to rebuild a replayed response. See below. |
-| `clock` | `SystemClock` | The source of "now" for `staleAfter`; `FrozenClock` ships with the package for testing that. |
+| `clock` | `SystemClock` | Any PSR-20 `Psr\Clock\ClockInterface` — the source of "now" for `staleAfter`; `FrozenClock` ships with the package for testing that. |
 
 `#[UseCassette(...)]` maps onto these names 1:1, with no additions and no omissions — `requiresEnv` really is a core parameter, since only the client knows the moment a real request is about to happen. [Providers](../integrations/phpunit.md#providers) are project-wide configuration rather than a constructor argument: they describe which APIs the project talks to, so `VCR_ERASE_TAPE=@shopify` has to mean the same thing for every instance in a run.
 

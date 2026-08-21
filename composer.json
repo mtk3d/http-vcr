@@ -6,6 +6,7 @@
     "keywords": ["testing", "http", "vcr", "psr-18", "psr-7", "cassette", "mock"],
     "require": {
         "php": "^8.2",
+        "psr/clock": "^1.0",
         "psr/http-message": "^2.0",
         "psr/http-client": "^1.0",
         "psr/http-factory": "^1.0",
