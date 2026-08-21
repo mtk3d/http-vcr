@@ -85,6 +85,16 @@ final class CassetteFile
         return [];
     }
 
+    public function bodyRef(int $index): string
+    {
+        return $this->string($this->part($index, 'response'), 'bodyRef');
+    }
+
+    public function bodySha256(int $index): string
+    {
+        return $this->string($this->part($index, 'response'), 'bodySha256');
+    }
+
     public function bodyEncoding(int $index): string
     {
         return $this->string($this->part($index, 'response'), 'bodyEncoding');

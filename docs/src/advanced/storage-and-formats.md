@@ -30,11 +30,13 @@ The interface is small:
 
 ```php
 interface CassetteSerializerInterface {
-    public function serialize(Cassette $cassette): string;
-    public function deserialize(string $content): Cassette;
+    public function serialize(Cassette $cassette, ?SidecarBodies $bodies = null): string;
+    public function deserialize(string $content, ?SidecarBodies $bodies = null): Cassette;
     public function fileExtension(): string;   // 'json', 'yaml' — no leading dot
 }
 ```
+
+`$bodies` is where bodies past the [inline threshold](../reference/cassette-format.md#sidecar-files) go, since a body large enough to leave the file has to be written somewhere; passing `null` keeps every body inline whatever its size. The cassette manager supplies one, because it is what knows which cassette file is open and therefore what the sidecars beside it are called.
 
 The unit of exchange is a `Cassette` — a `schemaVersion` plus a list of `Interaction`s, with no I/O of its own — rather than a bare array of interactions. That's what lets a serializer carry the version in both directions: `schemaVersion` is a property of the file, not of any interaction, so a serializer that only ever saw a list would have to emit the version from a hardcoded constant and throw it away on read, leaving nowhere for the [migration path](#format-versioning) to live.
 

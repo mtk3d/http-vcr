@@ -172,7 +172,7 @@ final class JsonCassetteSerializerTest extends TestCase
     {
         $problem = CassetteFormatException::malformed('is not valid JSON (Syntax error)');
 
-        $located = CassetteFormatException::in('tests/Cassettes/shopify/get-product.json', $problem);
+        $located = $problem->in('tests/Cassettes/shopify/get-product.json');
 
         self::assertSame(
             'Cassette tests/Cassettes/shopify/get-product.json: is not valid JSON (Syntax error)',

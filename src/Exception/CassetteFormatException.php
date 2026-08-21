@@ -9,6 +9,9 @@ use RuntimeException;
 /**
  * A cassette's schemaVersion is unknown to this installation, or its contents can't be
  * deserialized.
+ *
+ * @phpstan-consistent-constructor subclasses keep the constructor, so attributing a problem
+ *                                to a file can rebuild whichever kind it was
  */
 class CassetteFormatException extends RuntimeException implements VcrException
 {
@@ -29,9 +32,12 @@ class CassetteFormatException extends RuntimeException implements VcrException
     /**
      * Names the file the problem is in. The serializer works on a string and has no idea
      * where it came from; whoever read that string does.
+     *
+     * Returns the same kind of exception it was called on, so attributing a problem to a
+     * file doesn't turn an integrity failure into a generic format one.
      */
-    public static function in(string $cassetteLocation, self $problem): self
+    public function in(string $cassetteLocation): static
     {
-        return new self(sprintf('Cassette %s: %s', $cassetteLocation, $problem->getMessage()), 0, $problem);
+        return new static(sprintf('Cassette %s: %s', $cassetteLocation, $this->getMessage()), 0, $this);
     }
 }

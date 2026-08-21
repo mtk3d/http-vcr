@@ -42,6 +42,7 @@ final class Config
         private readonly ?ResponseFactoryInterface $responseFactory,
         private readonly ?StreamFactoryInterface $streamFactory,
         private readonly ?ClockInterface $clock,
+        private readonly ?int $inlineBodyLimit,
     ) {
     }
 
@@ -56,6 +57,7 @@ final class Config
         ?ResponseFactoryInterface $responseFactory = null,
         ?StreamFactoryInterface $streamFactory = null,
         ?ClockInterface $clock = null,
+        ?int $inlineBodyLimit = null,
     ): self {
         return new self(
             $cassetteDirectory,
@@ -65,6 +67,7 @@ final class Config
             $responseFactory,
             $streamFactory,
             $clock,
+            $inlineBodyLimit,
         );
     }
 
@@ -122,6 +125,15 @@ final class Config
         return $this->defaultMatchers !== []
             ? $this->defaultMatchers
             : [new MethodMatcher(), new UriMatcher(), new QueryStringMatcher()];
+    }
+
+    /**
+     * Bodies past this many bytes are kept in a file of their own rather than inside the
+     * cassette. 1 MiB by default — big enough that ordinary API payloads never notice.
+     */
+    public function inlineBodyLimit(): int
+    {
+        return $this->inlineBodyLimit ?? 1_048_576;
     }
 
     public function clock(): ClockInterface

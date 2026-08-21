@@ -56,6 +56,7 @@ final class VcrClient implements ClientInterface
         array $matchers = [],
         private readonly bool $recordTransportErrors = false,
         private readonly bool $decodeCompressedResponse = true,
+        ?int $inlineBodyLimit = null,
         bool $repeatablePlayback = false,
         bool $locked = false,
         ?CassettePersisterInterface $persister = null,
@@ -85,6 +86,7 @@ final class VcrClient implements ClientInterface
             $mode,
             $repeatablePlayback,
             $locked,
+            $inlineBodyLimit ?? $config->inlineBodyLimit(),
         );
     }
 

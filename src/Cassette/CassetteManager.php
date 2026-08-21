@@ -11,6 +11,7 @@ use HttpVcr\Exception\RecordingNotAllowedException;
 use HttpVcr\Matching\CompositeMatcher;
 use HttpVcr\Matching\Mismatch;
 use HttpVcr\Persistence\CassettePersisterInterface;
+use HttpVcr\Persistence\SidecarBodies;
 use HttpVcr\Persistence\SupportsSessionLocking;
 use HttpVcr\RecordMode;
 use HttpVcr\Serializer\CassetteSerializerInterface;
@@ -53,6 +54,7 @@ final class CassetteManager
         private readonly RecordMode $mode = RecordMode::RecordIfAbsent,
         private readonly bool $repeatablePlayback = false,
         private readonly bool $locked = false,
+        private readonly int $inlineBodyLimit = 1_048_576,
     ) {
         $this->cassette = new Cassette();
     }
@@ -307,15 +309,30 @@ final class CassetteManager
         }
 
         try {
-            return $this->serializer->deserialize($content);
+            return $this->serializer->deserialize($content, $this->sidecars());
         } catch (CassetteFormatException $exception) {
-            throw CassetteFormatException::in($this->location(), $exception);
+            throw $exception->in($this->location());
         }
     }
 
     private function persist(): void
     {
-        $this->persister->write($this->key(), $this->serializer->serialize($this->cassette));
+        $sidecars = $this->sidecars();
+
+        $this->persister->write($this->key(), $this->serializer->serialize($this->cassette, $sidecars));
+
+        // Only now is the live set of references known: whatever this write didn't use is
+        // a file nothing points at any more.
+        $sidecars->collectGarbage();
+    }
+
+    /**
+     * A fresh store per pass, so the references it saw are exactly the ones this cassette
+     * currently holds.
+     */
+    private function sidecars(): SidecarBodies
+    {
+        return new SidecarBodies($this->persister, $this->name, $this->inlineBodyLimit);
     }
 
     private function takeLock(): void

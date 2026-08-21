@@ -2,7 +2,7 @@
 
 Record and replay HTTP interactions for fast, deterministic PHP tests — built as a decorator over PSR-18 (`Psr\Http\Client\ClientInterface`) instead of monkey-patching curl/streams.
 
-Status: **in progress** — the record/replay core is built (`VcrClient`, the default matchers, the JSON cassette format, filesystem storage, `VCR_ALLOW_RECORDING`/`VCR_ERASE_TAPE`); redaction, the client bridges, the PHPUnit attribute and the CLI are not. See [PLAN.md](./PLAN.md) for architecture, scope, and build phases, and [`docs/`](./docs/src/SUMMARY.md) for the user-facing documentation (mdBook: `mdbook build docs`), which describes the library as planned in full.
+Status: **in progress** — the record/replay core is built (`VcrClient`, the default matchers, the JSON cassette format, filesystem storage, `VCR_ALLOW_RECORDING`/`VCR_ERASE_TAPE`, binary and oversized bodies, response decompression, recorded transport failures); redaction, the client bridges, the PHPUnit attribute and the CLI are not. See [PLAN.md](./PLAN.md) for architecture, scope, and build phases, and [`docs/`](./docs/src/SUMMARY.md) for the user-facing documentation (mdBook: `mdbook build docs`), which describes the library as planned in full.
 
 ## Why not php-vcr / php-http/vcr-plugin?
 

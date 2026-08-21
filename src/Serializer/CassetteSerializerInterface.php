@@ -6,6 +6,7 @@ namespace HttpVcr\Serializer;
 
 use HttpVcr\Cassette\Cassette;
 use HttpVcr\Exception\CassetteFormatException;
+use HttpVcr\Persistence\SidecarBodies;
 
 /**
  * The on-disk format of a cassette.
@@ -17,12 +18,16 @@ use HttpVcr\Exception\CassetteFormatException;
  */
 interface CassetteSerializerInterface
 {
-    public function serialize(Cassette $cassette): string;
+    /**
+     * @param SidecarBodies|null $bodies where bodies too large to sit in the file itself go;
+     *                                   null keeps every body inline, whatever its size
+     */
+    public function serialize(Cassette $cassette, ?SidecarBodies $bodies = null): string;
 
     /**
      * @throws CassetteFormatException on an unreadable cassette or an unsupported schema
      */
-    public function deserialize(string $content): Cassette;
+    public function deserialize(string $content, ?SidecarBodies $bodies = null): Cassette;
 
     /**
      * The file extension for this format, without the dot — `json`, `yaml`. The persister

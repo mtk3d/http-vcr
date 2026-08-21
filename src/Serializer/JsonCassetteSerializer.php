@@ -14,6 +14,7 @@ use HttpVcr\Cassette\RecordedError;
 use HttpVcr\Cassette\RecordedRequest;
 use HttpVcr\Cassette\RecordedResponse;
 use HttpVcr\Exception\CassetteFormatException;
+use HttpVcr\Persistence\SidecarBodies;
 use JsonException;
 use Throwable;
 
@@ -32,7 +33,7 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
         return 'json';
     }
 
-    public function serialize(Cassette $cassette): string
+    public function serialize(Cassette $cassette, ?SidecarBodies $bodies = null): string
     {
         $interactions = [];
 
@@ -45,12 +46,12 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
                     'method' => $interaction->request->method,
                     'uri' => $interaction->request->uri,
                     'headers' => $interaction->request->headers,
-                    ...$this->bodyFields($interaction->request->body, $interaction->request->bodyEncoding),
+                    ...$this->bodyFields($interaction->request->body, $interaction->request->bodyEncoding, $bodies),
                 ],
                 'response' => $response === null ? null : [
                     'status' => $response->status,
                     'headers' => $response->headers,
-                    ...$this->bodyFields($response->body, $response->bodyEncoding),
+                    ...$this->bodyFields($response->body, $response->bodyEncoding, $bodies),
                 ],
                 'outcome' => $interaction->outcome->value,
                 'errorCategory' => $error?->category->value,
@@ -74,7 +75,7 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
         return $json . "\n";
     }
 
-    public function deserialize(string $content): Cassette
+    public function deserialize(string $content, ?SidecarBodies $bodies = null): Cassette
     {
         try {
             $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
@@ -105,13 +106,13 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
         $parsed = [];
 
         foreach ($interactions as $position => $interaction) {
-            $parsed[] = $this->interaction($interaction, $position + 1);
+            $parsed[] = $this->interaction($interaction, $position + 1, $bodies);
         }
 
         return new Cassette($parsed, $schemaVersion);
     }
 
-    private function interaction(mixed $data, int $position): Interaction
+    private function interaction(mixed $data, int $position, ?SidecarBodies $bodies): Interaction
     {
         if (!is_array($data)) {
             throw CassetteFormatException::malformed(sprintf('has a malformed interaction #%d', $position));
@@ -127,10 +128,10 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
             ));
         }
 
-        $request = $this->request($data['request'] ?? null, $position);
+        $request = $this->request($data['request'] ?? null, $position, $bodies);
         $outcomeOf = $outcome === Outcome::Error
             ? $this->error($data, $position)
-            : $this->response($data['response'] ?? null, $position);
+            : $this->response($data['response'] ?? null, $position, $bodies);
 
         $recordedAt = $this->recordedAt($data['recordedAt'] ?? null, $position);
         $locked = $this->bool($data['locked'] ?? false, 'locked', $position);
@@ -149,10 +150,20 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
      * cannot hold those bytes at all, so storing them verbatim isn't an option, and
      * refusing to record would be a strange way to react to a server sending Latin-1.
      *
-     * @return array{body: string, bodyEncoding?: string}
+     * A body past the inline threshold goes to a file of its own instead, leaving a
+     * reference and a checksum behind. There is nothing for base64 to solve there — a
+     * sidecar holds raw bytes — so the two never appear together.
+     *
+     * @return array{body?: string, bodyEncoding?: string, bodyRef?: string, bodySha256?: string}
      */
-    private function bodyFields(string $body, ?string $encoding): array
+    private function bodyFields(string $body, ?string $encoding, ?SidecarBodies $bodies): array
     {
+        $sidecar = $bodies?->offload($body);
+
+        if ($sidecar !== null) {
+            return ['bodyRef' => $sidecar['ref'], 'bodySha256' => $sidecar['sha256']];
+        }
+
         if ($encoding === null && preg_match('//u', $body) !== 1) {
             $encoding = 'base64';
         }
@@ -167,8 +178,30 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
      *
      * @return array{string, string|null}
      */
-    private function storedBody(array $data, int $position): array
+    private function storedBody(array $data, int $position, ?SidecarBodies $bodies): array
     {
+        $ref = $data['bodyRef'] ?? null;
+
+        if (is_string($ref)) {
+            if ($bodies === null) {
+                throw CassetteFormatException::malformed(sprintf(
+                    'keeps the body of interaction #%d in a separate file, which this reader has no access to',
+                    $position,
+                ));
+            }
+
+            $sha256 = $data['bodySha256'] ?? null;
+
+            if (!is_string($sha256)) {
+                throw CassetteFormatException::malformed(sprintf(
+                    'has a bodyRef without a bodySha256 in interaction #%d',
+                    $position,
+                ));
+            }
+
+            return [$bodies->fetch($ref, $sha256), null];
+        }
+
         $body = $this->body($data['body'] ?? '', $position);
         $encoding = $data['bodyEncoding'] ?? null;
 
@@ -219,7 +252,7 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
         );
     }
 
-    private function request(mixed $data, int $position): RecordedRequest
+    private function request(mixed $data, int $position, ?SidecarBodies $bodies): RecordedRequest
     {
         if (!is_array($data) || !is_string($data['method'] ?? null) || !is_string($data['uri'] ?? null)) {
             throw CassetteFormatException::malformed(sprintf(
@@ -228,7 +261,7 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
             ));
         }
 
-        [$body, $encoding] = $this->storedBody($data, $position);
+        [$body, $encoding] = $this->storedBody($data, $position, $bodies);
 
         return new RecordedRequest(
             $data['method'],
@@ -239,7 +272,7 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
         );
     }
 
-    private function response(mixed $data, int $position): RecordedResponse
+    private function response(mixed $data, int $position, ?SidecarBodies $bodies): RecordedResponse
     {
         if (!is_array($data) || !is_int($data['status'] ?? null)) {
             throw CassetteFormatException::malformed(sprintf(
@@ -248,7 +281,7 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
             ));
         }
 
-        [$body, $encoding] = $this->storedBody($data, $position);
+        [$body, $encoding] = $this->storedBody($data, $position, $bodies);
 
         return new RecordedResponse(
             $data['status'],
