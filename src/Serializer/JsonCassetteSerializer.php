@@ -45,12 +45,12 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
                     'method' => $interaction->request->method,
                     'uri' => $interaction->request->uri,
                     'headers' => $interaction->request->headers,
-                    'body' => $interaction->request->body,
+                    ...$this->bodyFields($interaction->request->body, $interaction->request->bodyEncoding),
                 ],
                 'response' => $response === null ? null : [
                     'status' => $response->status,
                     'headers' => $response->headers,
-                    'body' => $response->body,
+                    ...$this->bodyFields($response->body, $response->bodyEncoding),
                 ],
                 'outcome' => $interaction->outcome->value,
                 'errorCategory' => $error?->category->value,
@@ -141,6 +141,61 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
             : Interaction::recorded($request, $outcomeOf, $recordedAt, $locked, $repeatable);
     }
 
+    /**
+     * JSON carries text, and a body is not always text. Binary content — anything whose
+     * Content-Type isn't textual — is stored base64-encoded and marked as such.
+     *
+     * Content that claims to be text but isn't valid UTF-8 gets the same treatment: JSON
+     * cannot hold those bytes at all, so storing them verbatim isn't an option, and
+     * refusing to record would be a strange way to react to a server sending Latin-1.
+     *
+     * @return array{body: string, bodyEncoding?: string}
+     */
+    private function bodyFields(string $body, ?string $encoding): array
+    {
+        if ($encoding === null && preg_match('//u', $body) !== 1) {
+            $encoding = 'base64';
+        }
+
+        return $encoding === null
+            ? ['body' => $body]
+            : ['body' => base64_encode($body), 'bodyEncoding' => $encoding];
+    }
+
+    /**
+     * @param array<mixed> $data
+     *
+     * @return array{string, string|null}
+     */
+    private function storedBody(array $data, int $position): array
+    {
+        $body = $this->body($data['body'] ?? '', $position);
+        $encoding = $data['bodyEncoding'] ?? null;
+
+        if ($encoding === null) {
+            return [$body, null];
+        }
+
+        if ($encoding !== 'base64') {
+            throw CassetteFormatException::malformed(sprintf(
+                'has an unknown bodyEncoding "%s" in interaction #%d',
+                is_string($encoding) ? $encoding : gettype($encoding),
+                $position,
+            ));
+        }
+
+        $decoded = base64_decode($body, true);
+
+        if ($decoded === false) {
+            throw CassetteFormatException::malformed(sprintf(
+                'has a body that is not valid base64 in interaction #%d',
+                $position,
+            ));
+        }
+
+        return [$decoded, 'base64'];
+    }
+
     private function error(mixed $data, int $position): RecordedError
     {
         if (!is_array($data)) {
@@ -173,11 +228,14 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
             ));
         }
 
+        [$body, $encoding] = $this->storedBody($data, $position);
+
         return new RecordedRequest(
             $data['method'],
             $data['uri'],
             $this->headers($data['headers'] ?? [], $position),
-            $this->body($data['body'] ?? '', $position),
+            $body,
+            $encoding,
         );
     }
 
@@ -190,10 +248,13 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
             ));
         }
 
+        [$body, $encoding] = $this->storedBody($data, $position);
+
         return new RecordedResponse(
             $data['status'],
             $this->headers($data['headers'] ?? [], $position),
-            $this->body($data['body'] ?? '', $position),
+            $body,
+            $encoding,
         );
     }
 

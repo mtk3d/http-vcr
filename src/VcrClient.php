@@ -200,6 +200,7 @@ final class VcrClient implements ClientInterface
             $response->getStatusCode(),
             $this->headers($response),
             $body,
+            $this->encoding($response, $body),
         ));
 
         return $response;
@@ -247,7 +248,32 @@ final class VcrClient implements ClientInterface
             (string) $request->getUri(),
             $this->headers($request),
             $body,
+            $this->encoding($request, $body),
         )];
+    }
+
+    /**
+     * How this body has to be stored: as text, or base64-encoded because it is bytes.
+     *
+     * Decided from Content-Type, with the actual content as the tie-breaker — a body that
+     * claims to be text but isn't valid UTF-8 is bytes whatever the header says. A hook can
+     * override the result before the interaction is written.
+     */
+    private function encoding(MessageInterface $message, string $body): ?string
+    {
+        if ($body === '') {
+            return null;
+        }
+
+        $type = strtolower(trim(explode(';', $message->getHeaderLine('Content-Type'))[0]));
+
+        $textual = $type === ''
+            || str_starts_with($type, 'text/')
+            || $type === 'application/json'
+            || $type === 'application/x-www-form-urlencoded'
+            || (str_starts_with($type, 'application/') && str_ends_with($type, '+json'));
+
+        return $textual && preg_match('//u', $body) === 1 ? null : 'base64';
     }
 
     /**

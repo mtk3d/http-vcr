@@ -62,6 +62,29 @@ final class CassetteFile
         return array_map(fn (int $index): string => $this->responseBody($index), range(0, $this->count() - 1));
     }
 
+    public function bodyEncoding(int $index): string
+    {
+        return $this->string($this->part($index, 'response'), 'bodyEncoding');
+    }
+
+    public function requestBodyEncoding(int $index): string
+    {
+        return $this->string($this->part($index, 'request'), 'bodyEncoding');
+    }
+
+    /**
+     * The body exactly as the file holds it — base64 and all.
+     */
+    public function rawResponseBody(int $index): string
+    {
+        return $this->string($this->part($index, 'response'), 'body');
+    }
+
+    public function rawRequestBody(int $index): string
+    {
+        return $this->string($this->part($index, 'request'), 'body');
+    }
+
     public function outcome(int $index): string
     {
         $outcome = $this->interactions()[$index]['outcome'] ?? null;

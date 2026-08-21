@@ -10,18 +10,21 @@ namespace HttpVcr\Cassette;
 final readonly class RecordedResponse
 {
     /**
-     * @param array<string, list<string>> $headers header names as received, values as a list
+     * @param array<string, list<string>> $headers      header names as received, values as a list
+     * @param string|null                 $bodyEncoding 'base64' when the body is binary, null
+     *                                                  when it is text
      */
     public function __construct(
         public int $status,
         public array $headers = [],
         public string $body = '',
+        public ?string $bodyEncoding = null,
     ) {
     }
 
     public function withStatus(int $status): self
     {
-        return new self($status, $this->headers, $this->body);
+        return new self($status, $this->headers, $this->body, $this->bodyEncoding);
     }
 
     /**
@@ -29,7 +32,7 @@ final readonly class RecordedResponse
      */
     public function withHeaders(array $headers): self
     {
-        return new self($this->status, $headers, $this->body);
+        return new self($this->status, $headers, $this->body, $this->bodyEncoding);
     }
 
     /**
@@ -45,9 +48,9 @@ final readonly class RecordedResponse
         return $this->withHeaders(Headers::without($this->headers, $name));
     }
 
-    public function withBody(string $body): self
+    public function withBody(string $body, ?string $encoding = null): self
     {
-        return new self($this->status, $this->headers, $body);
+        return new self($this->status, $this->headers, $body, $encoding);
     }
 
     /**
