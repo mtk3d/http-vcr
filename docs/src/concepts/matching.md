@@ -33,7 +33,7 @@ Two reasons that matters if you write your own: a snapshot's body is a plain str
 
 ## Built-in matchers
 
-- **`MethodMatcher`** — HTTP method, exact match.
+- **`MethodMatcher`** — HTTP method, compared case-insensitively.
 - **`UriMatcher`** — scheme + host + path, normalized (lowercase host, default ports stripped). The query string is handled separately.
 - **`HostMatcher`** — just the host, for cases where matching the full path is too strict.
 - **`QueryStringMatcher`** — query params as an unordered set (`?a=1&b=2` equals `?b=2&a=1`), but repeated keys keep their order (`?tag=a&tag=b` is treated as a list).
@@ -43,7 +43,7 @@ Two reasons that matters if you write your own: a snapshot's body is a plain str
   public function __construct(array $headers = [], bool $exact = false) {}
   ```
 
-  `$headers` lists the header names to check; empty means every header on the *recorded* request. `exact: true` opts into a strict 1:1 comparison of the whole header set, for a test that specifically cares about it.
+  `$headers` lists the header names to check; empty means every header on the *recorded* request. `exact: true` additionally requires both sides to carry the same set of them, so a header the incoming request added is a mismatch rather than an extra — narrowed to `$headers` when one is given, and the whole header set when it isn't.
 - **`BodyMatcher`** — raw body, exact match.
 - **`BodyJsonMatcher`** — semantic JSON match: `{"a":1,"b":2}` matches `{"b":2,"a":1}`. Scalar types are compared strictly and array order is significant. Falls back to a raw comparison when either body isn't valid JSON.
 
