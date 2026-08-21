@@ -7,3 +7,4 @@
 
 # Cassette session lock files (never committed — see docs/src/reference/cassette-format.md)
 *.cassette-lock
+/composer.lock
