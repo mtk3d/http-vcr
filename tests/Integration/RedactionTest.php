@@ -242,6 +242,24 @@ final class RedactionTest extends TestCase
         $replayed->sendRequest($this->bearing('sk_live_SOMETHING_ELSE'));
     }
 
+    /**
+     * For a secret shared by every cassette in a project, declared once instead of in every
+     * test — and registered before anything the instance adds, so it runs first.
+     */
+    public function testAProjectWideRuleAppliesWithoutTouchingTheClient(): void
+    {
+        VcrClient::configure(redact: ['<COMPANY_PROXY_TOKEN>' => static fn (): string => 'sk_live_4eC39H']);
+
+        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'));
+        $vcr->sendRequest(
+            (new Request('GET', 'https://api.example.com/orders'))->withHeader('X-Proxy', 'sk_live_4eC39H'),
+        );
+        $vcr->close();
+
+        self::assertStringNotContainsString('sk_live_4eC39H', $this->cassettes->read('payments.json'));
+        self::assertStringContainsString('<COMPANY_PROXY_TOKEN>', $this->cassettes->read('payments.json'));
+    }
+
     public function testRedactionRegisteredAfterTheFirstRequestIsRefused(): void
     {
         $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'));

@@ -32,7 +32,8 @@ final class Config
     private static bool $frozen = false;
 
     /**
-     * @param list<RequestMatcherInterface> $defaultMatchers
+     * @param list<RequestMatcherInterface>    $defaultMatchers
+     * @param array<string, callable(): mixed> $redact
      */
     private function __construct(
         private readonly ?string $cassetteDirectory,
@@ -44,11 +45,15 @@ final class Config
         private readonly ?ClockInterface $clock,
         private readonly ?int $inlineBodyLimit,
         private readonly ?bool $scanRecordingsForSecrets,
+        private readonly array $redact,
     ) {
     }
 
     /**
-     * @param list<RequestMatcherInterface> $defaultMatchers empty means Method + Uri + QueryString
+     * @param list<RequestMatcherInterface>    $defaultMatchers empty means Method + Uri + QueryString
+     * @param array<string, callable(): mixed> $redact          placeholder to value provider, for a
+     *                                                          secret every cassette in the project
+     *                                                          would otherwise have to redact itself
      */
     public static function create(
         ?string $cassetteDirectory = null,
@@ -60,6 +65,7 @@ final class Config
         ?ClockInterface $clock = null,
         ?int $inlineBodyLimit = null,
         ?bool $scanRecordingsForSecrets = null,
+        array $redact = [],
     ): self {
         return new self(
             $cassetteDirectory,
@@ -71,6 +77,7 @@ final class Config
             $clock,
             $inlineBodyLimit,
             $scanRecordingsForSecrets,
+            $redact,
         );
     }
 
@@ -137,6 +144,17 @@ final class Config
     public function inlineBodyLimit(): int
     {
         return $this->inlineBodyLimit ?? 1_048_576;
+    }
+
+    /**
+     * Redaction rules every cassette in the project gets, registered before anything an
+     * individual VcrClient adds — so a project-wide rule always runs first.
+     *
+     * @return array<string, callable(): mixed>
+     */
+    public function redactions(): array
+    {
+        return $this->redact;
     }
 
     /**

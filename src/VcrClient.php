@@ -90,6 +90,10 @@ final class VcrClient implements ClientInterface
             $inlineBodyLimit ?? $config->inlineBodyLimit(),
             scanner: $config->scanRecordingsForSecrets() ? new SecretScanner() : null,
         );
+
+        foreach ($config->redactions() as $placeholder => $value) {
+            $this->cassette->redaction->redact($placeholder, $value);
+        }
     }
 
     /**
@@ -98,7 +102,8 @@ final class VcrClient implements ClientInterface
      * throws, so that two tests in one process can't see different defaults depending on
      * the order they ran in.
      *
-     * @param list<RequestMatcherInterface> $defaultMatchers
+     * @param list<RequestMatcherInterface>    $defaultMatchers
+     * @param array<string, callable(): mixed> $redact project-wide redaction rules
      */
     public static function configure(
         ?string $cassetteDirectory = null,
@@ -109,6 +114,7 @@ final class VcrClient implements ClientInterface
         ?StreamFactoryInterface $streamFactory = null,
         ?ClockInterface $clock = null,
         ?bool $scanRecordingsForSecrets = null,
+        array $redact = [],
     ): void {
         Config::replaceGlobal(Config::create(
             $cassetteDirectory,
@@ -119,6 +125,7 @@ final class VcrClient implements ClientInterface
             $streamFactory,
             $clock,
             scanRecordingsForSecrets: $scanRecordingsForSecrets,
+            redact: $redact,
         ));
     }
 
