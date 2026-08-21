@@ -2,16 +2,19 @@
 
 Record and replay HTTP interactions in tests, as a decorator over a PSR-18 client.
 
-**State: M1 and M1.5 built** — `VcrClient` records and replays through the PSR-18 decorator,
-with the default matcher set, the JSON cassette format, filesystem storage with session
-locking, CI-aware recording permission, `VCR_ERASE_TAPE`, and the edge cases M1.5 covers:
-non-seekable streams, binary bodies, sidecar files, response decompression and recorded
-transport failures. `bin/` does not exist yet (M5). Next is M2 (matching and redaction).
+**State: M1, M1.5 and M2 built** — `VcrClient` records and replays through the PSR-18
+decorator, with the full matcher set (`Method`, `Uri`, `Host`, `QueryString`, `Headers`,
+`Body`, `BodyJson`), the JSON cassette format, filesystem storage with session locking,
+CI-aware recording permission, `VCR_ERASE_TAPE`, the edge cases M1.5 covers (non-seekable
+streams, binary bodies, sidecar files, response decompression, recorded transport
+failures), and M2's two differentiators: the `beforeRecord`/`beforePlayback` hook pipeline
+with redaction built on it, and the secret scan that warns after a recording session.
+`bin/` does not exist yet (M5). Next is M3 (advanced modes).
 
 Build order is `PLAN.md` §6 — M1 → M1.5 → M2 → M3 → M4 → M5 — and it is a dependency
 order, not a wish list: don't implement a later phase's feature while an earlier one is
 unbuilt. Decisions taken while implementing a phase go to `PLAN.md` §7 like any other
-(18–25 came out of M1, 26–31 out of M1.5).
+(18–25 came out of M1, 26–31 out of M1.5, 33–40 out of M2).
 
 ## Language
 
