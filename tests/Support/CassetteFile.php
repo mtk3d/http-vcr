@@ -67,7 +67,23 @@ final class CassetteFile
      */
     public function responseHeader(int $index, string $name): array
     {
-        $headers = $this->part($index, 'response')['headers'] ?? [];
+        return $this->header($index, 'response', $name);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function requestHeader(int $index, string $name): array
+    {
+        return $this->header($index, 'request', $name);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function header(int $index, string $part, string $name): array
+    {
+        $headers = $this->part($index, $part)['headers'] ?? [];
 
         if (!is_array($headers)) {
             return [];
