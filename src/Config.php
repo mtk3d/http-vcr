@@ -12,6 +12,8 @@ use HttpVcr\Matching\RequestMatcherInterface;
 use HttpVcr\Matching\UriMatcher;
 use HttpVcr\Persistence\CassettePersisterInterface;
 use HttpVcr\Persistence\FilesystemCassettePersister;
+use HttpVcr\Scope\CassetteScopeResolverInterface;
+use HttpVcr\Scope\NullScopeResolver;
 use HttpVcr\Serializer\CassetteSerializerInterface;
 use HttpVcr\Serializer\JsonCassetteSerializer;
 use LogicException;
@@ -43,6 +45,7 @@ final class Config
         private readonly array $defaultMatchers,
         private readonly ?StrictMode $strictMode,
         private readonly ?DateInterval $staleAfter,
+        private readonly ?CassetteScopeResolverInterface $scopeResolver,
         private readonly ?ResponseFactoryInterface $responseFactory,
         private readonly ?StreamFactoryInterface $streamFactory,
         private readonly ?ClockInterface $clock,
@@ -65,6 +68,7 @@ final class Config
         array $defaultMatchers = [],
         ?StrictMode $strictMode = null,
         ?DateInterval $staleAfter = null,
+        ?CassetteScopeResolverInterface $scopeResolver = null,
         ?ResponseFactoryInterface $responseFactory = null,
         ?StreamFactoryInterface $streamFactory = null,
         ?ClockInterface $clock = null,
@@ -79,6 +83,7 @@ final class Config
             $defaultMatchers,
             $strictMode,
             $staleAfter,
+            $scopeResolver,
             $responseFactory,
             $streamFactory,
             $clock,
@@ -162,6 +167,15 @@ final class Config
     public function staleAfter(): ?DateInterval
     {
         return $this->staleAfter;
+    }
+
+    /**
+     * How a cassette name is split across files, for every cassette in the project (§3.8).
+     * No splitting by default.
+     */
+    public function scopeResolver(): CassetteScopeResolverInterface
+    {
+        return $this->scopeResolver ?? new NullScopeResolver();
     }
 
     /**

@@ -29,6 +29,29 @@ final class RecordingNotAllowedException extends RuntimeException implements Vcr
         ));
     }
 
+    /**
+     * The scoped twin of forRequest(): the file for the computed scope is missing and this
+     * run may not record it. Still this exception rather than "no cassette for that scope",
+     * because the same run with recording allowed would have recorded the new scope and
+     * passed (§3.8).
+     *
+     * @param list<string> $existingScopes
+     */
+    public static function forScope(
+        string $cassetteName,
+        string $scope,
+        array $existingScopes,
+        string $cause,
+    ): self {
+        return new self(sprintf(
+            'Cannot record cassette "%s" (scope "%s"): recording is disabled by %s. %s',
+            $cassetteName,
+            $scope,
+            $cause,
+            CassetteNotFoundException::describeScopes($existingScopes),
+        ));
+    }
+
     public static function forRequest(RecordedRequest $incoming, string $cassetteLocation, string $cause): self
     {
         return new self(sprintf(

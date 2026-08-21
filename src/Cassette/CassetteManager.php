@@ -25,19 +25,21 @@ use HttpVcr\StrictMode;
 use Psr\Clock\ClockInterface;
 
 /**
- * One cassette session: opening the file, deciding whether this run may record into it,
- * handing out matching interactions and appending new ones (§3.2).
+ * One cassette file for the length of a session: opening it, deciding whether this run may
+ * record into it, handing out matching interactions and appending new ones (§3.2).
  *
- * All the state that outlives a single request lives here rather than on VcrClient —
- * which interactions have been played, and the file lock.
+ * One *file*, not one cassette name — with a scope resolver in play a single name spans
+ * several of these, one per scope, and they are independent of each other down to the lock
+ * and the strict-mode check (§3.8). {@see CassetteSession} is what routes between them.
+ *
+ * All the state that outlives a single request lives here rather than on VcrClient: which
+ * interactions have been played, and the file lock.
  */
 final class CassetteManager
 {
     private const LOCK_EXTENSION = 'cassette-lock';
 
     private bool $opened = false;
-
-    private bool $started = false;
 
     private Cassette $cassette;
 
@@ -72,6 +74,7 @@ final class CassetteManager
 
     public function __construct(
         private readonly string $name,
+        private readonly ?string $scope,
         private readonly CassettePersisterInterface $persister,
         private readonly CassetteSerializerInterface $serializer,
         private readonly CompositeMatcher $matcher,
@@ -89,29 +92,50 @@ final class CassetteManager
         private readonly ?Closure $warn = null,
     ) {
         $this->cassette = new Cassette();
-
-        // Registered before the session exists, so redaction is always the first hook in
-        // either direction: a project-wide rule runs ahead of anything added by hand.
-        $this->hooks->addBeforeRecord($this->redaction->beforeRecord(...));
-        $this->hooks->addBeforePlayback($this->redaction->beforePlayback(...));
     }
 
     /**
-     * Marks the session as under way: from here on it is too late to register a hook or
-     * anything else that would have changed an interaction already on its way past.
-     *
-     * On the session rather than on VcrClient, because the Guzzle bridge builds a fresh
-     * client per request out of withInner() and a flag on the instance would never see a
-     * second request (§3.14).
+     * The cassette name as the test declared it, without any scope — what VCR_ERASE_TAPE
+     * matches on and what an error message calls the cassette (§3.1).
      */
-    public function begin(): void
+    public function name(): string
     {
-        $this->started = true;
+        return $this->name;
     }
 
-    public function hasStarted(): bool
+    /**
+     * The scope this file was opened for, null when the cassette isn't scoped (§3.8).
+     */
+    public function scope(): ?string
     {
-        return $this->started;
+        return $this->scope;
+    }
+
+    public function mode(): RecordMode
+    {
+        return $this->mode;
+    }
+
+    /**
+     * The scopes this cassette name already has files for, in alphabetical order.
+     *
+     * The one piece of information worth having when a scope turns up missing: "2024-01 is
+     * on disk, the code is asking for 2024-04" is the whole diagnosis (§3.8).
+     *
+     * @return list<string>
+     */
+    public function existingScopes(): array
+    {
+        $prefix = $this->name . '.';
+        $scopes = [];
+
+        foreach ($this->persister->list($this->serializer->fileExtension(), $prefix) as $found) {
+            $scopes[] = substr($found, strlen($prefix));
+        }
+
+        sort($scopes);
+
+        return $scopes;
     }
 
     /**
@@ -290,15 +314,21 @@ final class CassetteManager
      */
     public function close(): void
     {
+        $this->prepare();
+        $this->release();
+        $this->verify();
+    }
+
+    /**
+     * Reads the file if nothing else has, so that a strict check about to run has something
+     * to judge — a session that made no request at all still promised something about what
+     * is on disk. Before the lock goes back, since opening may need it.
+     */
+    public function prepare(): void
+    {
         if ($this->strictMode !== StrictMode::None) {
-            // A session that made no request at all has still promised something about the
-            // cassette on disk, so there is something to read before the check can mean
-            // anything — and it has to happen before the lock goes back.
             $this->open();
         }
-
-        $this->release();
-        $this->verifyStrictMode();
     }
 
     /**
@@ -318,7 +348,7 @@ final class CassetteManager
     /**
      * @throws StrictModeViolationException
      */
-    private function verifyStrictMode(): void
+    public function verify(): void
     {
         if ($this->strictMode === StrictMode::None || $this->verified) {
             return;
@@ -632,7 +662,7 @@ final class CassetteManager
      */
     private function sidecars(): SidecarBodies
     {
-        return new SidecarBodies($this->persister, $this->name, $this->inlineBodyLimit);
+        return new SidecarBodies($this->persister, $this->fileName(), $this->inlineBodyLimit);
     }
 
     private function takeLock(): void
@@ -653,11 +683,20 @@ final class CassetteManager
 
     private function key(): string
     {
-        return $this->name . '.' . $this->serializer->fileExtension();
+        return $this->fileName() . '.' . $this->serializer->fileExtension();
     }
 
     private function lockKey(): string
     {
-        return $this->name . '.' . self::LOCK_EXTENSION;
+        return $this->fileName() . '.' . self::LOCK_EXTENSION;
+    }
+
+    /**
+     * The cassette name with the scope appended, without a format extension — the file this
+     * session actually works on, and the namespace its sidecars belong to.
+     */
+    private function fileName(): string
+    {
+        return $this->scope === null ? $this->name : $this->name . '.' . $this->scope;
     }
 }

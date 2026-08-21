@@ -696,6 +696,7 @@ http-vcr/
 │   │   ├── NoMatchingInteractionException.php
 │   │   ├── CassetteNotFoundException.php
 │   │   ├── StrictModeViolationException.php
+│   │   ├── StaleCassetteException.php  (przekroczony `staleAfter` przy `VCR_ENFORCE_STALE_CHECK`, §3.7 — decyzja 43)
 │   │   ├── MissingEnvironmentVariableException.php
 │   ├── MissingDependencyException.php  (brak implementacji PSR-17 / klienta wewnętrznego, §3.14)
 │   │   ├── RecordingNotAllowedException.php
@@ -705,7 +706,9 @@ http-vcr/
 │   │   └── VcrRequestException.php    (implementuje też Psr\Http\Client\RequestExceptionInterface, §3.1)
 │   ├── Cassette/
 │   │   ├── Cassette.php             (dane: `schemaVersion` + lista `Interaction`, bez I/O — czysty snapshot zserializowanej zawartości)
-│   │   ├── CassetteManager.php      (zachowanie: otwarcie/zamknięcie sesji, `flock` na `.http-vcr/{kaseta}.cassette-lock` przez całą sesję nagrywania, read-modify-write, atomowy `rename()`, sprzątanie osieroconych sidecarów — cała logika opisana w §3.2 i przywoływana w §2/§3.1 pod tą nazwą)
+│   │   ├── CassetteManager.php      (jeden plik kasety: otwarcie/zamknięcie, `flock` na `.http-vcr/{kaseta}.cassette-lock` przez całą sesję nagrywania, read-modify-write, atomowy `rename()`, sprzątanie osieroconych sidecarów — cała logika opisana w §3.2 i przywoływana w §2/§3.1 pod tą nazwą)
+│   │   ├── CassetteSession.php      (nazwa kasety w skali testu: hooki, redakcja, resolver scope'ów, routing do plików — §3.8, decyzja 44)
+│   │   ├── Staleness.php            (czysta funkcja „które interakcje przekroczyły `staleAfter`", wspólna z komendą `stale` — §3.7, decyzja 43)
 │   │   ├── Interaction.php          (readonly; publiczna powierzchnia z with*() wyliczona w §3.5)
 │   │   ├── RecordedRequest.php      (readonly snapshot: method/uri/headers/body — typ argumentów matcherów, §3.2/§3.3)
 │   │   ├── RecordedResponse.php     (readonly snapshot: status/headers/body)
@@ -869,6 +872,10 @@ Uwaga: pierwsza wersja szkieletu i kilku rozdziałów (`introduction`, `getting-
     - **Nowy typ, mimo że hierarchia z decyzji 23 jest zamknięta.** Zamknięta znaczy „nie dokładamy typu dla pomyłki w wywołaniu biblioteki", a nie „nigdy nie przybędzie przypadku". `VCR_ENFORCE_STALE_CHECK` to sytuacja, w której test **nie dostaje odpowiedzi** i o którą trzeba zapytać osobno („czy to przeterminowana kaseta, czy realny brak dopasowania"), więc mieści się w regule „wyjątek nazywa powód". Odrzucone: **ponowne użycie `StrictModeViolationException`** (dwie zupełnie różne przyczyny pod jedną nazwą, a `strictMode` i `staleAfter` są ortogonalne) i **`RuntimeException` bez `VcrException`** (kod łapiący ogólnie po `VcrException` przestałby łapać wszystko, co biblioteka rzuca celowo).
     - **Sprawdzenie przy otwarciu sesji, nie przy zamknięciu.** Odwrotnie niż `StrictMode` (decyzja 42), który z definicji da się ocenić dopiero po fakcie. Przebieg, który i tak ma zostać zatrzymany, zatrzymywany jest zanim kod pod testem przejdzie pół drogi na odtworzonych danych — a komunikat i tak nie zmieniłby się od tego, co zdarzy się później.
     - **`Staleness` osobno od `CassetteManager`.** Poza plikami z §5, precedens ten sam co w decyzji 36: liczenie przeterminowania to czysta funkcja (kaseta + próg + zegar → lista pozycji), a jej drugim konsumentem jest komenda `stale` (M5), która czyta kasetę z dysku i nie ma żadnej sesji. Trzymanie tego w managerze oznaczałoby albo drugą kopię reguły „`now() - recordedAt > interval`" w CLI, albo otwieranie sesji tylko po to, żeby o nią zapytać.
+
+44. **Scoping rozdziela sesję na dwie klasy: `CassetteSession` (nazwa kasety w skali testu) i `CassetteManager` (jeden plik)** (§3.8/§3.6/§5). §5 opisuje `CassetteManager` jako „otwarcie/zamknięcie sesji, `flock`, read-modify-write" — czyli obsługę **pliku**. Scoping sprawia, że jedna nazwa kasety to N plików, otwieranych leniwie w miarę tego, jakie scope'y wyliczą się z żądań, i §3.6 wymaga wprost, żeby `AllPlayed`/`InOrder` liczyły się **per plik**, a nie na wspólnej puli. Dlatego doszedł `Cassette/CassetteSession.php`: trzyma to, co należy do testu (rejestr hooków, reguły redakcji, flaga „pierwsze żądanie poszło", resolver scope'ów) i routuje żądanie do właściwego `CassetteManager`-a; menedżer zyskał tylko pole `scope` i buduje z niego nazwę pliku, blokady i przestrzeń sidecarów. Konsekwencje, wszystkie zamierzone: dwa scope'y tej samej kasety nie widzą swoich interakcji ani swoich blokad, a `close()` **najpierw oddaje wszystkie blokady, a dopiero potem weryfikuje** — inaczej pierwszy scope, który nie spełnił asercji, zostawiłby blokadę drugiego wiszącą. Odrzucone: **mapa stanu per scope wewnątrz `CassetteManager`** (każde pole — `played`, `baseline`, `holdsLock`, `recordedHere` — stałoby się tablicą kluczowaną scope'em, czyli ręczną emulacją obiektu) oraz **osobna instancja `VcrClient` per scope** (scope wylicza się z żądania, a klienta konstruuje się przed nim).
+    - **Sanitacja scope'u siedzi w `CassetteSession`, nie w persisterze.** Persister sanituje nazwę kasety **po segmentach** (`/` jest w niej znaczący, §3.8), a scope jest z definicji jednym segmentem — gdyby doklejać go do nazwy przed sanitacją, `/` z `CallbackScopeResolver` stałby się podkatalogiem. Scope jest więc sanitowany przed złożeniem nazwy pliku, tą samą białą listą i z tym samym odrzuceniem segmentu pustego/kropkowego (`InvalidArgumentException`, klasa z decyzji 23).
+    - **Wyliczenie istniejących scope'ów przez `list()` po prefiksie `nazwa.`**, a nie przez osobny indeks. Plik bez scope'u (`nazwa.json`) nie ma kropki po nazwie, więc nie wpada do listy sam z siebie, a sąsiad o dłuższej nazwie (`nazwa-inna.json`) nie zaczyna się od prefiksu — dwa przypadki, przez które naiwne `str_starts_with($name, $base)` byłoby błędne.
 
 ## 8. Pomysły poza zakresem M1–M5 (nie planowane teraz, żeby nie zgubić)
 

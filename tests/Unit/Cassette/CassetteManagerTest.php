@@ -259,6 +259,7 @@ final class CassetteManagerTest extends TestCase
     ): CassetteManager {
         return new CassetteManager(
             'session',
+            null,
             $persister,
             new JsonCassetteSerializer(),
             CompositeMatcher::of([new MethodMatcher(), new UriMatcher(), new QueryStringMatcher()]),

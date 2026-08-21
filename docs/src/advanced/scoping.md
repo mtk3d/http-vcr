@@ -22,6 +22,8 @@ interface CassetteScopeResolverInterface {
 
 - **`CallbackScopeResolver`** — arbitrary logic, e.g. reading the version from a header instead of the URL (`Accept: application/vnd.api+json;version=3`).
 
+A resolver applies per request, not per cassette: a URI the pattern doesn't match is unscoped and belongs in the cassette's own file. That's what makes a resolver safe on a cassette that also carries traffic the versioning doesn't apply to — an OAuth token endpoint outside the versioned path, say.
+
 ## What happens on a version bump
 
 A cassette named `ProductsTest__getProduct` at `scope = 2024-01` is stored as `ProductsTest__getProduct.2024-01.json`. Once the application starts calling `2024-04`, `VcrClient` computes the new scope and doesn't find a file for it. What happens then depends on *why* it couldn't just record one — the exception names the actual cause, following the same rule as [everywhere else](../reference/exceptions.md#which-one-you-get-when-nothing-came-back):
@@ -38,8 +40,8 @@ record it under RecordIfAbsent, or add the missing scope by hand.
 
 ```
 Cannot record cassette "ProductsTest__getProduct" (scope "2024-04"):
-recording disabled by VCR_ALLOW_RECORDING=0, inferred from CI=true.
-Existing scopes: 2024-01.
+recording is disabled by CI detection (CI=true is set, VCR_ALLOW_RECORDING
+is not). Existing scopes: 2024-01.
 ```
 
 **`RecordIfAbsent` / `ExtendCassette` with recording allowed** — no exception at all: a new file is recorded for the new scope, exactly like the first recording of any cassette.

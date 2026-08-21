@@ -6,6 +6,7 @@ namespace HttpVcr;
 
 use DateInterval;
 use HttpVcr\Cassette\CassetteManager;
+use HttpVcr\Cassette\CassetteSession;
 use HttpVcr\Cassette\ErrorCategory;
 use HttpVcr\Cassette\Interaction;
 use HttpVcr\Cassette\RecordedError;
@@ -19,6 +20,7 @@ use HttpVcr\Exception\VcrRequestException;
 use HttpVcr\Matching\CompositeMatcher;
 use HttpVcr\Matching\RequestMatcherInterface;
 use HttpVcr\Persistence\CassettePersisterInterface;
+use HttpVcr\Scope\CassetteScopeResolverInterface;
 use HttpVcr\Serializer\CassetteSerializerInterface;
 use LogicException;
 use Psr\Clock\ClockInterface;
@@ -41,7 +43,7 @@ use Psr\Http\Message\StreamFactoryInterface;
  */
 final class VcrClient implements ClientInterface
 {
-    private readonly CassetteManager $cassette;
+    private readonly CassetteSession $cassette;
 
     private readonly ResponseFactoryInterface $responseFactory;
 
@@ -63,6 +65,7 @@ final class VcrClient implements ClientInterface
         ?int $inlineBodyLimit = null,
         bool $repeatablePlayback = false,
         bool $locked = false,
+        ?CassetteScopeResolverInterface $scopeResolver = null,
         ?CassettePersisterInterface $persister = null,
         ?CassetteSerializerInterface $serializer = null,
         ?ResponseFactoryInterface $responseFactory = null,
@@ -80,7 +83,7 @@ final class VcrClient implements ClientInterface
         $this->responseFactory = $factories->responseFactory();
         $this->streamFactory = $factories->streamFactory();
 
-        $this->cassette = new CassetteManager(
+        $this->cassette = new CassetteSession(
             $cassette,
             $persister ?? $config->persister(),
             $serializer ?? $config->serializer(),
@@ -93,6 +96,7 @@ final class VcrClient implements ClientInterface
             $repeatablePlayback,
             $locked,
             $inlineBodyLimit ?? $config->inlineBodyLimit(),
+            $scopeResolver ?? $config->scopeResolver(),
             scanner: $config->scanRecordingsForSecrets() ? new SecretScanner() : null,
         );
 
@@ -117,6 +121,7 @@ final class VcrClient implements ClientInterface
         array $defaultMatchers = [],
         ?StrictMode $strictMode = null,
         ?DateInterval $staleAfter = null,
+        ?CassetteScopeResolverInterface $scopeResolver = null,
         ?ResponseFactoryInterface $responseFactory = null,
         ?StreamFactoryInterface $streamFactory = null,
         ?ClockInterface $clock = null,
@@ -130,6 +135,7 @@ final class VcrClient implements ClientInterface
             $defaultMatchers,
             $strictMode,
             $staleAfter,
+            $scopeResolver,
             $responseFactory,
             $streamFactory,
             $clock,
@@ -243,7 +249,12 @@ final class VcrClient implements ClientInterface
         $this->cassette->begin();
 
         [$request, $incoming] = $this->snapshot($request);
-        $interaction = $this->cassette->play($incoming);
+
+        // Which file this request belongs in is settled before anything is compared: with a
+        // scope resolver, one cassette name is several files and they never see each other's
+        // interactions (§3.8).
+        $cassette = $this->cassette->for($request);
+        $interaction = $cassette->play($incoming);
 
         if ($interaction?->response !== null) {
             return $this->rebuild($interaction->response);
@@ -256,7 +267,7 @@ final class VcrClient implements ClientInterface
             };
         }
 
-        return $this->recordOrExplain($request, $incoming);
+        return $this->recordOrExplain($cassette, $request, $incoming);
     }
 
     /**
@@ -296,34 +307,55 @@ final class VcrClient implements ClientInterface
         ));
     }
 
-    private function recordOrExplain(RequestInterface $request, RecordedRequest $incoming): ResponseInterface
-    {
-        $blocked = $this->cassette->recordingBlockedBecause();
+    private function recordOrExplain(
+        CassetteManager $cassette,
+        RequestInterface $request,
+        RecordedRequest $incoming,
+    ): ResponseInterface {
+        $blocked = $cassette->recordingBlockedBecause();
+        $scope = $cassette->cassetteExists() ? null : $cassette->scope();
 
         // Named first even when the cassette is missing too: with recording allowed, this
         // very run would have recorded and passed, so that is the actual cause.
         if ($blocked !== null) {
-            throw RecordingNotAllowedException::forRequest($incoming, $this->cassette->location(), $blocked);
+            throw $scope === null
+                ? RecordingNotAllowedException::forRequest($incoming, $cassette->location(), $blocked)
+                : RecordingNotAllowedException::forScope(
+                    $cassette->name(),
+                    $scope,
+                    $cassette->existingScopes(),
+                    $blocked,
+                );
         }
 
-        if ($this->cassette->isRecording()) {
-            return $this->record($request, $incoming);
+        if ($cassette->isRecording()) {
+            return $this->record($cassette, $request, $incoming);
         }
 
-        if (!$this->cassette->cassetteExists()) {
-            throw CassetteNotFoundException::at($this->cassette->location(), $incoming);
+        if (!$cassette->cassetteExists()) {
+            throw $scope === null
+                ? CassetteNotFoundException::at($cassette->location(), $incoming)
+                : CassetteNotFoundException::forScope(
+                    $cassette->name(),
+                    $scope,
+                    $cassette->existingScopes(),
+                    $cassette->mode(),
+                );
         }
 
         throw NoMatchingInteractionException::forRequest(
             $incoming,
-            $this->cassette->location(),
-            $this->cassette->mismatches($incoming),
-            $this->cassette->interactionCount(),
+            $cassette->location(),
+            $cassette->mismatches($incoming),
+            $cassette->interactionCount(),
         );
     }
 
-    private function record(RequestInterface $request, RecordedRequest $incoming): ResponseInterface
-    {
+    private function record(
+        CassetteManager $cassette,
+        RequestInterface $request,
+        RecordedRequest $incoming,
+    ): ResponseInterface {
         if ($this->inner === null) {
             throw new LogicException(
                 'This VcrClient was built without an inner client, so it can only replay. '
@@ -334,14 +366,14 @@ final class VcrClient implements ClientInterface
         try {
             $response = $this->inner->sendRequest($request);
         } catch (ClientExceptionInterface $exception) {
-            $this->recordFailure($incoming, $exception);
+            $this->recordFailure($cassette, $incoming, $exception);
 
             throw $exception;
         }
 
         [$response, $body] = $this->decompress(...$this->buffer($response));
 
-        $this->cassette->record($incoming, new RecordedResponse(
+        $cassette->record($incoming, new RecordedResponse(
             $response->getStatusCode(),
             $this->headers($response),
             $body,
@@ -360,8 +392,11 @@ final class VcrClient implements ClientInterface
      * that can be replayed as something an application catching by contract will recognize.
      * A client exception that is neither passes through unrecorded.
      */
-    private function recordFailure(RecordedRequest $incoming, ClientExceptionInterface $exception): void
-    {
+    private function recordFailure(
+        CassetteManager $cassette,
+        RecordedRequest $incoming,
+        ClientExceptionInterface $exception,
+    ): void {
         $category = match (true) {
             $exception instanceof NetworkExceptionInterface => ErrorCategory::Network,
             $exception instanceof RequestExceptionInterface => ErrorCategory::Request,
@@ -372,7 +407,7 @@ final class VcrClient implements ClientInterface
             return;
         }
 
-        $this->cassette->recordFailure($incoming, new RecordedError(
+        $cassette->recordFailure($incoming, new RecordedError(
             $category,
             $exception->getMessage(),
             $exception::class,
