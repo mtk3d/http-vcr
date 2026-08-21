@@ -120,6 +120,66 @@ final class VcrClient implements ClientInterface
     }
 
     /**
+     * Replaces a secret with $placeholder everywhere it appears in an interaction, in both
+     * directions: the placeholder goes to disk, and the real value comes back on replay —
+     * into the recorded request before matching compares it, and into the response before
+     * the code under test receives it (§3.4).
+     *
+     * @param callable(): mixed $value read when it is needed, not when this is called, so
+     *                                 a test may set the variable it reads afterwards
+     */
+    public function redact(string $placeholder, callable $value): void
+    {
+        $this->configuring('redact');
+
+        $this->cassette->redaction->redact($placeholder, $value);
+    }
+
+    /**
+     * @param (callable(): mixed)|null $value without it the rule is write-only: the header
+     *                                        is stored redacted, the code under test sees
+     *                                        the placeholder on replay, and the header
+     *                                        stops distinguishing interactions (§3.3)
+     */
+    public function redactHeader(string $name, ?callable $value = null): void
+    {
+        $this->configuring('redactHeader');
+
+        $this->cassette->redaction->redactHeader($name, $value);
+    }
+
+    /**
+     * @param string                   $pointer a JSON Pointer into the body: `/customer/email`
+     * @param (callable(): mixed)|null $value
+     */
+    public function redactJsonField(string $pointer, ?callable $value = null): void
+    {
+        $this->configuring('redactJsonField');
+
+        $this->cassette->redaction->redactJsonField($pointer, $value);
+    }
+
+    /**
+     * @param (callable(): mixed)|null $value
+     */
+    public function redactQueryParam(string $name, ?callable $value = null): void
+    {
+        $this->configuring('redactQueryParam');
+
+        $this->cassette->redaction->redactQueryParam($name, $value);
+    }
+
+    /**
+     * @param (callable(): mixed)|null $value
+     */
+    public function redactFormField(string $name, ?callable $value = null): void
+    {
+        $this->configuring('redactFormField');
+
+        $this->cassette->redaction->redactFormField($name, $value);
+    }
+
+    /**
      * Registers a hook that sees each interaction on its way to the cassette, and may
      * change it or return null to keep it out of the file altogether (§3.5).
      *

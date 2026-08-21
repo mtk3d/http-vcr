@@ -8,6 +8,7 @@ use HttpVcr\Environment;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Exception\RecordingNotAllowedException;
 use HttpVcr\Hook\HookRegistry;
+use HttpVcr\Hook\RedactionHooks;
 use HttpVcr\Matching\CompositeMatcher;
 use HttpVcr\Matching\Mismatch;
 use HttpVcr\Persistence\CassettePersisterInterface;
@@ -59,8 +60,14 @@ final class CassetteManager
         private readonly bool $locked = false,
         private readonly int $inlineBodyLimit = 1_048_576,
         public readonly HookRegistry $hooks = new HookRegistry(),
+        public readonly RedactionHooks $redaction = new RedactionHooks(),
     ) {
         $this->cassette = new Cassette();
+
+        // Registered before the session exists, so redaction is always the first hook in
+        // either direction: a project-wide rule runs ahead of anything added by hand.
+        $this->hooks->addBeforeRecord($this->redaction->beforeRecord(...));
+        $this->hooks->addBeforePlayback($this->redaction->beforePlayback(...));
     }
 
     /**
@@ -89,6 +96,8 @@ final class CassetteManager
     public function play(RecordedRequest $incoming): ?Interaction
     {
         $this->open();
+
+        $incoming = $this->redaction->forMatching($incoming);
 
         foreach ($this->cassette->interactions as $position => $interaction) {
             if ($this->isSpent($position, $interaction)) {
@@ -121,6 +130,8 @@ final class CassetteManager
     public function mismatches(RecordedRequest $incoming): array
     {
         $this->open();
+
+        $incoming = $this->redaction->forMatching($incoming);
 
         $mismatches = [];
 

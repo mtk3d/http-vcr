@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HttpVcr\Matching;
 
 use HttpVcr\Cassette\RecordedRequest;
+use HttpVcr\JsonPointer;
 use InvalidArgumentException;
 use stdClass;
 
@@ -90,13 +91,13 @@ final class BodyJsonMatcher implements RequestMatcherInterface, ExplainsMismatch
                 return $mismatch;
             }
 
-            $expectedDocument = $this->without($expectedDocument, $this->tokens($pointer));
-            $actualDocument = $this->without($actualDocument, $this->tokens($pointer));
+            $expectedDocument = JsonPointer::without($expectedDocument, JsonPointer::tokens($pointer));
+            $actualDocument = JsonPointer::without($actualDocument, JsonPointer::tokens($pointer));
         }
 
         foreach ($this->ignored as $pointer) {
-            $expectedDocument = $this->without($expectedDocument, $this->tokens($pointer));
-            $actualDocument = $this->without($actualDocument, $this->tokens($pointer));
+            $expectedDocument = JsonPointer::without($expectedDocument, JsonPointer::tokens($pointer));
+            $actualDocument = JsonPointer::without($actualDocument, JsonPointer::tokens($pointer));
         }
 
         return $this->compare($expectedDocument, $actualDocument, '');
@@ -104,10 +105,10 @@ final class BodyJsonMatcher implements RequestMatcherInterface, ExplainsMismatch
 
     private function checkPattern(mixed $expected, mixed $actual, string $pointer, string $pattern): ?string
     {
-        $tokens = $this->tokens($pointer);
+        $tokens = JsonPointer::tokens($pointer);
         $path = implode('/', $tokens);
-        $recorded = $this->read($expected, $tokens);
-        $incoming = $this->read($actual, $tokens);
+        $recorded = JsonPointer::read($expected, $tokens);
+        $incoming = JsonPointer::read($actual, $tokens);
 
         if ($incoming === null) {
             return sprintf('field "%s" missing', $path);
@@ -210,90 +211,6 @@ final class BodyJsonMatcher implements RequestMatcherInterface, ExplainsMismatch
         $decoded = json_decode($body);
 
         return json_last_error() === JSON_ERROR_NONE ? [$decoded] : null;
-    }
-
-    /**
-     * @param list<string> $tokens
-     *
-     * @return array{mixed}|null null when the document has no member there
-     */
-    private function read(mixed $node, array $tokens): ?array
-    {
-        foreach ($tokens as $token) {
-            if ($node instanceof stdClass && property_exists($node, $token)) {
-                $node = $node->{$token};
-
-                continue;
-            }
-
-            if (is_array($node) && ctype_digit($token) && array_key_exists((int) $token, $node)) {
-                $node = $node[(int) $token];
-
-                continue;
-            }
-
-            return null;
-        }
-
-        return [$node];
-    }
-
-    /**
-     * The document without the member at $tokens — a new one: the matcher compares values
-     * and has no business editing what it was handed.
-     *
-     * @param list<string> $tokens
-     */
-    private function without(mixed $node, array $tokens): mixed
-    {
-        $token = array_shift($tokens);
-
-        if ($token === null) {
-            return $node;
-        }
-
-        if ($node instanceof stdClass && property_exists($node, $token)) {
-            $node = clone $node;
-
-            if ($tokens === []) {
-                unset($node->{$token});
-            } else {
-                $node->{$token} = $this->without($node->{$token}, $tokens);
-            }
-
-            return $node;
-        }
-
-        if (is_array($node) && ctype_digit($token) && array_key_exists((int) $token, $node)) {
-            $index = (int) $token;
-
-            if ($tokens === []) {
-                unset($node[$index]);
-
-                return array_values($node);
-            }
-
-            $node[$index] = $this->without($node[$index], $tokens);
-        }
-
-        return $node;
-    }
-
-    /**
-     * @return list<string> the reference tokens of a JSON Pointer, unescaped
-     */
-    private function tokens(string $pointer): array
-    {
-        $tokens = explode('/', $pointer);
-
-        if ($tokens[0] === '') {
-            array_shift($tokens);
-        }
-
-        return array_values(array_map(
-            static fn (string $token): string => str_replace(['~1', '~0'], ['/', '~'], $token),
-            $tokens,
-        ));
     }
 
     private function join(string $path, string $key): string
