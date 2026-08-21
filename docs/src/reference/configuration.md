@@ -38,7 +38,7 @@ return Config::create(
 | `defaultMatchers` | `[MethodMatcher, UriMatcher, QueryStringMatcher]` | Used by any `VcrClient` constructed without an explicit `matchers` list. See [why the query string is in there](../concepts/matching.md#the-default-set). |
 | `redact` | `[]` | Project-wide [redaction rules](../safety/redaction.md#project-wide-redaction), as `placeholder => value provider`. |
 | `innerClientFactory` | detected | Builds the real PSR-18 client `#[UseCassette]` uses when it has to record. See below. |
-| PSR-17 factories, `clock`, `scopeResolver`, `inlineBodyLimit` | see [VcrClient Reference](vcr-client.md) | The `VcrClient` constructor parameters that make sense project-wide, as defaults for every instance. |
+| PSR-17 factories, `clock`, `scopeResolver`, `strictMode`, `inlineBodyLimit` | see [VcrClient Reference](vcr-client.md) | The `VcrClient` constructor parameters that make sense project-wide, as defaults for every instance. |
 
 ## `innerClientFactory`
 

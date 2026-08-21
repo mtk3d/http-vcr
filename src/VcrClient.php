@@ -55,6 +55,7 @@ final class VcrClient implements ClientInterface
         string $cassette,
         RecordMode $mode = RecordMode::RecordIfAbsent,
         array $matchers = [],
+        ?StrictMode $strictMode = null,
         private readonly bool $recordTransportErrors = false,
         private readonly bool $decodeCompressedResponse = true,
         ?int $inlineBodyLimit = null,
@@ -85,6 +86,7 @@ final class VcrClient implements ClientInterface
             $clock ?? $config->clock(),
             Environment::fromSystem(),
             $mode,
+            $strictMode ?? $config->strictMode(),
             $repeatablePlayback,
             $locked,
             $inlineBodyLimit ?? $config->inlineBodyLimit(),
@@ -110,6 +112,7 @@ final class VcrClient implements ClientInterface
         ?CassettePersisterInterface $persister = null,
         ?CassetteSerializerInterface $serializer = null,
         array $defaultMatchers = [],
+        ?StrictMode $strictMode = null,
         ?ResponseFactoryInterface $responseFactory = null,
         ?StreamFactoryInterface $streamFactory = null,
         ?ClockInterface $clock = null,
@@ -121,6 +124,7 @@ final class VcrClient implements ClientInterface
             $persister,
             $serializer,
             $defaultMatchers,
+            $strictMode,
             $responseFactory,
             $streamFactory,
             $clock,
@@ -251,11 +255,13 @@ final class VcrClient implements ClientInterface
     }
 
     /**
-     * Ends the cassette session, releasing the lock a recording session holds.
+     * Ends the cassette session: releases the lock a recording session holds, and checks
+     * whatever {@see StrictMode} the cassette was opened with (§3.6).
      *
-     * Called automatically when the client is collected; worth calling explicitly from a
-     * test harness, which knows when the test is over and shouldn't wait for a garbage
-     * collector to release a lock other processes are queueing behind.
+     * Worth calling from a test harness, which knows when the test is over and shouldn't
+     * wait for a garbage collector to release a lock other processes are queueing behind.
+     * The destructor gives the lock back on its own, but never raises a strict-mode
+     * failure — an assertion belongs at a moment the test chose.
      */
     public function close(): void
     {
@@ -264,7 +270,7 @@ final class VcrClient implements ClientInterface
 
     public function __destruct()
     {
-        $this->close();
+        $this->cassette->release();
     }
 
     /**

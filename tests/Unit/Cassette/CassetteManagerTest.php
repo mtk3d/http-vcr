@@ -20,6 +20,7 @@ use HttpVcr\Matching\UriMatcher;
 use HttpVcr\RecordMode;
 use HttpVcr\SecretScanner;
 use HttpVcr\Serializer\JsonCassetteSerializer;
+use HttpVcr\StrictMode;
 use HttpVcr\Tests\Support\InMemoryCassettePersister;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -264,6 +265,7 @@ final class CassetteManagerTest extends TestCase
             FrozenClock::at('2026-08-21T10:00:00+00:00'),
             new Environment($environment),
             RecordMode::RecordIfAbsent,
+            StrictMode::None,
             false,
             $locked,
             scanner: $scanner,

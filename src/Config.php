@@ -40,6 +40,7 @@ final class Config
         private readonly ?CassettePersisterInterface $persister,
         private readonly ?CassetteSerializerInterface $serializer,
         private readonly array $defaultMatchers,
+        private readonly ?StrictMode $strictMode,
         private readonly ?ResponseFactoryInterface $responseFactory,
         private readonly ?StreamFactoryInterface $streamFactory,
         private readonly ?ClockInterface $clock,
@@ -60,6 +61,7 @@ final class Config
         ?CassettePersisterInterface $persister = null,
         ?CassetteSerializerInterface $serializer = null,
         array $defaultMatchers = [],
+        ?StrictMode $strictMode = null,
         ?ResponseFactoryInterface $responseFactory = null,
         ?StreamFactoryInterface $streamFactory = null,
         ?ClockInterface $clock = null,
@@ -72,6 +74,7 @@ final class Config
             $persister,
             $serializer,
             $defaultMatchers,
+            $strictMode,
             $responseFactory,
             $streamFactory,
             $clock,
@@ -135,6 +138,16 @@ final class Config
         return $this->defaultMatchers !== []
             ? $this->defaultMatchers
             : [new MethodMatcher(), new UriMatcher(), new QueryStringMatcher()];
+    }
+
+    /**
+     * What every cassette in the project asserts about the way it was replayed. None by
+     * default: AllPlayed/InOrder are worth declaring for one well-understood action, and a
+     * blanket setting mostly produces false alarms on unrelated cassettes (§3.6).
+     */
+    public function strictMode(): StrictMode
+    {
+        return $this->strictMode ?? StrictMode::None;
     }
 
     /**

@@ -36,6 +36,18 @@ Under forced recording, "in the cassette when the session opened" means *after* 
 
 One wrinkle specific to `InOrder` and a *partial* re-record: survivors are written back at the front of the file and freshly recorded interactions appended after them, so refreshing one provider inside a multi-API cassette reorders it relative to the sequence the code under test actually performs. If such a cassette is under `InOrder`, look at the file after a partial refresh — or re-record the whole thing (`VCR_ERASE_TAPE=<cassette>`, no `@provider`), which restores the natural execution order.
 
+## When the check runs
+
+Both modes are checked by `VcrClient::close()`, which also releases the recording lock. The [PHPUnit integration](../integrations/phpunit.md) calls it in its after-test hook; a hand-built client is closed by whatever built it:
+
+```php
+$vcr = new VcrClient($inner, cassette: 'shopify/checkout', strictMode: StrictMode::AllPlayed);
+// ... exercise the code under test ...
+$vcr->close();
+```
+
+The destructor releases the lock too, but never raises a strict-mode failure: it runs at a moment nothing chose — often while another exception is already on its way up, where an assertion would bury the actual failure.
+
 ## Setting it per test, not just globally
 
 Both examples above configure `strictMode` on the `VcrClient` constructor directly, which applies for as long as that instance lives. With the [PHPUnit attribute](../integrations/phpunit.md), the same thing is set per test:

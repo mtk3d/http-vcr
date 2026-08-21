@@ -8,6 +8,7 @@ use Closure;
 use HttpVcr\Environment;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Exception\RecordingNotAllowedException;
+use HttpVcr\Exception\StrictModeViolationException;
 use HttpVcr\Hook\HookRegistry;
 use HttpVcr\Hook\RedactionHooks;
 use HttpVcr\Matching\CompositeMatcher;
@@ -18,6 +19,7 @@ use HttpVcr\Persistence\SupportsSessionLocking;
 use HttpVcr\RecordMode;
 use HttpVcr\SecretScanner;
 use HttpVcr\Serializer\CassetteSerializerInterface;
+use HttpVcr\StrictMode;
 use Psr\Clock\ClockInterface;
 
 /**
@@ -50,6 +52,17 @@ final class CassetteManager
     /** @var array<int, int> */
     private array $played = [];
 
+    /**
+     * How many interactions the cassette held when the session opened — the ones the
+     * strict modes judge. Everything from this position on was recorded by this session.
+     */
+    private int $baseline = 0;
+
+    /** @var list<int> the positions of the interactions replayed so far, in replay order */
+    private array $sequence = [];
+
+    private bool $verified = false;
+
     /** @var list<Interaction> */
     private array $recordedHere = [];
 
@@ -63,6 +76,7 @@ final class CassetteManager
         private readonly ClockInterface $clock,
         private readonly Environment $environment,
         private readonly RecordMode $mode = RecordMode::RecordIfAbsent,
+        private readonly StrictMode $strictMode = StrictMode::None,
         private readonly bool $repeatablePlayback = false,
         private readonly bool $locked = false,
         private readonly int $inlineBodyLimit = 1_048_576,
@@ -123,6 +137,10 @@ final class CassetteManager
             }
 
             $this->played[$position] = ($this->played[$position] ?? 0) + 1;
+
+            if ($position < $this->baseline && !$this->isRepeatable($interaction)) {
+                $this->sequence[] = $position;
+            }
 
             return $interaction;
         }
@@ -262,10 +280,106 @@ final class CassetteManager
         return $this->persister->describe($this->key());
     }
 
+    /**
+     * Ends the session: gives back what it holds, and only then checks what the strict
+     * mode promised about the replay (§3.6). In that order, so a failed assertion never
+     * leaves a lock behind for a parallel process to queue on.
+     */
     public function close(): void
+    {
+        if ($this->strictMode !== StrictMode::None) {
+            // A session that made no request at all has still promised something about the
+            // cassette on disk, so there is something to read before the check can mean
+            // anything — and it has to happen before the lock goes back.
+            $this->open();
+        }
+
+        $this->release();
+        $this->verifyStrictMode();
+    }
+
+    /**
+     * The half of close() that only gives things back — the lock, and the scan's findings.
+     *
+     * Split out for the destructor, which runs at a moment nothing chose: often while
+     * another exception is already unwinding, and sometimes during shutdown, where PHP
+     * turns a thrown exception into a fatal error with no usable stack. Releasing a lock
+     * there is right; raising a failed assertion is not.
+     */
+    public function release(): void
     {
         $this->releaseLock();
         $this->reportSecrets();
+    }
+
+    /**
+     * @throws StrictModeViolationException
+     */
+    private function verifyStrictMode(): void
+    {
+        if ($this->strictMode === StrictMode::None || $this->verified) {
+            return;
+        }
+
+        $this->verified = true;
+
+        if ($this->strictMode === StrictMode::AllPlayed) {
+            $this->verifyAllPlayed();
+
+            return;
+        }
+
+        $this->verifyInOrder();
+    }
+
+    private function verifyAllPlayed(): void
+    {
+        $unplayed = [];
+
+        foreach ($this->baseline() as $position => $interaction) {
+            if (($this->played[$position] ?? 0) === 0) {
+                $unplayed[$position] = $interaction;
+            }
+        }
+
+        if ($unplayed !== []) {
+            throw StrictModeViolationException::unplayed($this->location(), $unplayed, $this->baseline);
+        }
+    }
+
+    /**
+     * Replay picks the first interaction still available that matches, so replaying in
+     * recording order means the positions come out ascending. A descent is the violation,
+     * and the pair around it is what the message has to name.
+     */
+    private function verifyInOrder(): void
+    {
+        $baseline = $this->baseline();
+        $previous = null;
+
+        foreach ($this->sequence as $position) {
+            if ($previous !== null && $position < $previous) {
+                throw StrictModeViolationException::outOfOrder(
+                    $this->location(),
+                    $position,
+                    $baseline[$position],
+                    $previous,
+                    $baseline[$previous],
+                );
+            }
+
+            $previous = $position;
+        }
+    }
+
+    /**
+     * The interactions the cassette held when the session opened, keyed by position.
+     *
+     * @return array<int, Interaction>
+     */
+    private function baseline(): array
+    {
+        return array_slice($this->cassette->interactions, 0, $this->baseline, true);
     }
 
     /**
@@ -313,6 +427,16 @@ final class CassetteManager
         $this->opened = true;
         $this->existed = $this->persister->exists($this->key());
 
+        $this->openCassette();
+
+        // Read after the session has settled on its contents — under forced recording that
+        // means after the truncation, which is part of opening rather than something that
+        // happens once the session is under way (§3.6).
+        $this->baseline = count($this->cassette->interactions);
+    }
+
+    private function openCassette(): void
+    {
         $eraseTape = $this->environment->eraseTape();
 
         if ($eraseTape->covers($this->name)) {
@@ -429,11 +553,21 @@ final class CassetteManager
 
     private function isSpent(int $position, Interaction $interaction): bool
     {
-        if ($interaction->repeatablePlayback || $this->repeatablePlayback) {
+        if ($this->isRepeatable($interaction)) {
             return false;
         }
 
         return ($this->played[$position] ?? 0) > 0;
+    }
+
+    /**
+     * A repeatable interaction is never consumed, and for the same reason it sits outside
+     * the InOrder sequence: something replayable at any point in the run says nothing
+     * about the order of the interactions around it.
+     */
+    private function isRepeatable(Interaction $interaction): bool
+    {
+        return $interaction->repeatablePlayback || $this->repeatablePlayback;
     }
 
     private function readFromDisk(): Cassette
