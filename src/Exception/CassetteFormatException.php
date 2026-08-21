@@ -12,19 +12,26 @@ use RuntimeException;
  */
 class CassetteFormatException extends RuntimeException implements VcrException
 {
-    public static function unsupportedSchemaVersion(string $cassetteLocation, int $found, int $supported): self
+    public static function unsupportedSchemaVersion(int $found, int $supported): self
     {
         return new self(sprintf(
-            'Cassette %s is written in schema version %d; this version of http-vcr understands %d. '
-            . 'Upgrade http-vcr to read it.',
-            $cassetteLocation,
+            'schema version %d, where this installation of http-vcr writes and reads %d. Upgrade http-vcr to read it.',
             $found,
             $supported,
         ));
     }
 
-    public static function malformed(string $cassetteLocation, string $problem): self
+    public static function malformed(string $problem): self
     {
-        return new self(sprintf('Cassette %s could not be read: %s.', $cassetteLocation, $problem));
+        return new self($problem);
+    }
+
+    /**
+     * Names the file the problem is in. The serializer works on a string and has no idea
+     * where it came from; whoever read that string does.
+     */
+    public static function in(string $cassetteLocation, self $problem): self
+    {
+        return new self(sprintf('Cassette %s: %s', $cassetteLocation, $problem->getMessage()), 0, $problem);
     }
 }
