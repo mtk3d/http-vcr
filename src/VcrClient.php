@@ -6,6 +6,7 @@ namespace HttpVcr;
 
 use HttpVcr\Cassette\CassetteManager;
 use HttpVcr\Cassette\ErrorCategory;
+use HttpVcr\Cassette\Interaction;
 use HttpVcr\Cassette\RecordedError;
 use HttpVcr\Cassette\RecordedRequest;
 use HttpVcr\Cassette\RecordedResponse;
@@ -118,8 +119,36 @@ final class VcrClient implements ClientInterface
         ));
     }
 
+    /**
+     * Registers a hook that sees each interaction on its way to the cassette, and may
+     * change it or return null to keep it out of the file altogether (§3.5).
+     *
+     * @param callable(Interaction): ?Interaction $hook
+     */
+    public function beforeRecord(callable $hook): void
+    {
+        $this->configuring('beforeRecord');
+
+        $this->cassette->hooks->addBeforeRecord($hook);
+    }
+
+    /**
+     * Registers a hook that sees each recorded interaction on its way back out — before
+     * the matchers compare anything, so a request changed here is the one matching sees.
+     *
+     * @param callable(Interaction): Interaction $hook
+     */
+    public function beforePlayback(callable $hook): void
+    {
+        $this->configuring('beforePlayback');
+
+        $this->cassette->hooks->addBeforePlayback($hook);
+    }
+
     public function sendRequest(RequestInterface $request): ResponseInterface
     {
+        $this->cassette->begin();
+
         [$request, $incoming] = $this->snapshot($request);
         $interaction = $this->cassette->play($incoming);
 
@@ -152,6 +181,24 @@ final class VcrClient implements ClientInterface
     public function __destruct()
     {
         $this->close();
+    }
+
+    /**
+     * Configuration is only configuration until the session has started; after that it is
+     * a change of rules halfway through, covering some interactions and not others.
+     */
+    private function configuring(string $method): void
+    {
+        if (!$this->cassette->hasStarted()) {
+            return;
+        }
+
+        throw new LogicException(sprintf(
+            '%s() has to be called before the first request of this cassette session. An interaction has '
+            . 'already been through the pipeline it configures, so registering it now would cover part of '
+            . 'the run and not the rest.',
+            $method,
+        ));
     }
 
     private function recordOrExplain(RequestInterface $request, RecordedRequest $incoming): ResponseInterface

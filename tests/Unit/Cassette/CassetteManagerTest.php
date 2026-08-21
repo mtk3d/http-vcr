@@ -93,6 +93,7 @@ final class CassetteManagerTest extends TestCase
             new RecordedResponse(200),
         );
 
+        self::assertNotNull($interaction);
         self::assertSame('2026-08-21T10:00:00+00:00', $interaction->recordedAt->format('c'));
     }
 

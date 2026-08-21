@@ -7,6 +7,7 @@ namespace HttpVcr\Cassette;
 use HttpVcr\Environment;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Exception\RecordingNotAllowedException;
+use HttpVcr\Hook\HookRegistry;
 use HttpVcr\Matching\CompositeMatcher;
 use HttpVcr\Matching\Mismatch;
 use HttpVcr\Persistence\CassettePersisterInterface;
@@ -28,6 +29,8 @@ final class CassetteManager
     private const LOCK_EXTENSION = 'cassette-lock';
 
     private bool $opened = false;
+
+    private bool $started = false;
 
     private Cassette $cassette;
 
@@ -55,8 +58,27 @@ final class CassetteManager
         private readonly bool $repeatablePlayback = false,
         private readonly bool $locked = false,
         private readonly int $inlineBodyLimit = 1_048_576,
+        public readonly HookRegistry $hooks = new HookRegistry(),
     ) {
         $this->cassette = new Cassette();
+    }
+
+    /**
+     * Marks the session as under way: from here on it is too late to register a hook or
+     * anything else that would have changed an interaction already on its way past.
+     *
+     * On the session rather than on VcrClient, because the Guzzle bridge builds a fresh
+     * client per request out of withInner() and a flag on the instance would never see a
+     * second request (§3.14).
+     */
+    public function begin(): void
+    {
+        $this->started = true;
+    }
+
+    public function hasStarted(): bool
+    {
+        return $this->started;
     }
 
     /**
@@ -69,7 +91,16 @@ final class CassetteManager
         $this->open();
 
         foreach ($this->cassette->interactions as $position => $interaction) {
-            if ($this->isSpent($position, $interaction) || !$this->matcher->matches($interaction->request, $incoming)) {
+            if ($this->isSpent($position, $interaction)) {
+                continue;
+            }
+
+            // Before the comparison, not after: a hook that puts a real value back into the
+            // recorded request is the reason the recorded request can be compared with a
+            // live one at all (§3.4).
+            $interaction = $this->hooks->beforePlayback($interaction);
+
+            if (!$this->matcher->matches($interaction->request, $incoming)) {
                 continue;
             }
 
@@ -98,7 +129,10 @@ final class CassetteManager
                 continue;
             }
 
-            $mismatch = $this->matcher->explainMismatch($interaction->request, $incoming);
+            $mismatch = $this->matcher->explainMismatch(
+                $this->hooks->beforePlayback($interaction)->request,
+                $incoming,
+            );
 
             if ($mismatch !== null) {
                 $mismatches[$position + 1] = $mismatch;
@@ -108,7 +142,11 @@ final class CassetteManager
         return $mismatches;
     }
 
-    public function record(RecordedRequest $request, RecordedResponse $response): Interaction
+    /**
+     * @return Interaction|null null when a beforeRecord hook refused the interaction, in
+     *                          which case nothing was written
+     */
+    public function record(RecordedRequest $request, RecordedResponse $response): ?Interaction
     {
         return $this->append(Interaction::recorded($request, $response, $this->clock->now()));
     }
@@ -118,14 +156,20 @@ final class CassetteManager
      * recordTransportErrors on, since a transient network blip has no business becoming a
      * permanent part of a regression test.
      */
-    public function recordFailure(RecordedRequest $request, RecordedError $error): Interaction
+    public function recordFailure(RecordedRequest $request, RecordedError $error): ?Interaction
     {
         return $this->append(Interaction::failed($request, $error, $this->clock->now()));
     }
 
-    private function append(Interaction $interaction): Interaction
+    private function append(Interaction $interaction): ?Interaction
     {
         $this->open();
+
+        $interaction = $this->hooks->beforeRecord($interaction);
+
+        if ($interaction === null) {
+            return null;
+        }
 
         // Read-modify-write, not a bare write: the appended interaction goes onto whatever
         // is on disk now, which is why the lock is taken before the read and not around
