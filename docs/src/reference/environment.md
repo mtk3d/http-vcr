@@ -35,7 +35,7 @@ A selector has two independently optional halves, separated by `@`: **which cass
 | `sync/order-flow@shopify` | that one | only `shopify`'s |
 | `all@shopify` | the explicit spelling of `@shopify` | — |
 
-The `@provider` half is what makes a test that talks to two APIs refreshable one API at a time: the interactions that don't belong to the named provider survive the truncation and replay from the cassette as usual, so the run only needs credentials for the API being refreshed. A name is resolved first against configured providers, then against hosts actually present in the cassettes; matching neither is an error listing both sets — never a silent no-op.
+A cassette records one test's traffic, which is why the cassette half of a selector names a scenario as readily as a service ([What one cassette covers](../concepts/how-it-works.md#what-one-cassette-covers)). The `@provider` half is what makes a test that talks to two APIs refreshable one API at a time: the interactions that don't belong to the named provider survive the truncation and replay from the cassette as usual, so the run only needs credentials for the API being refreshed. A name is resolved first against configured providers, then against hosts actually present in the cassettes; matching neither is an error listing both sets — never a silent no-op.
 
 `@` can't be confused with part of a cassette name, since names are sanitized to `[A-Za-z0-9_.-]` and `/`.
 

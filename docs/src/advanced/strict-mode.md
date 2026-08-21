@@ -14,6 +14,8 @@ This catches drift in the opposite direction from a missing match: instead of "t
 
 A [`repeatablePlayback`](../concepts/record-modes.md) interaction never gets consumed, so "unplayed" means something slightly different for it: it counts as played once it's been replayed **at least once**. One that nothing ever asked for still fails `AllPlayed` — that's precisely the signal this mode is for.
 
+It's an assertion about one file, which presumes that file belongs to this test alone — see [What one cassette covers](../concepts/how-it-works.md#what-one-cassette-covers).
+
 With [scoped cassettes](scoping.md), this is checked **per scope file**, not aggregated across a whole test run. If a test touches both a `2024-01` and a `2024-04` scope, each of those two physical files has to independently close with zero unplayed interactions — treating them as one shared pool would hide which specific file has the leftover.
 
 ## `StrictMode::InOrder`
@@ -34,7 +36,7 @@ Both modes assert on how the *existing* recording got replayed, so a session tha
 
 Under forced recording, "in the cassette when the session opened" means *after* the truncation — truncation is part of opening, not something that happens afterwards. So `VCR_ERASE_TAPE=<cassette>` on a cassette with no locks leaves both modes with an empty set to check (they pass trivially), while whatever the selector spared is checked exactly as usual: [locked interactions](../safety/locked-interactions.md), and — when the selector named a [provider](../integrations/phpunit.md#providers) — the other providers' traffic that kept replaying. That's the intent — there's nothing to assert about a recording the same run just erased.
 
-One wrinkle specific to `InOrder` and a *partial* re-record: survivors are written back at the front of the file and freshly recorded interactions appended after them, so refreshing one provider inside a multi-API cassette reorders it relative to the sequence the code under test actually performs. If such a cassette is under `InOrder`, look at the file after a partial refresh — or re-record the whole thing (`VCR_ERASE_TAPE=<cassette>`, no `@provider`), which restores the natural execution order.
+One wrinkle specific to `InOrder` and a *partial* re-record: survivors are written back at the front of the file and freshly recorded interactions appended after them, so refreshing one provider inside a multi-API cassette — a `sync/order-flow` carrying both Shopify and Zendesk traffic — reorders it relative to the sequence the code under test actually performs. If such a cassette is under `InOrder`, look at the file after a partial refresh — or re-record the whole thing (`VCR_ERASE_TAPE=<cassette>`, no `@provider`), which restores the natural execution order.
 
 ## When the check runs
 
