@@ -178,12 +178,51 @@ final class ForcedRecordingTest extends TestCase
         $_ENV['VCR_ERASE_TAPE'] = 'all';
 
         $inner = new FakeHttpClient();
-        $vcr = new VcrClient($inner, 'shopify/checkout', persister: $this->persister());
+        $vcr = new VcrClient($inner, 'shopify/checkout', persister: $this->persister(), warn: $this->collect(...));
         $vcr->sendRequest(new Request('GET', 'https://shop.example.com/orders'));
         $vcr->close();
 
         self::assertSame(0, $inner->sentCount());
         self::assertSame($before, $this->cassettes->read('shopify/checkout.json'));
+    }
+
+    public function testAFullyLockedCassetteSaysTheEraseCameToNothing(): void
+    {
+        $this->seed('shopify/checkout', [
+            $this->interaction('https://shop.example.com/orders', '{"id":"original"}', locked: true),
+        ]);
+        $_ENV['VCR_ERASE_TAPE'] = 'all';
+
+        $vcr = new VcrClient(
+            new FakeHttpClient(),
+            'shopify/checkout',
+            persister: $this->persister(),
+            warn: $this->collect(...),
+        );
+        $vcr->sendRequest(new Request('GET', 'https://shop.example.com/orders'));
+        $vcr->close();
+
+        self::assertCount(1, $this->warnings);
+        self::assertStringContainsString('cassette fully locked, VCR_ERASE_TAPE had no effect.', $this->warnings[0]);
+    }
+
+    public function testACassetteWithAnythingLeftToEraseSaysNothing(): void
+    {
+        $this->seed('sync/order-flow', [
+            $this->interaction('https://acme.zendesk.com/tickets', '{"ticket":"old"}'),
+        ]);
+        $_ENV['VCR_ERASE_TAPE'] = '@shop.example.com';
+
+        $vcr = new VcrClient(
+            new FakeHttpClient(),
+            'sync/order-flow',
+            persister: $this->persister(),
+            warn: $this->collect(...),
+        );
+        $vcr->sendRequest(new Request('GET', 'https://acme.zendesk.com/tickets'));
+        $vcr->close();
+
+        self::assertSame([], $this->warnings, 'a selector passing over another API is the normal path');
     }
 
     public function testWithRecordingDisabledTheCassetteIsLeftAloneRatherThanErased(): void
@@ -208,6 +247,14 @@ final class ForcedRecordingTest extends TestCase
         }
 
         self::assertSame($before, $this->cassettes->read('sync/order-flow.json'));
+    }
+
+    /** @var list<string> */
+    private array $warnings = [];
+
+    private function collect(string $warning): void
+    {
+        $this->warnings[] = $warning;
     }
 
     /**

@@ -21,6 +21,7 @@ use HttpVcr\VcrClient;
 use LogicException;
 use Nyholm\Psr7\Request;
 use Nyholm\Psr7\Response;
+use Nyholm\Psr7\Stream;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -279,6 +280,33 @@ final class RedactionTest extends TestCase
     private function authorized(): Request
     {
         return (new Request('GET', 'https://api.example.com/orders'))->withHeader('X-Api-Key', 'sk_live_4eC39H');
+    }
+
+    /**
+     * The findings have somewhere to go other than standard error, which is what lets a
+     * test runner gather a whole run's worth and print them in one block (§3.4).
+     */
+    public function testTheScanReportsToWhereverTheCallerAskedFor(): void
+    {
+        $warnings = [];
+
+        $vcr = new VcrClient(
+            (new FakeHttpClient())->willRespond('{"ok":true}'),
+            'payments',
+            persister: $this->cassettes->persister(),
+            warn: static function (string $warning) use (&$warnings): void {
+                $warnings[] = $warning;
+            },
+        );
+        $vcr->sendRequest(
+            (new Request('POST', 'https://api.example.com/charges'))
+                ->withBody(Stream::create('{"api_key":"n0tar3alcr3dent1albutshapedl1keone"}')),
+        );
+        $vcr->close();
+
+        self::assertCount(1, $warnings);
+        self::assertStringContainsString('request.body', $warnings[0]);
+        self::assertStringContainsString('credential-shaped value', $warnings[0]);
     }
 
     /**

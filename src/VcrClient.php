@@ -72,6 +72,12 @@ final class VcrClient implements ClientInterface
      * @param list<RequestMatcherInterface> $matchers    empty means the project default set
      * @param list<string>                  $requiresEnv variables checked when this cassette is about
      *                                                   to record something for real (§3.12)
+     * @param (callable(string): void)|null $warn        where the session's warnings go — the
+     *                                                   secret scan's findings, and a forced
+     *                                                   recording a lock made a no-op. Standard
+     *                                                   error without one; a test harness passes
+     *                                                   its own so a run can report them together
+     *                                                   rather than scattered through the output
      */
     public function __construct(
         private ?ClientInterface $inner,
@@ -92,6 +98,7 @@ final class VcrClient implements ClientInterface
         ?ResponseFactoryInterface $responseFactory = null,
         ?StreamFactoryInterface $streamFactory = null,
         ?ClockInterface $clock = null,
+        ?callable $warn = null,
     ) {
         Config::freeze();
         $config = Config::global();
@@ -122,6 +129,7 @@ final class VcrClient implements ClientInterface
             $inlineBodyLimit ?? $config->inlineBodyLimit(),
             $scopeResolver ?? $config->scopeResolver(),
             scanner: $config->scanRecordingsForSecrets() ? new SecretScanner() : null,
+            warn: $warn === null ? null : $warn(...),
         );
 
         foreach ($config->redactions() as $placeholder => $value) {

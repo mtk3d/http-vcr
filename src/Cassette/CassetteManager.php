@@ -72,6 +72,8 @@ final class CassetteManager
 
     private bool $warned = false;
 
+    private bool $reportedLock = false;
+
     public function __construct(
         private readonly string $name,
         private readonly ?string $scope,
@@ -292,8 +294,8 @@ final class CassetteManager
     /**
      * True when VCR_ERASE_TAPE named this cassette and every interaction in it was locked,
      * so the run erased nothing and requested nothing. Not an error — the lock doing its
-     * one job — but worth saying out loud, so it doesn't look like the variable was
-     * silently ignored.
+     * one job — but said out loud when the session ends, so it doesn't look like the
+     * variable was silently ignored.
      */
     public function eraseTapeHadNoEffect(): bool
     {
@@ -342,6 +344,7 @@ final class CassetteManager
     public function release(): void
     {
         $this->releaseLock();
+        $this->reportLockedCassette();
         $this->reportSecrets();
     }
 
@@ -416,6 +419,25 @@ final class CassetteManager
     }
 
     /**
+     * Says that forced recording came to nothing, which is the lock doing its job rather
+     * than the variable being ignored — the difference between the two is invisible from
+     * the outside, since both leave the file exactly as it was.
+     */
+    private function reportLockedCassette(): void
+    {
+        if (!$this->eraseTapeHadNoEffect || $this->reportedLock) {
+            return;
+        }
+
+        $this->reportedLock = true;
+
+        $this->report(sprintf(
+            "http-vcr: %s\n  cassette fully locked, VCR_ERASE_TAPE had no effect.\n",
+            $this->location(),
+        ));
+    }
+
+    /**
      * Runs what this session recorded past the secret heuristic and says what it found.
      *
      * Only what this session recorded: a cassette re-read every run would repeat warnings
@@ -440,8 +462,16 @@ final class CassetteManager
             return;
         }
 
-        $warning = SecretScanner::warning($this->location(), count($this->recordedHere), $findings);
+        $this->report(SecretScanner::warning($this->location(), count($this->recordedHere), $findings));
+    }
 
+    /**
+     * Standard error unless a harness offered somewhere better: a test runner collects the
+     * whole run's warnings and prints them together, where they can still be read after
+     * hundreds of tests have scrolled past (§3.4).
+     */
+    private function report(string $warning): void
+    {
         if ($this->warn !== null) {
             ($this->warn)($warning);
 
@@ -574,7 +604,11 @@ final class CassetteManager
         ));
 
         $this->cassette = $recorded->withInteractions($survivors);
-        $this->eraseTapeHadNoEffect = $recorded->interactions !== [] && count($survivors) === count($recorded->interactions);
+
+        // Narrowly the fully-locked case, not "nothing matched": a `@provider` selector is
+        // meant to pass over the cassettes belonging to other APIs, and saying so on each
+        // of them would be noise on the normal path.
+        $this->eraseTapeHadNoEffect = $recorded->interactions !== [] && $this->allLocked($recorded->interactions);
 
         if (!$this->eraseTapeHadNoEffect && $this->existed) {
             $this->persist();
@@ -609,6 +643,24 @@ final class CassetteManager
 
         $this->recording = true;
         $this->cassette = new Cassette();
+    }
+
+    /**
+     * @param list<Interaction> $interactions
+     */
+    private function allLocked(array $interactions): bool
+    {
+        if ($this->locked) {
+            return true;
+        }
+
+        foreach ($interactions as $interaction) {
+            if (!$interaction->locked) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function isSpent(int $position, Interaction $interaction): bool
