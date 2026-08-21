@@ -2,14 +2,17 @@
 
 Record and replay HTTP interactions in tests, as a decorator over a PSR-18 client.
 
-**State: M1, M1.5 and M2 built** — `VcrClient` records and replays through the PSR-18
+**State: M1, M1.5, M2 and M3 built** — `VcrClient` records and replays through the PSR-18
 decorator, with the full matcher set (`Method`, `Uri`, `Host`, `QueryString`, `Headers`,
 `Body`, `BodyJson`), the JSON cassette format, filesystem storage with session locking,
 CI-aware recording permission, `VCR_ERASE_TAPE`, the edge cases M1.5 covers (non-seekable
 streams, binary bodies, sidecar files, response decompression, recorded transport
-failures), and M2's two differentiators: the `beforeRecord`/`beforePlayback` hook pipeline
-with redaction built on it, and the secret scan that warns after a recording session.
-`bin/` does not exist yet (M5). Next is M3 (advanced modes).
+failures), M2's two differentiators (the `beforeRecord`/`beforePlayback` hook pipeline with
+redaction built on it, and the secret scan that warns after a recording session), and M3's
+advanced modes: `RecordMode::ExtendCassette`, `StrictMode::AllPlayed`/`InOrder`,
+`staleAfter` with `VCR_ENFORCE_STALE_CHECK`, cassette scoping by URL (`src/Scope/`), and
+`bin/http-vcr` with the `lock`/`unlock` commands — the other four commands are M5. Next is
+M4 (adapters: Guzzle, Symfony, PHPUnit).
 
 Build order is `PLAN.md` §6 — M1 → M1.5 → M2 → M3 → M4 → M5 — and it is a dependency
 order, not a wish list: don't implement a later phase's feature while an earlier one is

@@ -1,0 +1,26 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use HttpVcr\Console\Application;
+
+// The host project's autoloader, not this package's: Composer links the binary into a
+// consuming project's vendor/bin, and the commands read that project's cassettes. The
+// first path covers running from http-vcr's own checkout, the second an installed package.
+$autoloaders = [
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../../../autoload.php',
+];
+
+foreach ($autoloaders as $autoloader) {
+    if (is_file($autoloader)) {
+        require $autoloader;
+
+        exit((new Application())->run());
+    }
+}
+
+fwrite(STDERR, "Could not find the project's vendor/autoload.php. Run composer install first.\n");
+
+exit(1);
