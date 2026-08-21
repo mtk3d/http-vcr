@@ -39,6 +39,14 @@ verified fact turns out wrong, record the correction in place — do not quietly
 - **Target PHP 8.2 syntax.** The local interpreter is newer and CI runs 8.2–8.5, so
   anything 8.3+ (property hooks, asymmetric visibility, `new` in more places) compiles
   locally and breaks the lowest leg.
+- **Only symfony/console APIs present across `^6.4 || ^7.0 || ^8.0` may be used.** The
+  three majors disagree, and the local interpreter can't even install Symfony 8 (it
+  requires PHP 8.4+), so a wrong call compiles and passes locally and breaks the two top
+  CI legs — the same trap as the PHP version above. The one already hit: `Application::add()`
+  was removed in 8.0 and `addCommand()` only arrived in 7.4, so registering a command goes
+  through `addCommands()`, which all three have. Check a method against the actual 8.x
+  source before using it (`composer require symfony/console:^8.0 --ignore-platform-req=php`
+  in a scratch directory).
 - **The record/replay core depends on `psr/http-message`, `psr/http-client`,
   `psr/http-factory` and `psr/clock`, and nothing else.** That promise is half the reason the library
   exists (§1). `symfony/console` and `nikic/php-parser` are in `require` for the CLI

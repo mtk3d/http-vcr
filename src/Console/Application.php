@@ -19,7 +19,12 @@ final class Application extends ConsoleApplication
     {
         parent::__construct('http-vcr');
 
-        $this->add(new LockCommand(lock: true));
-        $this->add(new LockCommand(lock: false));
+        // addCommands(), not add()/addCommand(): the package supports symfony/console
+        // ^6.4 || ^7.0 || ^8.0, and the two singular methods do not both exist across that
+        // range — add() was removed in 8.0, addCommand() only arrived in 7.4.
+        $this->addCommands([
+            new LockCommand(lock: true),
+            new LockCommand(lock: false),
+        ]);
     }
 }
