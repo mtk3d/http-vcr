@@ -2,10 +2,13 @@
 
 Record and replay HTTP interactions in tests, as a decorator over a PSR-18 client.
 
-**State: planning finished, no implementation yet.** `src/`, `tests/`, `bin/` and the
-tooling config files are empty or absent by design. Build order is `PLAN.md` §6 —
-M1 → M1.5 → M2 → M3 → M4 → M5 — and it is a dependency order, not a wish list: don't
-implement a later phase's feature while an earlier one is unbuilt.
+**State: M1 built** — `VcrClient` records and replays through the PSR-18 decorator, with the
+default matcher set, the JSON cassette format, filesystem storage with session locking,
+CI-aware recording permission and `VCR_ERASE_TAPE`. `bin/` does not exist yet (M5). Next is
+M1.5. Build order is `PLAN.md` §6 — M1 → M1.5 → M2 → M3 → M4 → M5 — and it is a dependency
+order, not a wish list: don't implement a later phase's feature while an earlier one is
+unbuilt. Decisions taken while implementing a phase go to `PLAN.md` §7 like any other
+(18–25 came out of M1).
 
 ## Language
 
