@@ -52,5 +52,6 @@ Misuse of the API throws a plain `LogicException` rather than a `VcrException`, 
 
 - registering a hook, matcher, or redaction rule after the cassette session's first request ([why](vcr-client.md#configuration-is-frozen-after-the-first-request))
 - calling `VcrClient::configure()` after the first `VcrClient` exists in the process
+- declaring two providers whose host patterns can both match the same host
 - using a `VcrClient` built with `inner: null` on a path that needs a real request, without `withInner()`
 - returning `null` from a [`beforePlayback`](../concepts/hooks.md#beforeplayback) hook

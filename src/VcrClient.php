@@ -13,6 +13,7 @@ use HttpVcr\Cassette\RecordedError;
 use HttpVcr\Cassette\RecordedRequest;
 use HttpVcr\Cassette\RecordedResponse;
 use HttpVcr\Exception\CassetteNotFoundException;
+use HttpVcr\Exception\MissingEnvironmentVariableException;
 use HttpVcr\Exception\NoMatchingInteractionException;
 use HttpVcr\Exception\RecordingNotAllowedException;
 use HttpVcr\Exception\VcrNetworkException;
@@ -57,9 +58,20 @@ final class VcrClient implements ClientInterface
      */
     private bool $ownsSession = true;
 
+    private readonly Environment $environment;
+
     /**
-     * @param ClientInterface|null          $inner    the real client, used only when actually recording
-     * @param list<RequestMatcherInterface> $matchers empty means the project default set
+     * The project configuration this client was built against, kept because two of its
+     * parts — the named providers and their requiresEnv — are consulted per request rather
+     * than once at construction.
+     */
+    private readonly Config $config;
+
+    /**
+     * @param ClientInterface|null          $inner       the real client, used only when actually recording
+     * @param list<RequestMatcherInterface> $matchers    empty means the project default set
+     * @param list<string>                  $requiresEnv variables checked when this cassette is about
+     *                                                   to record something for real (§3.12)
      */
     public function __construct(
         private ?ClientInterface $inner,
@@ -68,6 +80,7 @@ final class VcrClient implements ClientInterface
         array $matchers = [],
         ?StrictMode $strictMode = null,
         ?DateInterval $staleAfter = null,
+        private readonly array $requiresEnv = [],
         private readonly bool $recordTransportErrors = false,
         private readonly bool $decodeCompressedResponse = true,
         ?int $inlineBodyLimit = null,
@@ -91,13 +104,16 @@ final class VcrClient implements ClientInterface
         $this->responseFactory = $factories->responseFactory();
         $this->streamFactory = $factories->streamFactory();
 
+        $this->config = $config;
+        $this->environment = Environment::fromSystem($config->providers());
+
         $this->cassette = new CassetteSession(
             $cassette,
             $persister ?? $config->persister(),
             $serializer ?? $config->serializer(),
             CompositeMatcher::of($matchers !== [] ? $matchers : $config->defaultMatchers()),
             $clock ?? $config->clock(),
-            Environment::fromSystem($config->providers()),
+            $this->environment,
             $mode,
             $strictMode ?? $config->strictMode(),
             $staleAfter ?? $config->staleAfter(),
@@ -404,8 +420,12 @@ final class VcrClient implements ClientInterface
             );
         }
 
+        $inner = $this->inner;
+
+        $this->requireCredentials($cassette->name(), $incoming);
+
         try {
-            $response = $this->inner->sendRequest($request);
+            $response = $inner->sendRequest($request);
         } catch (ClientExceptionInterface $exception) {
             $this->recordFailure($cassette, $incoming, $exception);
 
@@ -422,6 +442,41 @@ final class VcrClient implements ClientInterface
         ));
 
         return $response;
+    }
+
+    /**
+     * Checks the variables this recording needs, at the one moment that can tell whether it
+     * needs them: a request about to go out for real (§3.12).
+     *
+     * Not at the start of the test — recording is allowed by default on a developer's
+     * machine, so that would have every replaying test there demand a full set of
+     * credentials it was never going to use. And per request, not per session, which is
+     * what lets a partial re-record of a two-API cassette ask only for the keys of the API
+     * it is refreshing.
+     */
+    private function requireCredentials(string $cassette, RecordedRequest $request): void
+    {
+        $host = parse_url($request->uri, PHP_URL_HOST);
+        $provider = is_string($host) ? $this->config->providerFor($host) : null;
+        $missing = [];
+
+        if ($provider !== null) {
+            $names = $this->environment->missing($this->config->providers()[$provider]->requiresEnv);
+
+            if ($names !== []) {
+                $missing[] = ['names' => $names, 'source' => sprintf('provider "%s"', $provider)];
+            }
+        }
+
+        $names = $this->environment->missing($this->requiresEnv);
+
+        if ($names !== []) {
+            $missing[] = ['names' => $names, 'source' => 'the cassette'];
+        }
+
+        if ($missing !== []) {
+            throw MissingEnvironmentVariableException::beforeRecording($cassette, $missing);
+        }
     }
 
     /**
