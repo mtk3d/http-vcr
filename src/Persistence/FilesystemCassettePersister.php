@@ -22,6 +22,16 @@ use SplFileInfo;
  */
 final class FilesystemCassettePersister implements CassettePersisterInterface, SupportsSessionLocking
 {
+    /**
+     * Lock files live in one hidden directory inside the cassette directory, rather than
+     * beside the cassettes themselves. They belong on the same filesystem as the resource
+     * they guard — the system temp directory isn't shared across a container boundary,
+     * where the cassette directory routinely is — but they are the library's business, not
+     * something to leaf through while reading recordings. The directory carries its own
+     * `.gitignore`, so a project needs no setup to keep it out of version control.
+     */
+    private const INTERNAL_DIRECTORY = '.http-vcr';
+
     /** @var array<string, resource> */
     private array $locks = [];
 
@@ -108,6 +118,10 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
 
             $name = substr($path, strlen($this->directory) + 1, -strlen($suffix));
 
+            if (str_starts_with($name, self::INTERNAL_DIRECTORY . '/')) {
+                continue;
+            }
+
             if (str_starts_with($name, $prefix)) {
                 $names[] = $name;
             }
@@ -129,12 +143,14 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
             return;
         }
 
-        $path = $this->path($key);
+        $path = $this->lockPath($key);
         $directory = dirname($path);
 
         if (!is_dir($directory) && !@mkdir($directory, 0o777, true) && !is_dir($directory)) {
             throw new RuntimeException(sprintf('Could not create directory %s.', $directory));
         }
+
+        $this->ignoreInternalDirectory();
 
         $handle = fopen($path, 'c');
 
@@ -165,12 +181,40 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
     }
 
     /**
+     * The directory ignores itself, so nothing about lock files reaches a project's
+     * version control settings — no line to add, and no .gitignore of the project's own
+     * to edit behind its author's back.
+     */
+    private function ignoreInternalDirectory(): void
+    {
+        $gitignore = $this->directory . '/' . self::INTERNAL_DIRECTORY . '/.gitignore';
+
+        if (!file_exists($gitignore)) {
+            @file_put_contents($gitignore, "*\n");
+        }
+    }
+
+    /**
+     * Same name as the cassette, in the library's own directory: the lock is never renamed
+     * or removed, so its inode stays put while the cassette's is replaced under it.
+     */
+    private function lockPath(string $key): string
+    {
+        return $this->directory . '/' . self::INTERNAL_DIRECTORY . '/' . $this->relativePath($key);
+    }
+
+    private function path(string $key): string
+    {
+        return $this->directory . '/' . $this->relativePath($key);
+    }
+
+    /**
      * A cassette name is a relative path inside the directory, so `/` is meaningful and
      * sanitization applies per segment. Everything outside `[A-Za-z0-9_.-]` becomes `_`;
      * an empty segment, `.`, `..` or a hidden file is refused outright rather than
-     * mangled, and the resolved path is checked to still be inside the directory.
+     * mangled, which is what keeps a name from resolving outside the directory.
      */
-    private function path(string $key): string
+    private function relativePath(string $key): string
     {
         $segments = [];
 
@@ -188,6 +232,6 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
             $segments[] = $sanitized;
         }
 
-        return $this->directory . '/' . implode('/', $segments);
+        return implode('/', $segments);
     }
 }

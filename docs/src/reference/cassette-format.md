@@ -56,7 +56,17 @@ Sidecars that nothing references any more — after a forced re-record, after an
 
 ## Lock files
 
-While a session is recording, http-vcr holds an exclusive lock so two parallel test processes (paratest and friends) can't interleave their writes into one cassette. The lock lives on a separate `{cassette}.cassette-lock` file, not on the cassette itself — cassettes are replaced via an atomic `rename()`, which swaps the file's inode, and a lock held on an inode that's no longer at that path stops excluding anything. The lock file is empty, created on demand, and belongs in `.gitignore` (`*.cassette-lock`).
+While a session is recording, http-vcr holds an exclusive lock so two parallel test processes (paratest and friends) can't interleave their writes into one cassette. The lock lives on a separate `{cassette}.cassette-lock` file, not on the cassette itself — cassettes are replaced via an atomic `rename()`, which swaps the file's inode, and a lock held on an inode that's no longer at that path stops excluding anything. The lock file is empty and created on demand, in a `.http-vcr/` directory inside the cassette directory:
+
+```
+tests/Cassettes/
+├── .http-vcr/
+│   ├── .gitignore                              (holds `*`)
+│   └── shopify/get-product.cassette-lock
+└── shopify/get-product.json
+```
+
+That directory carries its own `.gitignore`, so lock files stay out of version control with nothing to configure and nothing added to the project's own ignore rules. They stay on disk once a session ends, which is why they live somewhere out of the way rather than beside the recordings: deleting one would reopen the race the separate file exists to avoid, since a process waiting on the lock would acquire it on an inode no longer at that path while the next process created a fresh one.
 
 It sits next to the cassette rather than in the system temp directory, which matters more than it looks: `/tmp` isn't shared across a container boundary. A suite running inside Docker and another run started on the host see the same cassette directory through a bind mount but two different `/tmp`s — they'd take locks on two separate files and never exclude each other. The lock has to live where the resource lives, because that path is the only one every process allowed to write the cassette can agree on.
 

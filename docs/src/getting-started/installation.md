@@ -53,4 +53,4 @@ In a Laravel app the same commands are also available through `artisan vcr:*` �
 
 By default, `tests/Cassettes/` relative to the project root (the directory containing `composer.json`), with the cassette name as a path inside it — `shopify/get-product` becomes `tests/Cassettes/shopify/get-product.json`. Change it with `cassetteDirectory` in [`http-vcr.php`](../integrations/phpunit.md#project-configuration).
 
-Cassettes are meant to be committed. The lock files http-vcr creates next to them while recording are not — add `*.cassette-lock` to `.gitignore`.
+Cassettes are meant to be committed. The lock files http-vcr uses while recording are not, and take no setup either way: they go in a `.http-vcr/` directory inside the cassette directory, which ignores itself.

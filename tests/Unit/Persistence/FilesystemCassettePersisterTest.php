@@ -137,7 +137,7 @@ final class FilesystemCassettePersisterTest extends TestCase
         $persister = $this->persister();
         $persister->lock('shopify/get-product.cassette-lock');
 
-        $handle = fopen($this->directory . '/shopify/get-product.cassette-lock', 'c');
+        $handle = fopen($this->directory . '/.http-vcr/shopify/get-product.cassette-lock', 'c');
         self::assertIsResource($handle);
         self::assertFalse(flock($handle, LOCK_EX | LOCK_NB));
 
@@ -146,6 +146,51 @@ final class FilesystemCassettePersisterTest extends TestCase
 
         flock($handle, LOCK_UN);
         fclose($handle);
+    }
+
+    public function testLockFilesLiveInTheLibrarysOwnDirectoryNotBesideTheCassettes(): void
+    {
+        $persister = $this->persister();
+        $persister->write('shopify/get-product.json', 'x');
+
+        $persister->lock('shopify/get-product.cassette-lock');
+        $persister->unlock('shopify/get-product.cassette-lock');
+
+        self::assertFileExists($this->directory . '/.http-vcr/shopify/get-product.cassette-lock');
+        self::assertSame(
+            ['get-product.json'],
+            array_values(array_diff(scandir($this->directory . '/shopify') ?: [], ['.', '..'])),
+        );
+    }
+
+    public function testThatDirectoryIgnoresItselfSoAProjectNeedsNoSetup(): void
+    {
+        $persister = $this->persister();
+
+        $persister->lock('shopify/get-product.cassette-lock');
+        $persister->unlock('shopify/get-product.cassette-lock');
+
+        self::assertSame("*\n", file_get_contents($this->directory . '/.http-vcr/.gitignore'));
+    }
+
+    public function testNothingOfTheLibrarysOwnShowsUpAmongTheCassettes(): void
+    {
+        $persister = $this->persister();
+        $persister->write('shopify/get-product.json', 'x');
+        $persister->lock('shopify/get-product.cassette-lock');
+        $persister->unlock('shopify/get-product.cassette-lock');
+
+        self::assertSame(['shopify/get-product'], iterator_to_array($persister->list('json'), false));
+    }
+
+    public function testReplayingWritesNothingAtAllBecauseItNeverTakesALock(): void
+    {
+        $persister = $this->persister();
+        $persister->write('shopify/get-product.json', 'x');
+
+        $persister->read('shopify/get-product.json');
+
+        self::assertFileDoesNotExist($this->directory . '/.http-vcr');
     }
 
     public function testUnlockingWhatWasNeverLockedIsNotAnError(): void
