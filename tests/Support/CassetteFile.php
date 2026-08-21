@@ -62,6 +62,29 @@ final class CassetteFile
         return array_map(fn (int $index): string => $this->responseBody($index), range(0, $this->count() - 1));
     }
 
+    /**
+     * @return list<string>
+     */
+    public function responseHeader(int $index, string $name): array
+    {
+        $headers = $this->part($index, 'response')['headers'] ?? [];
+
+        if (!is_array($headers)) {
+            return [];
+        }
+
+        foreach ($headers as $header => $values) {
+            if (strcasecmp((string) $header, $name) === 0 && is_array($values)) {
+                return array_values(array_map(
+                    static fn (mixed $value): string => is_string($value) ? $value : '',
+                    $values,
+                ));
+            }
+        }
+
+        return [];
+    }
+
     public function bodyEncoding(int $index): string
     {
         return $this->string($this->part($index, 'response'), 'bodyEncoding');

@@ -55,6 +55,7 @@ final class VcrClient implements ClientInterface
         RecordMode $mode = RecordMode::RecordIfAbsent,
         array $matchers = [],
         private readonly bool $recordTransportErrors = false,
+        private readonly bool $decodeCompressedResponse = true,
         bool $repeatablePlayback = false,
         bool $locked = false,
         ?CassettePersisterInterface $persister = null,
@@ -194,7 +195,7 @@ final class VcrClient implements ClientInterface
             throw $exception;
         }
 
-        [$response, $body] = $this->buffer($response);
+        [$response, $body] = $this->decompress(...$this->buffer($response));
 
         $this->cassette->record($incoming, new RecordedResponse(
             $response->getStatusCode(),
@@ -250,6 +251,71 @@ final class VcrClient implements ClientInterface
             $body,
             $this->encoding($request, $body),
         )];
+    }
+
+    /**
+     * A compressed body is stored decompressed, with Content-Encoding stripped.
+     *
+     * Two reasons, and the second is the one that would hurt: redaction works on text and
+     * has nothing to say about a gzip frame, and a cassette is meant to be read in a pull
+     * request. The decompressed response is what the code under test receives on this run
+     * too, not just on replay — a recording run and a replaying run have to hand back the
+     * same thing, or a test passes once and fails after.
+     *
+     * Content this build cannot decompress — brotli without the extension — is stored as it
+     * came, header and all, so replay is still faithful and the client's own decoding still
+     * applies.
+     *
+     * @return array{ResponseInterface, string}
+     */
+    private function decompress(ResponseInterface $response, string $body): array
+    {
+        $encoding = strtolower(trim($response->getHeaderLine('Content-Encoding')));
+
+        if (!$this->decodeCompressedResponse || $encoding === '' || $encoding === 'identity' || $body === '') {
+            return [$response, $body];
+        }
+
+        $decoded = $this->inflate($encoding, $body);
+
+        if ($decoded === null) {
+            return [$response, $body];
+        }
+
+        $response = $response->withoutHeader('Content-Encoding');
+
+        if ($response->hasHeader('Content-Length')) {
+            $response = $response->withHeader('Content-Length', (string) strlen($decoded));
+        }
+
+        return [$response->withBody($this->streamFactory->createStream($decoded)), $decoded];
+    }
+
+    private function inflate(string $encoding, string $body): ?string
+    {
+        $decoded = match ($encoding) {
+            'gzip', 'x-gzip' => function_exists('gzdecode') ? @gzdecode($body) : false,
+            'deflate' => $this->inflateDeflate($body),
+            'br' => function_exists('brotli_uncompress') ? @brotli_uncompress($body) : false,
+            default => false,
+        };
+
+        return is_string($decoded) ? $decoded : null;
+    }
+
+    /**
+     * `deflate` is two things in the wild: zlib-wrapped, as the RFC says, and raw, as some
+     * servers send it. Try the correct one, fall back to the common mistake.
+     */
+    private function inflateDeflate(string $body): string|false
+    {
+        if (!function_exists('gzuncompress')) {
+            return false;
+        }
+
+        $decoded = @gzuncompress($body);
+
+        return $decoded === false ? @gzinflate($body) : $decoded;
     }
 
     /**
