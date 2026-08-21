@@ -321,12 +321,45 @@ final class CassetteManager
             return;
         }
 
+        if ($this->mode === RecordMode::ExtendCassette) {
+            $this->openForExtending();
+
+            return;
+        }
+
         if ($this->mode === RecordMode::RecordIfAbsent && !$this->existed) {
             $this->openForFirstRecording();
 
             return;
         }
 
+        $this->cassette = $this->readFromDisk();
+    }
+
+    /**
+     * The cassette keeps everything it holds and grows: recorded interactions replay as
+     * usual, and whatever matches none of them is appended.
+     *
+     * The lock is taken when the session opens rather than when something is finally
+     * appended, because an append is a read-modify-write of the file — the read that
+     * precedes it has to be inside the same lock, or a parallel session's interaction is
+     * overwritten by this one's copy of the file.
+     */
+    private function openForExtending(): void
+    {
+        if (!$this->environment->isRecordingAllowed()) {
+            // Replaying what is already there is unaffected: only the branch that would
+            // have appended something is blocked, and it says so when a request reaches it.
+            $this->recordingBlocked = $this->environment->recordingBlockedBecause();
+            $this->cassette = $this->readFromDisk();
+
+            return;
+        }
+
+        $this->takeLock();
+
+        $this->existed = $this->persister->exists($this->key());
+        $this->recording = true;
         $this->cassette = $this->readFromDisk();
     }
 

@@ -22,6 +22,12 @@ enum RecordMode
     case RecordIfAbsent;
 
     /**
+     * Replays what is already recorded and appends every unmatched request to the end of
+     * the cassette, leaving the existing interactions untouched.
+     */
+    case ExtendCassette;
+
+    /**
      * Never records, whatever is missing. Every miss throws.
      */
     case PlaybackOnly;
