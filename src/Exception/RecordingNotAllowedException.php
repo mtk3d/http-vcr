@@ -19,6 +19,16 @@ final class RecordingNotAllowedException extends RuntimeException implements Vcr
      * @param string $cause why recording is disabled, named precisely enough to act on —
      *                      see {@see \HttpVcr\Environment::recordingBlockedBecause()}
      */
+    public static function forErasedCassette(string $cassetteName, string $cause): self
+    {
+        return new self(sprintf(
+            'Recording is disabled by %s, ignoring VCR_ERASE_TAPE — cassette "%s" was left alone rather '
+            . 'than erased with no way to record it again.',
+            $cause,
+            $cassetteName,
+        ));
+    }
+
     public static function forRequest(RecordedRequest $incoming, string $cassetteLocation, string $cause): self
     {
         return new self(sprintf(
