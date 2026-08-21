@@ -9,6 +9,7 @@ use HttpVcr\Config;
 use HttpVcr\EraseTape;
 use HttpVcr\Exception\RecordingNotAllowedException;
 use HttpVcr\Persistence\FilesystemCassettePersister;
+use HttpVcr\Provider;
 use HttpVcr\Tests\Support\CassetteDirectory;
 use HttpVcr\Tests\Support\ControlsEnvironment;
 use HttpVcr\Tests\Support\FakeHttpClient;
@@ -123,6 +124,29 @@ final class ForcedRecordingTest extends TestCase
         self::assertSame('{"ticket":"old"}', (string) $ticket->getBody());
         self::assertSame('{"order":"new"}', (string) $order->getBody());
         self::assertSame(1, $inner->sentCount());
+    }
+
+    public function testTheNameAProjectGaveAnApiSelectsEveryHostItCovers(): void
+    {
+        VcrClient::configure(providers: [
+            'shopify' => new Provider(hosts: ['*.example.com'], requiresEnv: []),
+        ]);
+
+        $this->seed('sync/order-flow', [
+            $this->interaction('https://shop.example.com/orders/1', '{"order":"old"}'),
+            $this->interaction('https://acme.zendesk.com/tickets', '{"ticket":"old"}'),
+        ]);
+        $_ENV['VCR_ERASE_TAPE'] = '@shopify';
+
+        $inner = (new FakeHttpClient())->willRespond('{"order":"new"}');
+        $vcr = new VcrClient($inner, 'sync/order-flow', persister: $this->persister());
+
+        $ticket = $vcr->sendRequest(new Request('GET', 'https://acme.zendesk.com/tickets'));
+        $order = $vcr->sendRequest(new Request('GET', 'https://shop.example.com/orders/1'));
+        $vcr->close();
+
+        self::assertSame('{"ticket":"old"}', (string) $ticket->getBody());
+        self::assertSame('{"order":"new"}', (string) $order->getBody());
     }
 
     public function testSurvivorsKeepTheirOrderAtTheFrontAndFreshRecordingsFollow(): void

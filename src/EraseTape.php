@@ -20,8 +20,9 @@ final readonly class EraseTape
 {
     /**
      * @param list<array{cassette: string|null, provider: string|null}> $selectors
+     * @param array<string, Provider>                                   $providers
      */
-    private function __construct(private array $selectors)
+    private function __construct(private array $selectors, private array $providers = [])
     {
     }
 
@@ -35,7 +36,10 @@ final readonly class EraseTape
      *                                  thing to type must not also be the widest blast
      *                                  radius, so `all` has to be said out loud
      */
-    public static function parse(?string $value): self
+    /**
+     * @param array<string, Provider> $providers the APIs this project has named
+     */
+    public static function parse(?string $value, array $providers = []): self
     {
         if ($value === null || trim($value) === '') {
             return self::none();
@@ -75,7 +79,7 @@ final readonly class EraseTape
             ];
         }
 
-        return new self($selectors);
+        return new self($selectors, $providers);
     }
 
     public function isActive(): bool
@@ -128,11 +132,40 @@ final readonly class EraseTape
 
     /**
      * Every host is its own API until a project names one, so this needs no configuration.
+     *
+     * A named provider is matched by its host patterns; anything else is taken as a host
+     * and compared exactly, since a glob is a judgement about what counts as one API rather
+     * than something readable out of the data. A host a named provider has claimed stops
+     * answering to its own name, so one thing always has exactly one selector.
      */
     private function belongsTo(Interaction $interaction, string $provider): bool
     {
         $host = parse_url($interaction->request->uri, PHP_URL_HOST);
 
-        return is_string($host) && strcasecmp($host, $provider) === 0;
+        if (!is_string($host)) {
+            return false;
+        }
+
+        $named = $this->providers[$provider] ?? null;
+
+        if ($named !== null) {
+            return $named->covers($host);
+        }
+
+        return strcasecmp($host, $provider) === 0 && $this->claimant($host) === null;
+    }
+
+    /**
+     * The named provider this host belongs to, if any.
+     */
+    private function claimant(string $host): ?Provider
+    {
+        foreach ($this->providers as $provider) {
+            if ($provider->covers($host)) {
+                return $provider;
+            }
+        }
+
+        return null;
     }
 }

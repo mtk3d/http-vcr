@@ -9,12 +9,14 @@ use HttpVcr\Cassette\Interaction;
 use HttpVcr\Cassette\RecordedRequest;
 use HttpVcr\Cassette\RecordedResponse;
 use HttpVcr\EraseTape;
+use HttpVcr\Provider;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(EraseTape::class)]
+#[CoversClass(Provider::class)]
 final class EraseTapeTest extends TestCase
 {
     public function testAnUnsetVariableErasesNothing(): void
@@ -106,6 +108,50 @@ final class EraseTapeTest extends TestCase
         self::assertTrue($eraseTape->covers('any/cassette'));
         self::assertFalse($eraseTape->spares('any/cassette', $this->interaction('https://shop.myshopify.com/products')));
         self::assertTrue($eraseTape->spares('any/cassette', $this->interaction('https://acme.zendesk.com/tickets')));
+    }
+
+    public function testANamedProviderCoversEveryHostItsPatternsMatch(): void
+    {
+        $eraseTape = EraseTape::parse('@shopify', [
+            'shopify' => new Provider(hosts: ['*.myshopify.com', 'shopify.dev']),
+        ]);
+
+        self::assertFalse($eraseTape->spares('sync/order-flow', $this->interaction('https://shop.myshopify.com/products')));
+        self::assertFalse($eraseTape->spares('sync/order-flow', $this->interaction('https://other.myshopify.com/products')));
+        self::assertFalse($eraseTape->spares('sync/order-flow', $this->interaction('https://shopify.dev/docs')));
+        self::assertTrue($eraseTape->spares('sync/order-flow', $this->interaction('https://acme.zendesk.com/tickets')));
+    }
+
+    public function testAHostANamedProviderClaimedStopsAnsweringToItsOwnName(): void
+    {
+        $providers = ['shopify' => new Provider(hosts: ['*.myshopify.com'])];
+
+        $eraseTape = EraseTape::parse('@shop.myshopify.com', $providers);
+
+        self::assertTrue($eraseTape->spares('sync/order-flow', $this->interaction('https://shop.myshopify.com/products')));
+    }
+
+    public function testAHostNoProviderClaimedIsStillItsOwnApi(): void
+    {
+        $providers = ['shopify' => new Provider(hosts: ['*.myshopify.com'])];
+
+        $eraseTape = EraseTape::parse('@acme.zendesk.com', $providers);
+
+        self::assertFalse($eraseTape->spares('sync/order-flow', $this->interaction('https://acme.zendesk.com/tickets')));
+        self::assertTrue($eraseTape->spares('sync/order-flow', $this->interaction('https://shop.myshopify.com/products')));
+    }
+
+    public function testTwoAccountsOnSeparateSubdomainsAreSeparateProviders(): void
+    {
+        $providers = [
+            'zendesk-a' => new Provider(hosts: ['account-a.zendesk.com']),
+            'zendesk-b' => new Provider(hosts: ['account-b.zendesk.com']),
+        ];
+
+        $eraseTape = EraseTape::parse('@zendesk-a', $providers);
+
+        self::assertFalse($eraseTape->spares('sync/tickets', $this->interaction('https://account-a.zendesk.com/tickets')));
+        self::assertTrue($eraseTape->spares('sync/tickets', $this->interaction('https://account-b.zendesk.com/tickets')));
     }
 
     public function testALockedInteractionSurvivesEverySelector(): void

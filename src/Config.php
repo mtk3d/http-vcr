@@ -39,6 +39,7 @@ final class Config
     /**
      * @param list<RequestMatcherInterface>    $defaultMatchers
      * @param array<string, callable(): mixed> $redact
+     * @param array<string, Provider>          $providers
      */
     private function __construct(
         private readonly ?string $cassetteDirectory,
@@ -56,7 +57,9 @@ final class Config
         private readonly ?int $inlineBodyLimit,
         private readonly ?bool $scanRecordingsForSecrets,
         private readonly array $redact,
+        private readonly array $providers,
     ) {
+        $this->refuseAmbiguousProviders();
     }
 
     /**
@@ -64,6 +67,7 @@ final class Config
      * @param array<string, callable(): mixed> $redact          placeholder to value provider, for a
      *                                                          secret every cassette in the project
      *                                                          would otherwise have to redact itself
+     * @param array<string, Provider>          $providers       named APIs, recognised by host (§3.12)
      */
     public static function create(
         ?string $cassetteDirectory = null,
@@ -81,6 +85,7 @@ final class Config
         ?int $inlineBodyLimit = null,
         ?bool $scanRecordingsForSecrets = null,
         array $redact = [],
+        array $providers = [],
     ): self {
         return new self(
             $cassetteDirectory,
@@ -98,6 +103,7 @@ final class Config
             $inlineBodyLimit,
             $scanRecordingsForSecrets,
             $redact,
+            $providers,
         );
     }
 
@@ -215,6 +221,57 @@ final class Config
     public function scanRecordingsForSecrets(): bool
     {
         return $this->scanRecordingsForSecrets ?? true;
+    }
+
+    /**
+     * The APIs this project has named, if any (§3.12).
+     *
+     * @return array<string, Provider>
+     */
+    public function providers(): array
+    {
+        return $this->providers;
+    }
+
+    /**
+     * The name this project gave the API answering on that host, if it gave it one.
+     */
+    public function providerFor(string $host): ?string
+    {
+        foreach ($this->providers as $name => $provider) {
+            if ($provider->covers($host)) {
+                return $name;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * A host belonging to two providers is refused here rather than settled by declaration
+     * order: with the order deciding, `VCR_ERASE_TAPE=@shopify` would erase one thing today
+     * and another after someone sorted the array.
+     */
+    private function refuseAmbiguousProviders(): void
+    {
+        foreach ($this->providers as $name => $provider) {
+            foreach ($this->providers as $other => $rival) {
+                foreach ($provider->hosts as $pattern) {
+                    foreach ($rival->hosts as $rivalPattern) {
+                        if ($name !== $other && Provider::overlap($pattern, $rivalPattern)) {
+                            throw new LogicException(sprintf(
+                                'Providers "%s" (%s) and "%s" (%s) both claim the same host. One host '
+                                . 'belongs to one API, so that a selector always means the same thing.',
+                                $name,
+                                $pattern,
+                                $other,
+                                $rivalPattern,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public function clock(): ClockInterface

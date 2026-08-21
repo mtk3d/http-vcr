@@ -10,6 +10,7 @@ use HttpVcr\Matching\MethodMatcher;
 use HttpVcr\Matching\QueryStringMatcher;
 use HttpVcr\Matching\UriMatcher;
 use HttpVcr\Persistence\FilesystemCassettePersister;
+use HttpVcr\Provider;
 use HttpVcr\Serializer\JsonCassetteSerializer;
 use HttpVcr\Tests\Support\InMemoryCassettePersister;
 use HttpVcr\VcrClient;
@@ -77,6 +78,30 @@ final class ConfigTest extends TestCase
             RequestFactoryInterface::class => $factory,
             UriFactoryInterface::class => $factory,
         ], $config->psr17Factories());
+    }
+
+    public function testNamesTheProviderAHostBelongsTo(): void
+    {
+        $config = Config::create(providers: [
+            'shopify' => new Provider(hosts: ['*.myshopify.com']),
+            'zendesk' => new Provider(hosts: ['acme.zendesk.com'], requiresEnv: ['ZENDESK_API_KEY']),
+        ]);
+
+        self::assertSame('shopify', $config->providerFor('shop.myshopify.com'));
+        self::assertSame('zendesk', $config->providerFor('acme.zendesk.com'));
+        self::assertNull($config->providerFor('api.stripe.com'));
+        self::assertSame(['ZENDESK_API_KEY'], $config->providers()['zendesk']->requiresEnv);
+    }
+
+    public function testTwoProvidersClaimingOneHostAreRefusedRatherThanSettledByOrder(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('both claim the same host');
+
+        Config::create(providers: [
+            'shopify' => new Provider(hosts: ['*.myshopify.com']),
+            'one-shop' => new Provider(hosts: ['shop.myshopify.com']),
+        ]);
     }
 
     public function testConfiguringAfterTheFirstClientExistsThrowsRatherThanQuietlyChangingDefaults(): void

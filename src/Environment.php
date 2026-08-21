@@ -21,13 +21,19 @@ final class Environment
     private const CI_VARIABLES = ['CI', 'CONTINUOUS_INTEGRATION', 'BUILD_NUMBER', 'JENKINS_URL', 'TEAMCITY_VERSION'];
 
     /**
-     * @param array<string, string> $variables
+     * @param array<string, string>   $variables
+     * @param array<string, Provider> $providers the APIs this project has named, which is
+     *                                           what a `@name` in VCR_ERASE_TAPE resolves
+     *                                           against before falling back to a bare host
      */
-    public function __construct(private array $variables = [])
+    public function __construct(private array $variables = [], private array $providers = [])
     {
     }
 
-    public static function fromSystem(): self
+    /**
+     * @param array<string, Provider> $providers
+     */
+    public static function fromSystem(array $providers = []): self
     {
         $variables = [];
 
@@ -47,7 +53,34 @@ final class Environment
             }
         }
 
-        return new self($variables);
+        return new self($variables, $providers);
+    }
+
+    /**
+     * Which of these variables have no value — the check the recording branch runs before
+     * making a real request (§3.12).
+     *
+     * Read from the process at the moment of asking rather than from the snapshot above:
+     * the snapshot covers the VCR_* rules, which have to be settled when the session opens,
+     * while a credential may well be put in place by the test's own setUp().
+     *
+     * @param list<string> $names
+     *
+     * @return list<string>
+     */
+    public function missing(array $names): array
+    {
+        $missing = [];
+
+        foreach ($names as $name) {
+            $value = $this->variables[$name] ?? $_ENV[$name] ?? $_SERVER[$name] ?? getenv($name);
+
+            if (!is_string($value) || trim($value) === '') {
+                $missing[] = $name;
+            }
+        }
+
+        return $missing;
     }
 
     /**
@@ -88,7 +121,7 @@ final class Environment
 
     public function eraseTape(): EraseTape
     {
-        return EraseTape::parse($this->variables['VCR_ERASE_TAPE'] ?? null);
+        return EraseTape::parse($this->variables['VCR_ERASE_TAPE'] ?? null, $this->providers);
     }
 
     /**

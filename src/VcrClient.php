@@ -97,7 +97,7 @@ final class VcrClient implements ClientInterface
             $serializer ?? $config->serializer(),
             CompositeMatcher::of($matchers !== [] ? $matchers : $config->defaultMatchers()),
             $clock ?? $config->clock(),
-            Environment::fromSystem(),
+            Environment::fromSystem($config->providers()),
             $mode,
             $strictMode ?? $config->strictMode(),
             $staleAfter ?? $config->staleAfter(),
@@ -120,7 +120,8 @@ final class VcrClient implements ClientInterface
      * the order they ran in.
      *
      * @param list<RequestMatcherInterface>    $defaultMatchers
-     * @param array<string, callable(): mixed> $redact project-wide redaction rules
+     * @param array<string, callable(): mixed> $redact    project-wide redaction rules
+     * @param array<string, Provider>          $providers named APIs, recognised by host
      */
     public static function configure(
         ?string $cassetteDirectory = null,
@@ -137,6 +138,7 @@ final class VcrClient implements ClientInterface
         ?ClockInterface $clock = null,
         ?bool $scanRecordingsForSecrets = null,
         array $redact = [],
+        array $providers = [],
     ): void {
         Config::replaceGlobal(Config::create(
             $cassetteDirectory,
@@ -153,6 +155,7 @@ final class VcrClient implements ClientInterface
             $clock,
             scanRecordingsForSecrets: $scanRecordingsForSecrets,
             redact: $redact,
+            providers: $providers,
         ));
     }
 
