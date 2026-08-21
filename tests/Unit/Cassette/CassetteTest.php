@@ -49,6 +49,8 @@ final class CassetteTest extends TestCase
             ->withLocked(true)
             ->withRepeatablePlayback(true);
 
+        self::assertNotNull($interaction->response);
+        self::assertNotNull($changed->response);
         self::assertSame(200, $interaction->response->status);
         self::assertFalse($interaction->locked);
         self::assertSame(500, $changed->response->status);
@@ -60,7 +62,7 @@ final class CassetteTest extends TestCase
 
     private function interaction(string $uri): Interaction
     {
-        return new Interaction(
+        return Interaction::recorded(
             new RecordedRequest('GET', $uri),
             new RecordedResponse(200),
             new DateTimeImmutable('2026-08-21T10:00:00+00:00'),

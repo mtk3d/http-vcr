@@ -62,6 +62,40 @@ final class CassetteFile
         return array_map(fn (int $index): string => $this->responseBody($index), range(0, $this->count() - 1));
     }
 
+    public function outcome(int $index): string
+    {
+        $outcome = $this->interactions()[$index]['outcome'] ?? null;
+
+        return is_string($outcome) ? $outcome : '';
+    }
+
+    public function errorCategory(int $index): string
+    {
+        return $this->field($index, 'errorCategory');
+    }
+
+    public function errorMessage(int $index): string
+    {
+        return $this->field($index, 'errorMessage');
+    }
+
+    public function errorClass(int $index): string
+    {
+        return $this->field($index, 'errorClass');
+    }
+
+    public function hasResponse(int $index): bool
+    {
+        return isset($this->interactions()[$index]['response']);
+    }
+
+    private function field(int $index, string $name): string
+    {
+        $value = $this->interactions()[$index][$name] ?? null;
+
+        return is_string($value) ? $value : '';
+    }
+
     public function isLocked(int $index): bool
     {
         return ($this->interactions()[$index]['locked'] ?? false) === true;

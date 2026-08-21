@@ -7,7 +7,10 @@ namespace HttpVcr\Serializer;
 use DateTimeImmutable;
 use DateTimeInterface;
 use HttpVcr\Cassette\Cassette;
+use HttpVcr\Cassette\ErrorCategory;
 use HttpVcr\Cassette\Interaction;
+use HttpVcr\Cassette\Outcome;
+use HttpVcr\Cassette\RecordedError;
 use HttpVcr\Cassette\RecordedRequest;
 use HttpVcr\Cassette\RecordedResponse;
 use HttpVcr\Exception\CassetteFormatException;
@@ -34,6 +37,9 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
         $interactions = [];
 
         foreach ($cassette->interactions as $interaction) {
+            $response = $interaction->response;
+            $error = $interaction->error;
+
             $interactions[] = array_filter([
                 'request' => [
                     'method' => $interaction->request->method,
@@ -41,16 +47,19 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
                     'headers' => $interaction->request->headers,
                     'body' => $interaction->request->body,
                 ],
-                'response' => [
-                    'status' => $interaction->response->status,
-                    'headers' => $interaction->response->headers,
-                    'body' => $interaction->response->body,
+                'response' => $response === null ? null : [
+                    'status' => $response->status,
+                    'headers' => $response->headers,
+                    'body' => $response->body,
                 ],
-                'outcome' => 'success',
+                'outcome' => $interaction->outcome->value,
+                'errorCategory' => $error?->category->value,
+                'errorMessage' => $error?->message,
+                'errorClass' => $error?->exceptionClass,
                 'recordedAt' => $interaction->recordedAt->format(DateTimeInterface::ATOM),
                 'locked' => $interaction->locked,
                 'repeatablePlayback' => $interaction->repeatablePlayback,
-            ], static fn (mixed $value): bool => $value !== false);
+            ], static fn (mixed $value): bool => $value !== false && $value !== null);
         }
 
         try {
@@ -108,22 +117,50 @@ final class JsonCassetteSerializer implements CassetteSerializerInterface
             throw CassetteFormatException::malformed(sprintf('has a malformed interaction #%d', $position));
         }
 
-        $outcome = $data['outcome'] ?? 'success';
+        $outcome = Outcome::tryFrom(is_string($data['outcome'] ?? null) ? $data['outcome'] : 'success');
 
-        if ($outcome !== 'success') {
+        if ($outcome === null) {
             throw CassetteFormatException::malformed(sprintf(
-                'records outcome "%s" in interaction #%d, which this installation cannot replay',
-                is_string($outcome) ? $outcome : gettype($outcome),
+                'has an unknown outcome "%s" in interaction #%d',
+                is_string($data['outcome']) ? $data['outcome'] : gettype($data['outcome']),
                 $position,
             ));
         }
 
-        return new Interaction(
-            $this->request($data['request'] ?? null, $position),
-            $this->response($data['response'] ?? null, $position),
-            $this->recordedAt($data['recordedAt'] ?? null, $position),
-            $this->bool($data['locked'] ?? false, 'locked', $position),
-            $this->bool($data['repeatablePlayback'] ?? false, 'repeatablePlayback', $position),
+        $request = $this->request($data['request'] ?? null, $position);
+        $outcomeOf = $outcome === Outcome::Error
+            ? $this->error($data, $position)
+            : $this->response($data['response'] ?? null, $position);
+
+        $recordedAt = $this->recordedAt($data['recordedAt'] ?? null, $position);
+        $locked = $this->bool($data['locked'] ?? false, 'locked', $position);
+        $repeatable = $this->bool($data['repeatablePlayback'] ?? false, 'repeatablePlayback', $position);
+
+        return $outcomeOf instanceof RecordedError
+            ? Interaction::failed($request, $outcomeOf, $recordedAt, $locked, $repeatable)
+            : Interaction::recorded($request, $outcomeOf, $recordedAt, $locked, $repeatable);
+    }
+
+    private function error(mixed $data, int $position): RecordedError
+    {
+        if (!is_array($data)) {
+            throw CassetteFormatException::malformed(sprintf('has a malformed interaction #%d', $position));
+        }
+
+        $category = ErrorCategory::tryFrom(is_string($data['errorCategory'] ?? null) ? $data['errorCategory'] : '');
+
+        if ($category === null) {
+            throw CassetteFormatException::malformed(sprintf(
+                'has an interaction #%d recording a failure without a known errorCategory '
+                . '("network" or "request")',
+                $position,
+            ));
+        }
+
+        return new RecordedError(
+            $category,
+            is_string($data['errorMessage'] ?? null) ? $data['errorMessage'] : '',
+            is_string($data['errorClass'] ?? null) ? $data['errorClass'] : '',
         );
     }
 

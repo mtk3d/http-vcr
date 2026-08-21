@@ -188,7 +188,7 @@ final class CassetteManagerTest extends TestCase
 
     private function interaction(string $uri): Interaction
     {
-        return new Interaction(
+        return Interaction::recorded(
             new RecordedRequest('GET', $uri),
             new RecordedResponse(200, [], '{}'),
             new DateTimeImmutable('2026-08-01T10:00:00+00:00'),

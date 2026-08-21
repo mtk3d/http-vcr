@@ -5,18 +5,25 @@ declare(strict_types=1);
 namespace HttpVcr;
 
 use HttpVcr\Cassette\CassetteManager;
+use HttpVcr\Cassette\ErrorCategory;
+use HttpVcr\Cassette\RecordedError;
 use HttpVcr\Cassette\RecordedRequest;
 use HttpVcr\Cassette\RecordedResponse;
 use HttpVcr\Clock\ClockInterface;
 use HttpVcr\Exception\CassetteNotFoundException;
 use HttpVcr\Exception\NoMatchingInteractionException;
 use HttpVcr\Exception\RecordingNotAllowedException;
+use HttpVcr\Exception\VcrNetworkException;
+use HttpVcr\Exception\VcrRequestException;
 use HttpVcr\Matching\CompositeMatcher;
 use HttpVcr\Matching\RequestMatcherInterface;
 use HttpVcr\Persistence\CassettePersisterInterface;
 use HttpVcr\Serializer\CassetteSerializerInterface;
 use LogicException;
+use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
+use Psr\Http\Client\NetworkExceptionInterface;
+use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -48,6 +55,7 @@ final class VcrClient implements ClientInterface
         string $cassette,
         RecordMode $mode = RecordMode::RecordIfAbsent,
         array $matchers = [],
+        private readonly bool $recordTransportErrors = false,
         bool $repeatablePlayback = false,
         bool $locked = false,
         ?CassettePersisterInterface $persister = null,
@@ -113,8 +121,15 @@ final class VcrClient implements ClientInterface
         $incoming = $this->snapshot($request);
         $interaction = $this->cassette->play($incoming);
 
-        if ($interaction !== null) {
+        if ($interaction?->response !== null) {
             return $this->rebuild($interaction->response);
+        }
+
+        if ($interaction?->error !== null) {
+            throw match ($interaction->error->category) {
+                ErrorCategory::Network => VcrNetworkException::replaying($interaction->error, $request),
+                ErrorCategory::Request => VcrRequestException::replaying($interaction->error, $request),
+            };
         }
 
         return $this->recordOrExplain($request, $incoming);
@@ -172,7 +187,13 @@ final class VcrClient implements ClientInterface
             );
         }
 
-        $response = $this->inner->sendRequest($request);
+        try {
+            $response = $this->inner->sendRequest($request);
+        } catch (ClientExceptionInterface $exception) {
+            $this->recordFailure($incoming, $exception);
+
+            throw $exception;
+        }
 
         $this->cassette->record($incoming, new RecordedResponse(
             $response->getStatusCode(),
@@ -181,6 +202,34 @@ final class VcrClient implements ClientInterface
         ));
 
         return $response;
+    }
+
+    /**
+     * A transport failure is only persisted when the cassette asked for it: a transient
+     * network blip shouldn't become a permanent part of a regression test. Either way the
+     * original exception continues on its way to the code under test, unchanged.
+     *
+     * Only the two failures PSR-18 gives an interface to are recordable — those are the two
+     * that can be replayed as something an application catching by contract will recognize.
+     * A client exception that is neither passes through unrecorded.
+     */
+    private function recordFailure(RecordedRequest $incoming, ClientExceptionInterface $exception): void
+    {
+        $category = match (true) {
+            $exception instanceof NetworkExceptionInterface => ErrorCategory::Network,
+            $exception instanceof RequestExceptionInterface => ErrorCategory::Request,
+            default => null,
+        };
+
+        if (!$this->recordTransportErrors || $category === null) {
+            return;
+        }
+
+        $this->cassette->recordFailure($incoming, new RecordedError(
+            $category,
+            $exception->getMessage(),
+            $exception::class,
+        ));
     }
 
     private function snapshot(RequestInterface $request): RecordedRequest

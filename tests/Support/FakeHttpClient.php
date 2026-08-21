@@ -6,6 +6,7 @@ namespace HttpVcr\Tests\Support;
 
 use LogicException;
 use Nyholm\Psr7\Response;
+use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -17,7 +18,7 @@ use Psr\Http\Message\ResponseInterface;
  */
 final class FakeHttpClient implements ClientInterface
 {
-    /** @var list<ResponseInterface> */
+    /** @var list<ResponseInterface|ClientExceptionInterface> */
     private array $responses = [];
 
     /** @var list<RequestInterface> */
@@ -32,9 +33,25 @@ final class FakeHttpClient implements ClientInterface
         return $this;
     }
 
+    /**
+     * Queues a transport failure — what PSR-18 hands back when there is no response at all.
+     */
+    public function willThrow(ClientExceptionInterface $failure): self
+    {
+        $this->responses[] = $failure;
+
+        return $this;
+    }
+
     public function sendRequest(RequestInterface $request): ResponseInterface
     {
         $response = array_shift($this->responses);
+
+        if ($response instanceof ClientExceptionInterface) {
+            $this->sent[] = $request;
+
+            throw $response;
+        }
 
         if ($response === null) {
             throw new LogicException(sprintf(

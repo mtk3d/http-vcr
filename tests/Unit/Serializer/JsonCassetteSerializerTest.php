@@ -27,7 +27,7 @@ final class JsonCassetteSerializerTest extends TestCase
     public function testWritesTheDocumentedShape(): void
     {
         $cassette = new Cassette([
-            new Interaction(
+            Interaction::recorded(
                 new RecordedRequest('GET', 'https://example.com/products/1', ['Accept' => ['application/json']]),
                 new RecordedResponse(200, ['Content-Type' => ['application/json']], '{"title":"T-Shirt"}'),
                 new DateTimeImmutable('2026-08-21T10:00:00+00:00'),
@@ -86,7 +86,7 @@ final class JsonCassetteSerializerTest extends TestCase
     public function testKeepsEverythingThroughARoundTrip(): void
     {
         $cassette = new Cassette([
-            new Interaction(
+            Interaction::recorded(
                 new RecordedRequest(
                     'POST',
                     'https://example.com/orders?tag=a&tag=b',
@@ -110,7 +110,7 @@ final class JsonCassetteSerializerTest extends TestCase
     public function testSlashesAndUnicodeAreLeftReadableInTheFile(): void
     {
         $json = (new JsonCassetteSerializer())->serialize(new Cassette([
-            new Interaction(
+            Interaction::recorded(
                 new RecordedRequest('GET', 'https://example.com/a/b'),
                 new RecordedResponse(200, [], '{"name":"Łódź"}'),
                 new DateTimeImmutable('2026-08-21T10:00:00+00:00'),
@@ -183,7 +183,7 @@ final class JsonCassetteSerializerTest extends TestCase
 
     private function interaction(): Interaction
     {
-        return new Interaction(
+        return Interaction::recorded(
             new RecordedRequest('GET', 'https://example.com/products/1'),
             new RecordedResponse(200, [], '{}'),
             new DateTimeImmutable('2026-08-21T10:00:00+00:00'),

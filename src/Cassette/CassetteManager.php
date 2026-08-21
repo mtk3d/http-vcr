@@ -108,9 +108,22 @@ final class CassetteManager
 
     public function record(RecordedRequest $request, RecordedResponse $response): Interaction
     {
-        $this->open();
+        return $this->append(Interaction::recorded($request, $response, $this->clock->now()));
+    }
 
-        $interaction = new Interaction($request, $response, $this->clock->now());
+    /**
+     * Persists a transport failure in place of a response — only ever reached with
+     * recordTransportErrors on, since a transient network blip has no business becoming a
+     * permanent part of a regression test.
+     */
+    public function recordFailure(RecordedRequest $request, RecordedError $error): Interaction
+    {
+        return $this->append(Interaction::failed($request, $error, $this->clock->now()));
+    }
+
+    private function append(Interaction $interaction): Interaction
+    {
+        $this->open();
 
         // Read-modify-write, not a bare write: the appended interaction goes onto whatever
         // is on disk now, which is why the lock is taken before the read and not around
