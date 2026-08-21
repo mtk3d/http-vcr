@@ -301,10 +301,78 @@ final class RedactionHooksTest extends TestCase
         $hooks->redact('<INNER>', static fn (): string => 'inner-token');
 
         $recorded = $hooks->beforeRecord(self::interaction(
-            self::request(headers: ['Authorization' => ['Bearer inner-token']]),
+            self::request(headers: ['X-Auth' => ['Bearer inner-token']]),
         ));
 
-        self::assertSame(['<OUTER>'], $recorded->request->header('Authorization'));
+        self::assertSame(['<OUTER>'], $recorded->request->header('X-Auth'));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function sensitiveHeaders(): iterable
+    {
+        yield 'Authorization' => ['Authorization'];
+        yield 'Proxy-Authorization' => ['Proxy-Authorization'];
+        yield 'Cookie' => ['Cookie'];
+        yield 'Set-Cookie' => ['Set-Cookie'];
+    }
+
+    #[DataProvider('sensitiveHeaders')]
+    public function testRedactsTheAuthorizationHeadersWithNoConfigurationAtAll(string $header): void
+    {
+        $recorded = (new RedactionHooks())->beforeRecord(self::interaction(
+            self::request(headers: [$header => ['Bearer sk_live_4eC39H']]),
+            new RecordedResponse(200, [$header => ['Bearer sk_live_4eC39H']]),
+        ));
+
+        self::assertSame([Redaction::placeholderFor($header)], $recorded->request->header($header));
+        self::assertSame([Redaction::placeholderFor($header)], $recorded->response?->header($header));
+    }
+
+    public function testAutomaticRedactionRunsAheadOfEveryDeclaredRule(): void
+    {
+        $hooks = new RedactionHooks();
+        $hooks->redact('<TOKEN>', static fn (): string => 'sk_live_4eC39H');
+
+        $recorded = $hooks->beforeRecord(self::interaction(
+            self::request(headers: ['Authorization' => ['Bearer sk_live_4eC39H']]),
+        ));
+
+        self::assertSame(['<REDACTED-AUTHORIZATION>'], $recorded->request->header('Authorization'));
+    }
+
+    public function testAnAutomaticallyRedactedHeaderStopsTellingTwoRequestsApart(): void
+    {
+        $incoming = (new RedactionHooks())->forMatching(
+            self::request(headers: ['Authorization' => ['Bearer sk_live_4eC39H']]),
+        );
+
+        self::assertSame(['<REDACTED-AUTHORIZATION>'], $incoming->header('Authorization'));
+    }
+
+    public function testAnIncludedHeaderIsNeitherRedactedNorNormalizedForMatching(): void
+    {
+        $hooks = new RedactionHooks();
+        $hooks->includeSensitiveHeaders(['authorization']);
+
+        $request = self::request(headers: ['Authorization' => ['Bearer sk_live_4eC39H']]);
+
+        self::assertSame(['Bearer sk_live_4eC39H'], $hooks->beforeRecord(self::interaction($request))->request->header('Authorization'));
+        self::assertSame(['Bearer sk_live_4eC39H'], $hooks->forMatching($request)->header('Authorization'));
+    }
+
+    public function testIncludingOneHeaderLeavesTheOtherThreeRedacted(): void
+    {
+        $hooks = new RedactionHooks();
+        $hooks->includeSensitiveHeaders(['Authorization']);
+
+        $recorded = $hooks->beforeRecord(self::interaction(
+            self::request(headers: ['Authorization' => ['Bearer a'], 'Cookie' => ['session=b']]),
+        ));
+
+        self::assertSame(['Bearer a'], $recorded->request->header('Authorization'));
+        self::assertSame(['<REDACTED-COOKIE>'], $recorded->request->header('Cookie'));
     }
 
     public function testMatchingSeesOnlyTheWriteOnlyRulesAppliedToTheIncomingRequest(): void
@@ -321,12 +389,12 @@ final class RedactionHooksTest extends TestCase
         self::assertSame(['acct-1'], $incoming->header('X-Account'));
     }
 
-    public function testAnInteractionPassesThroughUnchangedWhenNothingIsRedacted(): void
+    public function testAnInteractionWithNothingToRedactComesOutUnchanged(): void
     {
         $hooks = new RedactionHooks();
         $interaction = self::interaction(self::request());
 
-        self::assertSame($interaction, $hooks->beforeRecord($interaction));
+        self::assertEquals($interaction, $hooks->beforeRecord($interaction));
         self::assertSame($interaction, $hooks->beforePlayback($interaction));
     }
 

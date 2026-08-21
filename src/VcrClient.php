@@ -180,6 +180,20 @@ final class VcrClient implements ClientInterface
     }
 
     /**
+     * Takes one of the four automatically redacted headers — Authorization,
+     * Proxy-Authorization, Cookie, Set-Cookie — back out of redaction, for a test that
+     * verifies the header itself. It starts distinguishing interactions again too (§3.3).
+     *
+     * @param list<string> $names
+     */
+    public function includeSensitiveHeaders(array $names): void
+    {
+        $this->configuring('includeSensitiveHeaders');
+
+        $this->cassette->redaction->includeSensitiveHeaders($names);
+    }
+
+    /**
      * Registers a hook that sees each interaction on its way to the cassette, and may
      * change it or return null to keep it out of the file altogether (§3.5).
      *

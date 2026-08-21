@@ -29,8 +29,18 @@ use HttpVcr\JsonPointer;
  */
 final class RedactionHooks
 {
+    /**
+     * The headers redacted with no configuration at all. They almost always carry a
+     * credential and almost never carry what a test asserts on, so a false positive costs
+     * nothing and a miss costs a token in git history, which is permanent.
+     */
+    private const SENSITIVE_HEADERS = ['Authorization', 'Proxy-Authorization', 'Cookie', 'Set-Cookie'];
+
     /** @var list<Redaction> */
     private array $rules = [];
+
+    /** @var list<string> */
+    private array $included = [];
 
     /**
      * Replaces a literal value with $placeholder wherever it occurs in an interaction.
@@ -80,11 +90,25 @@ final class RedactionHooks
     }
 
     /**
+     * Takes one of the automatically redacted headers back out of redaction, for a test
+     * that verifies the authorization header itself. It returns to the pool matching looks
+     * at as well — one deliberate decision rather than two settings that have to agree.
+     *
+     * @param list<string> $names
+     */
+    public function includeSensitiveHeaders(array $names): void
+    {
+        foreach ($names as $name) {
+            $this->included[] = $name;
+        }
+    }
+
+    /**
      * The record-direction hook: real values out, placeholders in.
      */
     public function beforeRecord(Interaction $interaction): Interaction
     {
-        return $this->apply($interaction, $this->rules, restore: false);
+        return $this->apply($interaction, $this->all(), restore: false);
     }
 
     /**
@@ -393,18 +417,52 @@ final class RedactionHooks
     }
 
     /**
+     * Every rule in force, automatic redaction first: a rule nobody had to ask for should
+     * not depend on what else was declared.
+     *
      * @return list<Redaction>
      */
-    private function twoWay(): array
+    private function all(): array
     {
-        return array_values(array_filter($this->rules, static fn (Redaction $rule): bool => $rule->isTwoWay()));
+        $automatic = [];
+
+        foreach (self::SENSITIVE_HEADERS as $name) {
+            if (!$this->isIncluded($name)) {
+                $automatic[] = Redaction::of(RedactionTarget::Header, $name, Redaction::placeholderFor($name));
+            }
+        }
+
+        return array_merge($automatic, $this->rules);
+    }
+
+    private function isIncluded(string $name): bool
+    {
+        foreach ($this->included as $included) {
+            if (strcasecmp($included, $name) === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
      * @return list<Redaction>
      */
+    private function twoWay(): array
+    {
+        return array_values(array_filter($this->all(), static fn (Redaction $rule): bool => $rule->isTwoWay()));
+    }
+
+    /**
+     * Automatic redaction is among these: the library never knew those headers' real
+     * values, so lining both sides up is the only way a request carrying one can still be
+     * matched against a cassette that holds a placeholder.
+     *
+     * @return list<Redaction>
+     */
     private function oneWay(): array
     {
-        return array_values(array_filter($this->rules, static fn (Redaction $rule): bool => !$rule->isTwoWay()));
+        return array_values(array_filter($this->all(), static fn (Redaction $rule): bool => !$rule->isTwoWay()));
     }
 }

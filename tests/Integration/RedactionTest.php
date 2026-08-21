@@ -6,6 +6,7 @@ namespace HttpVcr\Tests\Integration;
 
 use HttpVcr\Cassette\CassetteManager;
 use HttpVcr\Config;
+use HttpVcr\Exception\NoMatchingInteractionException;
 use HttpVcr\Hook\RedactionHooks;
 use HttpVcr\Matching\HeadersMatcher;
 use HttpVcr\Matching\MethodMatcher;
@@ -187,6 +188,56 @@ final class RedactionTest extends TestCase
         self::assertSame(['sk_live_4eC39H'], $response->getHeader('X-Token'));
     }
 
+    public function testTheAuthorizationHeaderIsRedactedWithNoConfigurationAtAll(): void
+    {
+        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'));
+
+        $vcr->sendRequest(
+            (new Request('GET', 'https://api.example.com/orders'))->withHeader('Authorization', 'Bearer sk_live_4eC39H'),
+        );
+
+        $file = $this->cassettes->read('payments.json');
+        self::assertStringNotContainsString('sk_live_4eC39H', $file);
+        self::assertStringContainsString('<REDACTED-AUTHORIZATION>', $file);
+    }
+
+    /**
+     * The documented consequence of a redaction the library has no way to reverse: two
+     * recordings that differ only in that header are the same interaction to a matcher.
+     */
+    public function testAnAutomaticallyRedactedHeaderNoLongerTellsTwoRequestsApart(): void
+    {
+        $matchers = [new MethodMatcher(), new UriMatcher(), new HeadersMatcher(['Authorization'])];
+
+        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'), matchers: $matchers);
+        $vcr->sendRequest($this->bearing('sk_live_4eC39H'));
+        $vcr->close();
+
+        $response = $this->client(new FakeHttpClient(), RecordMode::PlaybackOnly, $matchers)
+            ->sendRequest($this->bearing('sk_live_SOMETHING_ELSE'));
+
+        self::assertSame('{"ok":true}', (string) $response->getBody());
+    }
+
+    public function testAnIncludedHeaderIsStoredAsSentAndTellsRequestsApartAgain(): void
+    {
+        $matchers = [new MethodMatcher(), new UriMatcher(), new HeadersMatcher(['Authorization'])];
+
+        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'), matchers: $matchers);
+        $vcr->includeSensitiveHeaders(['Authorization']);
+        $vcr->sendRequest($this->bearing('sk_live_4eC39H'));
+        $vcr->close();
+
+        self::assertStringContainsString('sk_live_4eC39H', $this->cassettes->read('payments.json'));
+
+        $replayed = $this->client(new FakeHttpClient(), RecordMode::PlaybackOnly, $matchers);
+        $replayed->includeSensitiveHeaders(['Authorization']);
+
+        $this->expectException(NoMatchingInteractionException::class);
+
+        $replayed->sendRequest($this->bearing('sk_live_SOMETHING_ELSE'));
+    }
+
     public function testRedactionRegisteredAfterTheFirstRequestIsRefused(): void
     {
         $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'));
@@ -196,6 +247,11 @@ final class RedactionTest extends TestCase
         $this->expectExceptionMessageMatches('/redact\(\) has to be called before the first request/');
 
         $vcr->redact('<API_KEY>', static fn (): string => 'sk_live_4eC39H');
+    }
+
+    private function bearing(string $token): Request
+    {
+        return (new Request('GET', 'https://api.example.com/orders'))->withHeader('Authorization', 'Bearer ' . $token);
     }
 
     private function authorized(): Request
