@@ -18,8 +18,10 @@ use HttpVcr\Serializer\CassetteSerializerInterface;
 use HttpVcr\Serializer\JsonCassetteSerializer;
 use LogicException;
 use Psr\Clock\ClockInterface;
+use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\UriFactoryInterface;
 
 /**
  * Project-wide defaults for every VcrClient the process constructs.
@@ -48,6 +50,8 @@ final class Config
         private readonly ?CassetteScopeResolverInterface $scopeResolver,
         private readonly ?ResponseFactoryInterface $responseFactory,
         private readonly ?StreamFactoryInterface $streamFactory,
+        private readonly ?RequestFactoryInterface $requestFactory,
+        private readonly ?UriFactoryInterface $uriFactory,
         private readonly ?ClockInterface $clock,
         private readonly ?int $inlineBodyLimit,
         private readonly ?bool $scanRecordingsForSecrets,
@@ -71,6 +75,8 @@ final class Config
         ?CassetteScopeResolverInterface $scopeResolver = null,
         ?ResponseFactoryInterface $responseFactory = null,
         ?StreamFactoryInterface $streamFactory = null,
+        ?RequestFactoryInterface $requestFactory = null,
+        ?UriFactoryInterface $uriFactory = null,
         ?ClockInterface $clock = null,
         ?int $inlineBodyLimit = null,
         ?bool $scanRecordingsForSecrets = null,
@@ -86,6 +92,8 @@ final class Config
             $scopeResolver,
             $responseFactory,
             $streamFactory,
+            $requestFactory,
+            $uriFactory,
             $clock,
             $inlineBodyLimit,
             $scanRecordingsForSecrets,
@@ -216,6 +224,8 @@ final class Config
 
     /**
      * The factories this project supplied, if any — the detection list fills in the rest.
+     * All four of them: the core uses two, and the Symfony bridge asks the same
+     * configuration for the request and URI factories it needs (§3.10).
      *
      * @return array<class-string, object>
      */
@@ -224,6 +234,8 @@ final class Config
         return array_filter([
             ResponseFactoryInterface::class => $this->responseFactory,
             StreamFactoryInterface::class => $this->streamFactory,
+            RequestFactoryInterface::class => $this->requestFactory,
+            UriFactoryInterface::class => $this->uriFactory,
         ]);
     }
 

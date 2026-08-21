@@ -84,6 +84,20 @@ final class Psr17FactoryResolver
     }
 
     /**
+     * Needed by the Symfony bridge alone, which builds a PSR-7 request out of a method, a
+     * URL and an options array (§3.10) — the core is handed requests, it never makes them.
+     */
+    public function requestFactory(): RequestFactoryInterface
+    {
+        return $this->resolve(RequestFactoryInterface::class);
+    }
+
+    public function uriFactory(): UriFactoryInterface
+    {
+        return $this->resolve(UriFactoryInterface::class);
+    }
+
+    /**
      * Lazily: a project that never touches a bridge needing a request factory never needs
      * one to exist.
      *

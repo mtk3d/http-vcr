@@ -14,8 +14,13 @@ use HttpVcr\Serializer\JsonCassetteSerializer;
 use HttpVcr\Tests\Support\InMemoryCassettePersister;
 use HttpVcr\VcrClient;
 use LogicException;
+use Nyholm\Psr7\Factory\Psr17Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\UriFactoryInterface;
 
 #[CoversClass(Config::class)]
 final class ConfigTest extends TestCase
@@ -53,6 +58,25 @@ final class ConfigTest extends TestCase
         self::assertSame($persister, Config::global()->persister());
         self::assertSame($clock, Config::global()->clock());
         self::assertEquals([new MethodMatcher()], Config::global()->defaultMatchers());
+    }
+
+    public function testCarriesAllFourPsr17FactoriesIncludingTheTwoOnlyTheSymfonyBridgeUses(): void
+    {
+        $factory = new Psr17Factory();
+
+        $config = Config::create(
+            responseFactory: $factory,
+            streamFactory: $factory,
+            requestFactory: $factory,
+            uriFactory: $factory,
+        );
+
+        self::assertSame([
+            ResponseFactoryInterface::class => $factory,
+            StreamFactoryInterface::class => $factory,
+            RequestFactoryInterface::class => $factory,
+            UriFactoryInterface::class => $factory,
+        ], $config->psr17Factories());
     }
 
     public function testConfiguringAfterTheFirstClientExistsThrowsRatherThanQuietlyChangingDefaults(): void

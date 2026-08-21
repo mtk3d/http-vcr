@@ -29,10 +29,12 @@ use Psr\Http\Client\ClientInterface;
 use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\MessageInterface;
+use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\UriFactoryInterface;
 
 /**
  * A PSR-18 client that replays a cassette instead of making requests — and records one
@@ -50,11 +52,17 @@ final class VcrClient implements ClientInterface
     private readonly StreamFactoryInterface $streamFactory;
 
     /**
+     * Whether this instance is the one that opened the session, as opposed to a satellite
+     * withInner() handed a middleware for the length of one request.
+     */
+    private bool $ownsSession = true;
+
+    /**
      * @param ClientInterface|null          $inner    the real client, used only when actually recording
      * @param list<RequestMatcherInterface> $matchers empty means the project default set
      */
     public function __construct(
-        private readonly ?ClientInterface $inner,
+        private ?ClientInterface $inner,
         string $cassette,
         RecordMode $mode = RecordMode::RecordIfAbsent,
         array $matchers = [],
@@ -124,6 +132,8 @@ final class VcrClient implements ClientInterface
         ?CassetteScopeResolverInterface $scopeResolver = null,
         ?ResponseFactoryInterface $responseFactory = null,
         ?StreamFactoryInterface $streamFactory = null,
+        ?RequestFactoryInterface $requestFactory = null,
+        ?UriFactoryInterface $uriFactory = null,
         ?ClockInterface $clock = null,
         ?bool $scanRecordingsForSecrets = null,
         array $redact = [],
@@ -138,10 +148,36 @@ final class VcrClient implements ClientInterface
             $scopeResolver,
             $responseFactory,
             $streamFactory,
+            $requestFactory,
+            $uriFactory,
             $clock,
             scanRecordingsForSecrets: $scanRecordingsForSecrets,
             redact: $redact,
         ));
+    }
+
+    /**
+     * The same client recording through a different transport: a new instance around the
+     * *same* cassette session, with everything else — mode, matchers, hooks, redaction —
+     * carried over untouched (§3.9).
+     *
+     * What a middleware needs, and the reason the session is an object of its own: the real
+     * request has to travel through the rest of the handler stack rather than around it, so
+     * the transport is known per request while the cassette is not. Sharing the session is
+     * what keeps replay consumption, the file lock and the configuration freeze counting
+     * across the whole run instead of resetting with every request (§3.14).
+     */
+    public function withInner(ClientInterface $inner): self
+    {
+        $satellite = clone $this;
+
+        $satellite->inner = $inner;
+
+        // The session outlives this instance: a middleware drops its satellite after every
+        // request, and a lock given back there would be given back mid-run.
+        $satellite->ownsSession = false;
+
+        return $satellite;
     }
 
     /**
@@ -286,7 +322,9 @@ final class VcrClient implements ClientInterface
 
     public function __destruct()
     {
-        $this->cassette->release();
+        if ($this->ownsSession) {
+            $this->cassette->release();
+        }
     }
 
     /**

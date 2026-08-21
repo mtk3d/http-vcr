@@ -6,12 +6,16 @@ namespace HttpVcr\Tests\Unit;
 
 use HttpVcr\Exception\MissingDependencyException;
 use HttpVcr\Psr17FactoryResolver;
+use Laminas\Diactoros\RequestFactory;
 use Laminas\Diactoros\ResponseFactory;
+use Laminas\Diactoros\UriFactory;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\UriFactoryInterface;
 
 #[CoversClass(Psr17FactoryResolver::class)]
 #[CoversClass(MissingDependencyException::class)]
@@ -23,6 +27,25 @@ final class Psr17FactoryResolverTest extends TestCase
 
         self::assertInstanceOf(ResponseFactoryInterface::class, $resolver->responseFactory());
         self::assertInstanceOf(StreamFactoryInterface::class, $resolver->streamFactory());
+    }
+
+    public function testResolvesTheTwoFactoriesOnlyTheSymfonyBridgeNeeds(): void
+    {
+        $resolver = new Psr17FactoryResolver();
+
+        self::assertInstanceOf(RequestFactoryInterface::class, $resolver->requestFactory());
+        self::assertInstanceOf(UriFactoryInterface::class, $resolver->uriFactory());
+    }
+
+    public function testAProviderSplitAcrossClassesCoversTheRequestAndUriFactoriesToo(): void
+    {
+        $resolver = new Psr17FactoryResolver([], [
+            RequestFactoryInterface::class => ['Laminas\Diactoros\RequestFactory'],
+            UriFactoryInterface::class => ['Laminas\Diactoros\UriFactory'],
+        ]);
+
+        self::assertInstanceOf(RequestFactory::class, $resolver->requestFactory());
+        self::assertInstanceOf(UriFactory::class, $resolver->uriFactory());
     }
 
     public function testAnExplicitFactoryWinsOverDetection(): void
