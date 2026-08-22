@@ -1,0 +1,39 @@
+{
+    "schemaVersion": 1,
+    "interactions": [
+        {
+            "request": {
+                "method": "GET",
+                "uri": "https://api.example.com/products",
+                "headers": {},
+                "body": ""
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": ["application/json"]
+                },
+                "body": "{\"products\":[1,2]}"
+            },
+            "outcome": "success",
+            "recordedAt": "2026-08-21T10:00:00+00:00"
+        },
+        {
+            "request": {
+                "method": "GET",
+                "uri": "https://api.example.com/products/1",
+                "headers": {},
+                "body": ""
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": ["application/json"]
+                },
+                "body": "{\"id\":1}"
+            },
+            "outcome": "success",
+            "recordedAt": "2026-08-21T10:00:00+00:00"
+        }
+    ]
+}

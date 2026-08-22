@@ -16,6 +16,11 @@
             <directory>tests/Integration</directory>
         </testsuite>
     </testsuites>
+    <extensions>
+        <!-- The library's own suite runs on its own PHPUnit bridge — the only way to find
+             out whether #[UseCassette] and the trait actually work together. -->
+        <bootstrap class="HttpVcr\Bridge\PHPUnit\Extension"/>
+    </extensions>
     <source>
         <include>
             <directory>src</directory>

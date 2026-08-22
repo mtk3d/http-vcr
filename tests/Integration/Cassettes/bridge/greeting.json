@@ -1,0 +1,22 @@
+{
+    "schemaVersion": 1,
+    "interactions": [
+        {
+            "request": {
+                "method": "GET",
+                "uri": "https://api.example.com/greeting",
+                "headers": {},
+                "body": ""
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": ["application/json"]
+                },
+                "body": "{\"hello\":\"world\"}"
+            },
+            "outcome": "success",
+            "recordedAt": "2026-08-21T10:00:00+00:00"
+        }
+    ]
+}
