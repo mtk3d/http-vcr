@@ -31,6 +31,7 @@ final class Application extends ConsoleApplication
             new StaleCommand(),
             new ProvidersCommand(),
             new TestsCommand(),
+            new ScanSecretsCommand(),
             new LockCommand(lock: true),
             new LockCommand(lock: false),
         ]);
