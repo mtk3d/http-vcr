@@ -188,3 +188,7 @@ Two limits worth knowing:
 ## Environment variables
 
 Four variables — `VCR_ALLOW_RECORDING`, `VCR_ERASE_TAPE`, `VCR_ENFORCE_STALE_CHECK`, `VCR_IGNORE_STALE_CASSETTES` — control recording and staleness from outside the test code, with locked interactions outranking all of them. They aren't PHPUnit-specific, so they live in one place: the [Environment Variables reference](../reference/environment.md), which also covers precedence, conflict resolution, and how the default for `VCR_ALLOW_RECORDING` is derived when it isn't set.
+
+## A worked file
+
+The attribute in its usual forms — on a method, on a class, with every parameter, and with a `#[CassetteDirectory]` base case — is in [`examples/phpunit-attribute.php`](https://github.com/mtk3d/http-vcr/blob/master/examples/phpunit-attribute.php).

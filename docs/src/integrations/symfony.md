@@ -47,3 +47,5 @@ A `MockResponse` on its own is a *description* of a response, not a usable one â
 The interface has a third method, `withOptions()`, which the bridge implements the way Symfony's own clients do: it returns a new `VcrHttpClient` with the default options merged in.
 
 Like the Guzzle bridge, this doesn't duplicate any record/replay logic â€” it only translates the shape of the call. All of the actual behavior lives in `VcrClient`.
+
+A service autowiring `HttpClientInterface`, tested through the bridge, is in [`examples/symfony-http-client.php`](https://github.com/mtk3d/http-vcr/blob/master/examples/symfony-http-client.php).

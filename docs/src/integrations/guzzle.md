@@ -83,3 +83,5 @@ Guzzle's own documentation notes that `sendRequest()` — the PSR-18 path — do
 ## Real-world example
 
 For a concrete case study of the decorator-vs-middleware question against an actual Guzzle-based SDK — including a case where the SDK builds its own client internally and the decorator still turns out to be enough — see [Shopify's Official PHP SDK](../examples/shopify-official-sdk.md).
+
+A short test using the middleware, with a history handler above the cassette and one below, is in [`examples/guzzle-middleware.php`](https://github.com/mtk3d/http-vcr/blob/master/examples/guzzle-middleware.php).
