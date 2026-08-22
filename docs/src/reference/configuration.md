@@ -76,7 +76,9 @@ VcrClient::configure(
 );
 ```
 
-These are two entrances to **one** configuration object, not two mechanisms with separate precedence. If both are used, `configure()` overrides field by field what was loaded from `http-vcr.php` — an explicit call in code beats a file picked up automatically in the background.
+These are two entrances to **one** configuration object, not two mechanisms with separate precedence. If both are used, `configure()` overrides field by field what was loaded from `http-vcr.php` — an explicit call in code beats a file picked up automatically in the background, and a field it says nothing about keeps the file's value. `redact` is the exception that proves it: rules from both are things the project asked for, so they add up rather than replace each other.
+
+`--config` is the third way in and the only one that *replaces* rather than merges — the point of naming a file is that the one discovered automatically was the wrong one.
 
 It must be called **once, before the first `VcrClient` is constructed in the process**, and throws `LogicException` afterwards. That's what makes ["no global state"](../concepts/how-it-works.md#no-global-state) true rather than aspirational: by the time any test touches a `VcrClient`, global configuration is already frozen, so there's nothing to reset between tests and no way for execution order to change what a test sees.
 

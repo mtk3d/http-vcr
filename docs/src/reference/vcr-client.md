@@ -8,12 +8,12 @@ public function __construct(
     string $cassette,
     RecordMode $mode = RecordMode::RecordIfAbsent,
     array $matchers = [],
-    StrictMode $strictMode = StrictMode::None,
+    ?StrictMode $strictMode = null,
     ?DateInterval $staleAfter = null,
     array $requiresEnv = [],
     bool $recordTransportErrors = false,
     bool $decodeCompressedResponse = true,
-    int $inlineBodyLimit = 1_048_576,
+    ?int $inlineBodyLimit = null,
     bool $repeatablePlayback = false,
     bool $locked = false,
     ?CassetteScopeResolverInterface $scopeResolver = null,
@@ -22,6 +22,7 @@ public function __construct(
     ?ResponseFactoryInterface $responseFactory = null,
     ?StreamFactoryInterface $streamFactory = null,
     ?ClockInterface $clock = null,
+    ?callable $warn = null,
 ) {}
 
 public function withInner(ClientInterface $inner): self;
@@ -44,9 +45,12 @@ public function withInner(ClientInterface $inner): self;
 | `scopeResolver` | `NullScopeResolver` | [Scoping](../advanced/scoping.md) — splits one cassette name across several files by API version. |
 | `persister` / `serializer` | from config | [Where and in what format](../advanced/storage-and-formats.md) cassettes are stored. |
 | `responseFactory` / `streamFactory` | detected | PSR-17, used to rebuild a replayed response. See below. |
+| `warn` | standard error | Where this session's warnings go: what the [secret scan](../safety/redaction.md#the-automatic-check-after-recording) found, and a forced recording a [lock](../safety/locked-interactions.md) made a no-op. The PHPUnit bridge passes its own, so a run prints them together at the end instead of scattered through the output. |
 | `clock` | `SystemClock` | Any PSR-20 `Psr\Clock\ClockInterface` — the source of "now" for `staleAfter`; `FrozenClock` ships with the package for testing that. |
 
-`#[UseCassette(...)]` maps onto these names 1:1, with no additions and no omissions — `requiresEnv` really is a core parameter, since only the client knows the moment a real request is about to happen. [Providers](../integrations/phpunit.md#providers) are project-wide configuration rather than a constructor argument: they describe which APIs the project talks to, so `VCR_ERASE_TAPE=@shopify` has to mean the same thing for every instance in a run.
+Where a parameter is nullable, `null` means "whatever the project configured" — the Default column is the value that applies when nothing configured one either.
+
+Every `#[UseCassette(...)]` argument is one of these parameters under the same name, the attribute adding nothing of its own — `requiresEnv` really is a core parameter, since only the client knows the moment a real request is about to happen. [Providers](../integrations/phpunit.md#providers) are project-wide configuration rather than a constructor argument: they describe which APIs the project talks to, so `VCR_ERASE_TAPE=@shopify` has to mean the same thing for every instance in a run.
 
 ## PSR-17 factories
 

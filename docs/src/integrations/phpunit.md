@@ -57,7 +57,9 @@ $this->useCassette('shopify/get-product', function () {
 });
 ```
 
-`useCassette()` is for PHPUnit 9 and older (no Extension API), for a test that needs two different cassettes, and for tests not written in PHPUnit at all. It accepts the same optional arguments as the attribute: `mode`, `strictMode`, `staleAfter`, `requiresEnv`, `locked`.
+`useCassette()` is for PHPUnit 9 and older (no Extension API), for a test that needs two different cassettes, and for tests not written in PHPUnit at all. It accepts the same optional arguments as the attribute: `mode`, `strictMode`, `staleAfter`, `requiresEnv`, `locked`. The closure is handed the `VcrClient` as its argument, and whatever it returns comes back from `useCassette()`.
+
+The trait also closes the session, from an `#[After]` method it brings with it. That matters for one thing: `StrictMode::AllPlayed`/`InOrder` assert at close, and an assertion raised inside the test's own lifecycle fails *that test*, while an exception from a PHPUnit event subscriber only ever becomes a runner warning. A test class that declares a cassette without using the trait still gets its lock released and its session cleared by the extension — it just won't fail on a strict-mode violation.
 
 Both read from `HttpVcr\Bridge\PHPUnit\CurrentCassetteSession`, the process-level handle the extension puts the test's `VcrClient` into and clears afterwards. It's a **public, BC-guaranteed contract**, not an internal detail — the [Laravel bridge](laravel.md#who-installs-the-hook-and-when) lives in a separate package and consults it at request time to decide whether an `Http` facade call belongs to an active cassette session. Anything else integrating a framework whose HTTP entry point is global will need the same seam.
 
@@ -93,7 +95,7 @@ Either way, the payoff is the same: [scoping a re-record to one API](../referenc
 
 An interaction belongs to a provider if its request host matches one of the provider's patterns. Matching is on the host alone — no scheme, port, or path — case-insensitively, glob-style: `*.myshopify.com` covers any subdomain, `account-a.zendesk.com` only that exact host. Nothing about this is written into the cassette; it's derived at use time from the current configuration, so changing a pattern applies retroactively to everything already recorded and there's no stored field to drift out of sync.
 
-Resolution for `@name`, in order: a configured provider with that name, then an exact host seen in the cassettes. Globs are only available to declared providers — `*.myshopify.com` is a judgement about what counts as one API, not a fact readable from the data. A host claimed by a declared provider stops being addressable by itself, so there's exactly one spelling for one thing. A name matching neither is an error listing both sets, configured names and known hosts.
+Resolution for `@name`, in order: a configured provider with that name, then an exact host seen in the cassettes. Globs are only available to declared providers — `*.myshopify.com` is a judgement about what counts as one API, not a fact readable from the data. A host claimed by a declared provider stops being addressable by itself, so there's exactly one spelling for one thing. A name matching neither erases nothing: which hosts a project's cassettes actually contain is a question only [`http-vcr providers`](../reference/cli.md#providers) can answer, since it is the one thing that reads all of them.
 
 Two providers matching the same host is a configuration error too, reported when `http-vcr.php` loads rather than resolved by declaration order. [`vendor/bin/http-vcr providers`](../reference/cli.md#providers) lists which hosts are running on implicit providers — a ready-made shortlist of what's worth naming.
 
@@ -113,7 +115,7 @@ Cannot record cassette "shopify/get-product": missing env var SHOPIFY_API_KEY
 - **The provider's `requiresEnv`**, matched against the host of that specific request. This is where API keys belong.
 - **The cassette's `requiresEnv`** (the attribute, or the `VcrClient` constructor), for variables that aren't tied to a host — and the only option at all in a project with no `http-vcr.php`.
 
-Anything with no `requiresEnv` declared simply isn't checked; it's opt-in, not a requirement.
+Anything with no `requiresEnv` declared simply isn't checked; it's opt-in, not a requirement. When both a provider and the cassette are missing something, one exception names both.
 
 Two things about the timing matter. It fires on the recording branch, not at the start of the test — recording is allowed by default on a developer machine, so validating up front would mean every *replaying* test there demanded a full set of real credentials it was never going to use. And it's evaluated **per request**, not per session, which is what lets `VCR_ERASE_TAPE=@shopify` refresh the Shopify half of a Shopify→Zendesk cassette while asking only for `SHOPIFY_API_KEY`.
 
