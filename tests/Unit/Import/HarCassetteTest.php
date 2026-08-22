@@ -12,9 +12,12 @@ use HttpVcr\Cassette\Outcome;
 use HttpVcr\Cassette\RecordedError;
 use HttpVcr\Cassette\RecordedRequest;
 use HttpVcr\Cassette\RecordedResponse;
+use HttpVcr\Config;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Import\HarCassetteExporter;
 use HttpVcr\Import\HarCassetteImporter;
+use HttpVcr\Tests\Support\CassetteDirectory;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -24,7 +27,7 @@ final class HarCassetteTest extends TestCase
 {
     public function testAnEntryBecomesAnInteraction(): void
     {
-        $cassette = (new HarCassetteImporter())->import($this->har([
+        $cassette = (new HarCassetteImporter())->convert($this->har([
             [
                 'startedDateTime' => '2026-08-21T10:00:00.000Z',
                 'request' => [
@@ -66,7 +69,7 @@ final class HarCassetteTest extends TestCase
     {
         $bytes = "\x89PNG\r\n\x1a\n" . str_repeat("\x00\xff", 8);
 
-        $cassette = (new HarCassetteImporter())->import($this->har([
+        $cassette = (new HarCassetteImporter())->convert($this->har([
             [
                 'startedDateTime' => '2026-08-21T10:00:00.000Z',
                 'request' => ['method' => 'GET', 'url' => 'https://example.com/logo.png', 'headers' => []],
@@ -87,7 +90,7 @@ final class HarCassetteTest extends TestCase
 
     public function testARequestTheBrowserSawFailIsImportedAsARecordedFailure(): void
     {
-        $cassette = (new HarCassetteImporter())->import($this->har([
+        $cassette = (new HarCassetteImporter())->convert($this->har([
             [
                 'startedDateTime' => '2026-08-21T10:00:00.000Z',
                 'request' => ['method' => 'GET', 'url' => 'https://example.com/slow', 'headers' => []],
@@ -127,14 +130,14 @@ final class HarCassetteTest extends TestCase
             ),
         ]);
 
-        $restored = (new HarCassetteImporter())->import((new HarCassetteExporter())->export($cassette));
+        $restored = (new HarCassetteImporter())->convert((new HarCassetteExporter())->toHar($cassette));
 
         self::assertEquals($cassette, $restored);
     }
 
     public function testTheExportIsAHarFileWithWhatAToolReadingItExpects(): void
     {
-        $har = json_decode((new HarCassetteExporter())->export(new Cassette([
+        $har = json_decode((new HarCassetteExporter())->toHar(new Cassette([
             Interaction::recorded(
                 new RecordedRequest('GET', 'https://example.com/products?page=2'),
                 new RecordedResponse(200, ['Content-Type' => ['application/json']], '{"ok":true}'),
@@ -167,7 +170,7 @@ final class HarCassetteTest extends TestCase
         $this->expectException(CassetteFormatException::class);
         $this->expectExceptionMessage('is not a HAR file');
 
-        (new HarCassetteImporter())->import('{"something":"else"}');
+        (new HarCassetteImporter())->convert('{"something":"else"}');
     }
 
     public function testTextThatIsNotJsonAtAllSaysThatInstead(): void
@@ -175,7 +178,49 @@ final class HarCassetteTest extends TestCase
         $this->expectException(CassetteFormatException::class);
         $this->expectExceptionMessage('is not valid JSON');
 
-        (new HarCassetteImporter())->import('<html></html>');
+        (new HarCassetteImporter())->convert('<html></html>');
+    }
+
+    public function testAHarFileBecomesACassetteWhereTheProjectKeepsThem(): void
+    {
+        $cassettes = new CassetteDirectory();
+        $config = Config::create(persister: $cassettes->persister());
+
+        $file = $cassettes->path . '/captured.har';
+        $cassettes->write('captured.har', $this->har([
+            [
+                'startedDateTime' => '2026-08-21T10:00:00.000Z',
+                'request' => ['method' => 'GET', 'url' => 'https://example.com/products', 'headers' => []],
+                'response' => [
+                    'status' => 200,
+                    'headers' => [['name' => 'Content-Type', 'value' => 'application/json']],
+                    'content' => ['size' => 11, 'mimeType' => 'application/json', 'text' => '{"ok":true}'],
+                ],
+            ],
+        ]));
+
+        try {
+            (new HarCassetteImporter($config))->import($file, 'shopify/get-product');
+
+            self::assertTrue($cassettes->has('shopify/get-product.json'));
+
+            (new HarCassetteExporter($config))->export('shopify/get-product', $cassettes->path . '/out.har');
+
+            self::assertSame(
+                '{"ok":true}',
+                (new HarCassetteImporter($config))->convert($cassettes->read('out.har'))
+                    ->interactions[0]->response?->body,
+            );
+        } finally {
+            $cassettes->remove();
+        }
+    }
+
+    public function testAHarFileThatIsNotThereSaysSoRatherThanImportingNothing(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        (new HarCassetteImporter(Config::create()))->import('/nowhere/captured.har', 'shopify/get-product');
     }
 
     /**

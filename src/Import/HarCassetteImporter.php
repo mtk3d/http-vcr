@@ -11,7 +11,10 @@ use HttpVcr\Cassette\Interaction;
 use HttpVcr\Cassette\RecordedError;
 use HttpVcr\Cassette\RecordedRequest;
 use HttpVcr\Cassette\RecordedResponse;
+use HttpVcr\Config;
 use HttpVcr\Exception\CassetteFormatException;
+use HttpVcr\Persistence\SidecarBodies;
+use InvalidArgumentException;
 use JsonException;
 use Throwable;
 
@@ -27,12 +30,11 @@ use Throwable;
  * a proxy — converted once into a cassette that then lives in the project's own format:
  *
  * ```php
- * $cassette = (new HarCassetteImporter())->import(file_get_contents('network.har'));
- * (new FilesystemCassettePersister($dir))->write(
- *     'shopify/checkout.json',
- *     (new JsonCassetteSerializer())->serialize($cassette),
- * );
+ * (new HarCassetteImporter())->import('captured.har', 'shopify/get-product');
  * ```
+ *
+ * The cassette is written where the project keeps cassettes, in the format it configured;
+ * {@see convert()} stops one step earlier and hands back the {@see Cassette} instead.
  *
  * An entry a browser recorded as never having completed (`status: 0`) becomes a recorded
  * network failure rather than being dropped — that is a thing http-vcr can replay (§3.1),
@@ -41,7 +43,42 @@ use Throwable;
  */
 final class HarCassetteImporter
 {
-    public function import(string $har): Cassette
+    public function __construct(private readonly ?Config $config = null)
+    {
+    }
+
+    /**
+     * @param string $file     the HAR file to read
+     * @param string $cassette the name to store it under, a path inside the cassette
+     *                         directory without an extension
+     *
+     * @return Cassette what was written, so a caller can look at it without reading it back
+     */
+    public function import(string $file, string $cassette): Cassette
+    {
+        $har = @file_get_contents($file);
+
+        if ($har === false) {
+            throw new InvalidArgumentException(sprintf('There is no HAR file at %s.', $file));
+        }
+
+        $imported = $this->convert($har);
+        $config = $this->config ?? Config::global();
+        $persister = $config->persister();
+        $serializer = $config->serializer();
+
+        $persister->write(
+            $cassette . '.' . $serializer->fileExtension(),
+            $serializer->serialize($imported, new SidecarBodies($persister, $cassette, $config->inlineBodyLimit())),
+        );
+
+        return $imported;
+    }
+
+    /**
+     * The conversion on its own, for a HAR that is already in hand.
+     */
+    public function convert(string $har): Cassette
     {
         try {
             $data = json_decode($har, true, 512, JSON_THROW_ON_ERROR);

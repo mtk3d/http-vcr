@@ -8,7 +8,11 @@ use Composer\InstalledVersions;
 use DateTimeInterface;
 use HttpVcr\Cassette\Cassette;
 use HttpVcr\Cassette\Interaction;
+use HttpVcr\Config;
 use HttpVcr\Exception\CassetteFormatException;
+use HttpVcr\Exception\CassetteNotFoundException;
+use HttpVcr\Persistence\SidecarBodies;
+use InvalidArgumentException;
 use JsonException;
 use stdClass;
 
@@ -23,10 +27,50 @@ use stdClass;
  *
  * The cassette itself is unaffected: this produces a copy for somewhere else, it does not
  * change the format anything is stored in.
+ *
+ * ```php
+ * (new HarCassetteExporter())->export('shopify/get-product', 'shopify.har');
+ * ```
+ *
+ * {@see toHar()} is the same conversion without the two file operations around it.
  */
 final class HarCassetteExporter
 {
-    public function export(Cassette $cassette): string
+    public function __construct(private readonly ?Config $config = null)
+    {
+    }
+
+    /**
+     * @param string $cassette the cassette name, a path inside the cassette directory
+     *                         without an extension
+     * @param string $file     where to write the HAR
+     */
+    public function export(string $cassette, string $file): void
+    {
+        $config = $this->config ?? Config::global();
+        $persister = $config->persister();
+        $serializer = $config->serializer();
+
+        $content = $persister->read($cassette . '.' . $serializer->fileExtension());
+
+        if ($content === null) {
+            throw new CassetteNotFoundException(sprintf(
+                'There is no cassette named "%s" to export.',
+                $cassette,
+            ));
+        }
+
+        $bodies = new SidecarBodies($persister, $cassette, $config->inlineBodyLimit());
+
+        if (@file_put_contents($file, $this->toHar($serializer->deserialize($content, $bodies))) === false) {
+            throw new InvalidArgumentException(sprintf('%s could not be written.', $file));
+        }
+    }
+
+    /**
+     * The conversion on its own, for a cassette already in hand.
+     */
+    public function toHar(Cassette $cassette): string
     {
         $entries = [];
 
