@@ -52,6 +52,8 @@ This is a speed optimization, never a safety requirement — what gets erased an
 
 It answers the question by combining two sources, neither sufficient alone: an AST scan of `#[UseCassette]` (which test opens which cassette) and the **contents of the cassettes** (which hosts actually appear in them). The second is what makes it work for a test whose cassette name gives away nothing about it talking to Shopify.
 
+The regex ends a test's name where PHPUnit does, so the data sets of a test with a data provider (`…::testFoo#0`) are covered by it, and a test whose name merely starts the same way is not. With no match at all it prints a regex that matches nothing, since an empty `--filter` would run the whole suite.
+
 One limitation that falls straight out of that: **a test whose cassette doesn't exist yet won't be listed**, because there's nothing to scan. Record it the first time with an unfiltered run.
 
 Loading the test classes to read their attributes by reflection would mean every one of them needing a correctly configured environment — the exact thing the CLI is supposed to avoid — so it parses the syntax instead. What the scan can resolve statically: scalar literals and arrays of them, enum cases (`RecordMode::RecordIfAbsent`), and `new DateInterval('P7D')`, which is what `staleAfter` almost always looks like since PHP 8.1 allows `new` in attribute arguments. Anything else (`staleAfter: self::INTERVAL`, a computed cassette name) is reported as "couldn't be fully analyzed" rather than guessed at.
@@ -64,7 +66,13 @@ vendor/bin/http-vcr scan-secrets
 
 The full, manual pass of the same scanner that [runs automatically after every recording](../safety/redaction.md#the-automatic-check-after-recording) — a heuristic sweep of every cassette's contents for `Bearer ` tokens, AWS-style `AKIA[0-9A-Z]{16}` keys, long hex/base64 strings in fields that look like tokens, and `Authorization`/`Cookie`/`Set-Cookie` values that don't look like placeholders.
 
-Two things this adds over the automatic check: it covers **every** cassette, not just what a run happened to record, and it has an exit code, so CI can make it blocking. Non-blocking by default.
+Two things this adds over the automatic check: it covers **every** cassette — the configured directory plus any a test class keeps beside itself with `#[CassetteDirectory]` — not just what a run happened to record, and it can be made blocking:
+
+```bash
+vendor/bin/http-vcr scan-secrets --fail-on-findings
+```
+
+Without that flag a finding is reported and the command still exits 0.
 
 The test is what the value *looks like*, not which `redact()` rules exist: this command doesn't run the test suite, so it can't know about rules registered imperatively in a `setUp()`. Anything in the `<...>` convention counts as a placeholder — both the built-in `<REDACTED-*>` values and your own `<API_KEY>`. Rules declared in `http-vcr.php` are read too, since that file can be loaded without running anything.
 
@@ -78,6 +86,10 @@ vendor/bin/http-vcr unlock shopify/checkout --interaction=2
 ```
 
 Sets or clears `"locked": true` on a specific interaction. Without `--interaction`, applies to every interaction in the file at once. With [scoped cassettes](../advanced/scoping.md), a bare name covers every scope file for that cassette; `--scope=2024-01` narrows it to one. See [Locked Interactions](../safety/locked-interactions.md).
+
+## Exit codes
+
+A finding is not a failure. `stale` reports interactions past their threshold and still exits 0 — crossing a threshold is a fact about the clock, and the same commit run an hour later would answer differently — and `scan-secrets` exits 0 unless asked for `--fail-on-findings`. What does exit non-zero, in every command that reads cassettes, is a cassette that cannot be parsed: that is a defect in the file rather than a verdict about its contents. `tests` also exits non-zero when `--provider` names something that is neither a configured provider nor a host in any cassette, and lists both sets.
 
 ## Running from inside a consuming project
 

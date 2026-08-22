@@ -183,7 +183,7 @@ Cassette names are unaffected: `stripe/charge` is still just a path inside which
 Two limits worth knowing:
 
 - **It only covers the PHPUnit path.** A hand-built `VcrClient` elsewhere takes a `persister` argument instead.
-- **The CLI resolves it by parsing, not executing.** `stale`, `tests` and `scan-secrets` read the attribute from the test files' syntax tree, following `extends` across the files under `testDirectories`. If a base class lives outside those directories, the CLI reports that it couldn't be fully analyzed rather than guessing — the same way it handles any other argument it can't resolve statically.
+- **The CLI resolves it by parsing, not executing.** `stale`, `tests` and `scan-secrets` read the attribute from the test files' syntax tree, following `extends` across every `.php` file under `testDirectories`. A base class outside those directories is never parsed, so a `#[UseCassette]` or `#[CassetteDirectory]` written on one is invisible to the CLI while still working at run time — keep shared declarations on a base class that lives under `testDirectories`. An argument the parser can't evaluate (`staleAfter: self::INTERVAL`) is reported as not fully analyzed rather than guessed at.
 
 ## Environment variables
 

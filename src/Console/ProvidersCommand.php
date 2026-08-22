@@ -94,7 +94,7 @@ final class ProvidersCommand extends Command
             return;
         }
 
-        $output->writeln('<comment>Implicit providers (addressable by host, no requiresEnv):</comment>');
+        $output->writeln('<comment>Implicit (addressable by host, no requiresEnv):</comment>');
 
         $rows = [];
 
