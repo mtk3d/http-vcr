@@ -29,6 +29,14 @@ final class MissingDependencyException extends RuntimeException implements VcrEx
         ));
     }
 
+    public static function noYaml(): self
+    {
+        return new self(
+            'The YAML cassette serializer needs symfony/yaml (composer require --dev symfony/yaml). '
+            . 'The default JsonCassetteSerializer needs nothing installed.',
+        );
+    }
+
     /**
      * @param list<string> $candidates the clients that were looked for
      */
