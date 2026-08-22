@@ -30,6 +30,7 @@ final class Application extends ConsoleApplication
         $this->addCommands([
             new StaleCommand(),
             new ProvidersCommand(),
+            new TestsCommand(),
             new LockCommand(lock: true),
             new LockCommand(lock: false),
         ]);

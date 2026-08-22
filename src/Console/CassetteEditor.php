@@ -75,6 +75,25 @@ final class CassetteEditor
         return $files;
     }
 
+    /**
+     * Every cassette in the directory, scope files included — they are separate recordings
+     * with separate contents, so nothing is collapsed onto a base name here.
+     *
+     * @return list<string>
+     */
+    public function all(): array
+    {
+        $files = [];
+
+        foreach ($this->persister->list($this->serializer->fileExtension()) as $file) {
+            $files[] = $file;
+        }
+
+        sort($files);
+
+        return $files;
+    }
+
     public function describe(string $file): string
     {
         return $this->persister->describe($this->key($file));

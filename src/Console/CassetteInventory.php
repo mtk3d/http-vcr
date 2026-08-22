@@ -44,15 +44,17 @@ final class CassetteInventory
      */
     public function files(): array
     {
-        $files = [];
+        return $this->editor->all();
+    }
 
-        foreach ($this->config->persister()->list($this->config->serializer()->fileExtension()) as $file) {
-            $files[] = $file;
-        }
-
-        sort($files);
-
-        return $files;
+    /**
+     * The files one declared cassette name has: its own, plus one per scope (§3.8).
+     *
+     * @return list<string>
+     */
+    public function filesOf(string $cassette): array
+    {
+        return $this->editor->files($cassette, null);
     }
 
     /**
