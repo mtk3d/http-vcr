@@ -8,6 +8,7 @@ use HttpVcr\Cassette\Cassette;
 use HttpVcr\Config;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Persistence\CassettePersisterInterface;
+use HttpVcr\Persistence\FilesystemCassettePersister;
 use HttpVcr\Persistence\SidecarBodies;
 use HttpVcr\Persistence\SupportsSessionLocking;
 use HttpVcr\Serializer\CassetteSerializerInterface;
@@ -31,9 +32,14 @@ final class CassetteEditor
 
     private readonly int $inlineBodyLimit;
 
-    public function __construct(Config $config)
+    /**
+     * @param string|null $directory a cassette directory of this class's own — what
+     *                               `#[CassetteDirectory]` declares (§3.12); null leaves it
+     *                               to the project configuration
+     */
+    public function __construct(Config $config, ?string $directory = null)
     {
-        $this->persister = $config->persister();
+        $this->persister = $directory === null ? $config->persister() : new FilesystemCassettePersister($directory);
         $this->serializer = $config->serializer();
         $this->inlineBodyLimit = $config->inlineBodyLimit();
     }
