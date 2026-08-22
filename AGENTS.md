@@ -2,7 +2,7 @@
 
 Record and replay HTTP interactions in tests, as a decorator over a PSR-18 client.
 
-**State: M1 through M4 built** — `VcrClient` records and replays through the PSR-18
+**State: M1 through M5 built** — `VcrClient` records and replays through the PSR-18
 decorator, with the full matcher set (`Method`, `Uri`, `Host`, `QueryString`, `Headers`,
 `Body`, `BodyJson`), the JSON cassette format, filesystem storage with session locking,
 CI-aware recording permission, `VCR_ERASE_TAPE`, the edge cases M1.5 covers (non-seekable
@@ -10,23 +10,28 @@ streams, binary bodies, sidecar files, response decompression, recorded transpor
 failures), M2's two differentiators (the `beforeRecord`/`beforePlayback` hook pipeline with
 redaction built on it, and the secret scan that warns after a recording session), M3's
 advanced modes (`RecordMode::ExtendCassette`, `StrictMode::AllPlayed`/`InOrder`,
-`staleAfter` with `VCR_ENFORCE_STALE_CHECK`, cassette scoping by URL, `bin/http-vcr
-lock`/`unlock`), and M4's adapters: `Bridge/Guzzle/VcrMiddleware` on `VcrClient::withInner()`,
-`Bridge/Symfony/VcrHttpClient`, the PHPUnit bridge (`#[UseCassette]`, `#[CassetteDirectory]`,
-`InteractsWithCassettes`, `Extension`, `CurrentCassetteSession`), named providers resolved
-by host, `requiresEnv` checked per request, and `http-vcr.php` with `--config`. Next is M5:
-the `stale`, `tests`, `providers` and `scan-secrets` commands, the YAML serializer, HAR
-import/export, and publishing the book.
+`staleAfter` with `VCR_ENFORCE_STALE_CHECK`, cassette scoping by URL), M4's adapters
+(`Bridge/Guzzle/VcrMiddleware` on `VcrClient::withInner()`, `Bridge/Symfony/VcrHttpClient`,
+the PHPUnit bridge — `#[UseCassette]`, `#[CassetteDirectory]`, `InteractsWithCassettes`,
+`Extension`, `CurrentCassetteSession` — named providers resolved by host, `requiresEnv`
+checked per request, and `http-vcr.php` with `--config`), and M5's tooling: the six CLI
+commands (`stale`, `tests`, `providers`, `scan-secrets`, `lock`, `unlock`) on the
+`TestScanner` AST scan of `#[UseCassette]`, `YamlCassetteSerializer` beside the JSON one on
+a shared `ArrayCassetteSerializer`, `Import/HarCassetteImporter`/`HarCassetteExporter`, the
+examples in `examples/`, and the book built and published from CI.
+
+Every phase of the plan is built. New work is either a §8 idea being promoted (write the
+decision in §7 first) or a correction to something already here.
 
 The library's own `phpunit.xml.dist` registers `HttpVcr\Bridge\PHPUnit\Extension`, and
 `tests/Integration/PHPUnitBridgeTest.php` runs through it against committed cassettes in
 `tests/Integration/Cassettes/` — that is the M4 bridge testing itself, not a fixture to
 tidy away.
 
-Build order is `PLAN.md` §6 — M1 → M1.5 → M2 → M3 → M4 → M5 — and it is a dependency
-order, not a wish list: don't implement a later phase's feature while an earlier one is
-unbuilt. Decisions taken while implementing a phase go to `PLAN.md` §7 like any other
-(18–25 came out of M1, 26–31 out of M1.5, 33–40 out of M2, 41–45 out of M3, 46–55 out of M4).
+Build order was `PLAN.md` §6 — M1 → M1.5 → M2 → M3 → M4 → M5 — a dependency order rather
+than a wish list. Decisions taken while implementing a phase go to `PLAN.md` §7 like any
+other (18–25 came out of M1, 26–31 out of M1.5, 33–40 out of M2, 41–45 out of M3, 46–55 out
+of M4, 57–64 out of M5).
 
 ## Language
 
