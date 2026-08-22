@@ -32,6 +32,8 @@ final class StaleCommandTest extends TestCase
 
     protected function setUp(): void
     {
+        Config::reset();
+
         $this->cassettes = new CassetteDirectory();
         $this->project = new CassetteDirectory();
 

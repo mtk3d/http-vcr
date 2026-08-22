@@ -29,6 +29,7 @@ final class Application extends ConsoleApplication
         // range — add() was removed in 8.0, addCommand() only arrived in 7.4.
         $this->addCommands([
             new StaleCommand(),
+            new ProvidersCommand(),
             new LockCommand(lock: true),
             new LockCommand(lock: false),
         ]);
