@@ -51,6 +51,6 @@ That handle is process-level state, which the [core deliberately avoids](../conc
 Http::globalOptions(['handler' => $stack]);
 ```
 
-where `$stack` is a Guzzle `HandlerStack` with `VcrMiddleware::create($vcr)` pushed onto it (see [Guzzle](guzzle.md)). Same interception, zero additional dependencies — but it's configuration you wire by hand in every test or in a testing-only service provider, and you're responsible for tearing it down again.
+where `$stack` is a Guzzle `HandlerStack` with `VcrMiddleware::create($vcr)` pushed onto it (see [Guzzle](guzzle.md)). Same interception, zero additional dependencies — but it's configuration you wire by hand in every test or in a testing-only service provider, and you're responsible for tearing it down again. The whole thing, as a base test case to copy, is in [`examples/laravel-http-recipe.php`](https://github.com/mtk3d/http-vcr/blob/master/examples/laravel-http-recipe.php).
 
 > `Http::withOptions([...])` looks like it would do the same thing and doesn't: it returns a `PendingRequest` configured for **one** call, so as a standalone statement it configures an object that's then thrown away. Use it only when you go on to make the request on it (`Http::withOptions([...])->get(...)`). The application-wide form is `Http::globalOptions()`, added in Laravel 11.
