@@ -102,6 +102,16 @@ scaffolding — see `PLAN.md` §5 for the intended layout.
 After touching `docs/`, rebuild the book (`mdbook build docs`) — `SUMMARY.md`
 drifting from the files on disk only surfaces at build time.
 
+The book needs `mdbook-mermaid` for the C4 diagrams under `docs/src/architecture/`.
+Run `mdbook-mermaid install docs` once; it writes `docs/mermaid.min.js` and
+`docs/mermaid-init.js`, which are gitignored rather than carried in the repository
+because the first is 2.5 MB. `book.toml` already references them, so a build
+without that step fails on the missing asset. CI does the same install.
+
+Mermaid renders in the browser, so a syntax error in a diagram does not fail the
+build — it fails silently on the published page. Diagrams are worth parsing
+before pushing.
+
 `docs/seo.sh` runs after that build in CI, stamping canonical links and writing
 the sitemap. It reads the first chapter out of `SUMMARY.md`, so reordering the
 book is enough to change which page the site root canonicalises to.

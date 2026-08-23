@@ -14,6 +14,7 @@ default-theme = "light"
 preferred-dark-theme = "navy"
 git-repository-url = "https://github.com/mtk3d/http-vcr"
 edit-url-template = "https://github.com/mtk3d/http-vcr/edit/master/docs/{path}"
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
 
 [output.html.fold]
 enable = true
@@ -22,3 +23,8 @@ level = 1
 [output.html.search]
 enable = true
 limit-results = 20
+
+[preprocessor]
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"

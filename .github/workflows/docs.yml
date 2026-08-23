@@ -14,6 +14,7 @@ concurrency:
 
 env:
   MDBOOK_VERSION: 0.5.4
+  MDBOOK_MERMAID_VERSION: 0.17.1
 
 jobs:
   build:
@@ -26,6 +27,15 @@ jobs:
         run: |
           curl -sSL "https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VERSION}/mdbook-v${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
             | tar -xz -C /usr/local/bin
+
+      # The C4 diagrams are mermaid, which mdBook does not render on its own. The
+      # preprocessor ships mermaid.min.js itself, so `install` writes the 2.5 MB asset
+      # here rather than us carrying it in the repository; book.toml already references it.
+      - name: Install mdbook-mermaid
+        run: |
+          curl -sSL "https://github.com/badboy/mdbook-mermaid/releases/download/v${MDBOOK_MERMAID_VERSION}/mdbook-mermaid-v${MDBOOK_MERMAID_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar -xz -C /usr/local/bin
+          mdbook-mermaid install docs
 
       # Fails the build when SUMMARY.md and the files on disk have drifted apart, which is
       # the one thing about the book that nothing else notices.

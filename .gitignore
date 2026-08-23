@@ -5,3 +5,7 @@
 /.pint.cache
 .DS_Store
 /composer.lock
+
+# Written by `mdbook-mermaid install docs`; 2.5 MB of vendored JS we do not track.
+/docs/mermaid.min.js
+/docs/mermaid-init.js
