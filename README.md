@@ -2,10 +2,10 @@
 
 **Record real HTTP interactions once, replay them on every test run after that.**
 
-[![Packagist](https://img.shields.io/packagist/v/mtk3d/http-vcr?label=packagist)](https://packagist.org/packages/mtk3d/http-vcr)
 [![Tests](https://img.shields.io/github/actions/workflow/status/mtk3d/http-vcr/ci.yml?branch=master&label=tests)](https://github.com/mtk3d/http-vcr/actions/workflows/ci.yml)
 [![Docs](https://img.shields.io/github/actions/workflow/status/mtk3d/http-vcr/docs.yml?branch=master&label=docs)](https://mtk3d.github.io/http-vcr/)
 [![PHP 8.2+](https://img.shields.io/badge/php-8.2%20%E2%80%93%208.5-777bb4.svg)](https://www.php.net/)
+[![Packagist](https://img.shields.io/packagist/v/mtk3d/http-vcr?label=packagist)](https://packagist.org/packages/mtk3d/http-vcr)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 The test suite for "the code that talks to Shopify/Stripe/Zendesk" becomes fast,
