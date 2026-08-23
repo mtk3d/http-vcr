@@ -1,9 +1,9 @@
 {
     "name": "mtk3d/http-vcr",
-    "description": "Record and replay HTTP interactions for fast, deterministic tests — a decorator over any PSR-18 client, built on PSR-7/PSR-17/PSR-18.",
+    "description": "Record and replay HTTP requests in PHP tests — a decorator over any PSR-18 client, so your suite runs fast and deterministic with no network access and no API keys. Built on PSR-7/PSR-17/PSR-18.",
     "type": "library",
     "license": "MIT",
-    "keywords": ["testing", "http", "vcr", "psr-18", "psr-7", "cassette", "mock"],
+    "keywords": ["testing", "test", "phpunit", "http", "http-client", "vcr", "cassette", "mock", "mocking", "stub", "fixtures", "record", "replay", "psr-18", "psr-7", "guzzle", "symfony"],
     "require": {
         "php": "^8.2",
         "psr/clock": "^1.0",

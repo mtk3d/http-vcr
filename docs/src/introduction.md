@@ -1,4 +1,4 @@
-# Introduction
+# http-vcr — record and replay HTTP requests in PHP tests
 
 **http-vcr** records real HTTP interactions the first time your tests run, and replays them on every run after that — so the test suite for "the code that talks to Shopify/Stripe/Zendesk" is fast, deterministic, and doesn't need network access or API credentials in CI.
 

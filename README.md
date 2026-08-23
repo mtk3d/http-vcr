@@ -1,4 +1,4 @@
-# http-vcr
+# http-vcr — record and replay HTTP requests in PHP tests
 
 **Record real HTTP interactions once, replay them on every test run after that.**
 
@@ -8,7 +8,7 @@
 [![Packagist](https://img.shields.io/packagist/v/mtk3d/http-vcr?label=packagist)](https://packagist.org/packages/mtk3d/http-vcr)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
-The test suite for "the code that talks to Shopify/Stripe/Zendesk" becomes fast,
+The PHP test suite for "the code that talks to Shopify/Stripe/Zendesk" becomes fast,
 deterministic, and runnable in CI with no network access and no API credentials.
 
 http-vcr is a decorator over [PSR-18](https://www.php-fig.org/psr/psr-18/)

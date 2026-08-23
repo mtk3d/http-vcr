@@ -1,6 +1,6 @@
 [book]
-title = "http-vcr"
-description = "Record and replay HTTP interactions for fast, deterministic PHP tests — a PSR-18 decorator, not curl monkey-patching."
+title = "http-vcr for PHP"
+description = "Record and replay HTTP requests in PHP tests. http-vcr decorates any PSR-18 client, so your suite runs fast and deterministic with no network access and no API keys."
 authors = ["Mateusz Cholewka"]
 language = "en"
 src = "src"
