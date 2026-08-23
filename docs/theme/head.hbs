@@ -1,0 +1,11 @@
+{{!-- Social cards. The canonical link and og:url are stamped in afterwards by
+      docs/seo.sh: they need absolute .html URLs, and Handlebars cannot turn
+      `path` (which arrives as .md) into one. --}}
+<meta property="og:site_name" content="{{ book_title }}">
+<meta property="og:type" content="article">
+<meta property="og:title" content="{{ title }}">
+<meta property="og:description" content="{{ description }}">
+<meta property="og:locale" content="{{ language }}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{{ title }}">
+<meta name="twitter:description" content="{{ description }}">

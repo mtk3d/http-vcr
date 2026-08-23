@@ -31,6 +31,10 @@ jobs:
       # the one thing about the book that nothing else notices.
       - run: mdbook build docs
 
+      # Canonical links and the sitemap need the published URLs, which only
+      # exist once the book is built.
+      - run: ./docs/seo.sh
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/book

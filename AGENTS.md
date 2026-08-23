@@ -102,6 +102,10 @@ scaffolding — see `PLAN.md` §5 for the intended layout.
 After touching `docs/`, rebuild the book (`mdbook build docs`) — `SUMMARY.md`
 drifting from the files on disk only surfaces at build time.
 
+`docs/seo.sh` runs after that build in CI, stamping canonical links and writing
+the sitemap. It reads the first chapter out of `SUMMARY.md`, so reordering the
+book is enough to change which page the site root canonicalises to.
+
 Write the test for the behavior before implementing it. A passing test is the only
 hard evidence that generated code does what it looked like it did.
 
