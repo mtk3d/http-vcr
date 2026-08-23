@@ -32,7 +32,7 @@ final class RunWarnings
 
     public static function collect(): self
     {
-        return self::$current = new self();
+        return self::$current = new self;
     }
 
     public static function stop(): void

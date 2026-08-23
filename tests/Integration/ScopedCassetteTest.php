@@ -40,7 +40,7 @@ final class ScopedCassetteTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
@@ -81,7 +81,7 @@ final class ScopedCassetteTest extends TestCase
     {
         $this->record('/admin/api/2024-01/products/1.json', '{"id":1}');
 
-        $inner = new FakeHttpClient();
+        $inner = new FakeHttpClient;
         $response = $this->client($inner)
             ->sendRequest(new Request('GET', 'https://shop.example.com/admin/api/2024-01/products/1.json'));
 
@@ -150,7 +150,7 @@ final class ScopedCassetteTest extends TestCase
             static fn (RequestInterface $request): ?string => $request->getHeaderLine('X-Api-Version') ?: null,
         );
 
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"id":1}'), $resolver);
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"id":1}'), $resolver);
         $vcr->sendRequest(new Request('GET', 'https://shop.example.com/products/1', ['X-Api-Version' => 'v3']));
 
         self::assertTrue($this->cassettes->has('shopify/get-product.v3.json'));
@@ -159,7 +159,7 @@ final class ScopedCassetteTest extends TestCase
     public function testAScopeIsSanitizedIntoASinglePathSegment(): void
     {
         $vcr = $this->client(
-            (new FakeHttpClient())->willRespond('{"id":1}'),
+            (new FakeHttpClient)->willRespond('{"id":1}'),
             new CallbackScopeResolver(static fn (): string => 'v3/beta rc:1'),
         );
         $vcr->sendRequest(new Request('GET', 'https://shop.example.com/products/1'));
@@ -170,7 +170,7 @@ final class ScopedCassetteTest extends TestCase
     public function testAScopeThatCannotBeAFileNameIsRefusedRatherThanMangled(): void
     {
         $vcr = $this->client(
-            new FakeHttpClient(),
+            new FakeHttpClient,
             new CallbackScopeResolver(static fn (): string => '../../etc'),
         );
 
@@ -184,8 +184,8 @@ final class ScopedCassetteTest extends TestCase
     {
         // ExtendCassette so that two calls can build up one scope file, which is what the
         // per-file checks below need.
-        $vcr = $this->client((new FakeHttpClient())->willRespond($body), mode: RecordMode::ExtendCassette);
-        $vcr->sendRequest(new Request('GET', 'https://shop.example.com' . $path));
+        $vcr = $this->client((new FakeHttpClient)->willRespond($body), mode: RecordMode::ExtendCassette);
+        $vcr->sendRequest(new Request('GET', 'https://shop.example.com'.$path));
         $vcr->close();
     }
 
@@ -196,7 +196,7 @@ final class ScopedCassetteTest extends TestCase
         StrictMode $strictMode = StrictMode::None,
     ): VcrClient {
         return new VcrClient(
-            $inner ?? new FakeHttpClient(),
+            $inner ?? new FakeHttpClient,
             'shopify/get-product',
             $mode,
             strictMode: $strictMode,

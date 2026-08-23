@@ -10,6 +10,7 @@ use HttpVcr\Config;
 use HttpVcr\Hook\HookRegistry;
 use HttpVcr\Matching\HeadersMatcher;
 use HttpVcr\Matching\MethodMatcher;
+use HttpVcr\Matching\RequestMatcherInterface;
 use HttpVcr\Matching\UriMatcher;
 use HttpVcr\RecordMode;
 use HttpVcr\Tests\Support\CassetteDirectory;
@@ -33,7 +34,7 @@ final class HooksTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
@@ -49,7 +50,7 @@ final class HooksTest extends TestCase
 
     public function testABeforeRecordHookChangesWhatLandsOnDisk(): void
     {
-        $vcr = $this->client((new FakeHttpClient())->willRespond(
+        $vcr = $this->client((new FakeHttpClient)->willRespond(
             new Response(200, ['X-Request-Id' => 'req-1'], '{"title":"T-Shirt"}'),
         ));
         $vcr->beforeRecord(static fn (Interaction $i): Interaction => $i->withResponse(
@@ -67,7 +68,7 @@ final class HooksTest extends TestCase
      */
     public function testARefusedInteractionIsNotRecordedButIsStillAnswered(): void
     {
-        $vcr = $this->client((new FakeHttpClient())->willRespond(new Response(503, [], 'upstream is down')));
+        $vcr = $this->client((new FakeHttpClient)->willRespond(new Response(503, [], 'upstream is down')));
         $vcr->beforeRecord(static fn (Interaction $i): ?Interaction => $i->response !== null && $i->response->status >= 500 ? null : $i);
 
         $response = $vcr->sendRequest(new Request('GET', 'https://shop.example.com/products/1.json'));
@@ -85,9 +86,9 @@ final class HooksTest extends TestCase
     {
         $this->recordWithHeader('acme.myshopify.com');
 
-        $vcr = $this->client(new FakeHttpClient(), RecordMode::PlaybackOnly, [
-            new MethodMatcher(),
-            new UriMatcher(),
+        $vcr = $this->client(new FakeHttpClient, RecordMode::PlaybackOnly, [
+            new MethodMatcher,
+            new UriMatcher,
             new HeadersMatcher(['X-Shop-Domain']),
         ]);
         $vcr->beforePlayback(static fn (Interaction $i): Interaction => $i->withRequest(
@@ -106,7 +107,7 @@ final class HooksTest extends TestCase
     {
         $this->recordWithHeader('acme.myshopify.com');
 
-        $vcr = $this->client(new FakeHttpClient(), RecordMode::PlaybackOnly);
+        $vcr = $this->client(new FakeHttpClient, RecordMode::PlaybackOnly);
         $vcr->beforePlayback(static fn (Interaction $i): Interaction => $i->withResponse(
             $i->response?->withBody('{"title":"Replaced"}') ?? throw new LogicException('No response.'),
         ));
@@ -120,7 +121,7 @@ final class HooksTest extends TestCase
     {
         $this->recordWithHeader('acme.myshopify.com');
 
-        $vcr = $this->client(new FakeHttpClient(), RecordMode::PlaybackOnly);
+        $vcr = $this->client(new FakeHttpClient, RecordMode::PlaybackOnly);
         /** @phpstan-ignore argument.type (a hook written wrong is exactly what this covers) */
         $vcr->beforePlayback(static fn (): ?Interaction => null);
 
@@ -132,7 +133,7 @@ final class HooksTest extends TestCase
 
     public function testAHookRegisteredAfterTheFirstRequestIsRefused(): void
     {
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"title":"T-Shirt"}'));
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"title":"T-Shirt"}'));
         $vcr->sendRequest(new Request('GET', 'https://shop.example.com/products/1.json'));
 
         $this->expectException(LogicException::class);
@@ -143,14 +144,14 @@ final class HooksTest extends TestCase
 
     private function recordWithHeader(string $domain): void
     {
-        $this->client((new FakeHttpClient())->willRespond('{"title":"T-Shirt"}'))
+        $this->client((new FakeHttpClient)->willRespond('{"title":"T-Shirt"}'))
             ->sendRequest(
                 (new Request('GET', 'https://shop.example.com/products/1.json'))->withHeader('X-Shop-Domain', $domain),
             );
     }
 
     /**
-     * @param list<\HttpVcr\Matching\RequestMatcherInterface> $matchers
+     * @param  list<RequestMatcherInterface>  $matchers
      */
     private function client(
         FakeHttpClient $inner,

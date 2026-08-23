@@ -13,7 +13,7 @@ use HttpVcr\Cassette\RecordedRequest;
  * The host is lowercased before comparing, since a host name is case-insensitive and PSR-7
  * implementations don't agree on how to spell one.
  */
-final class HostMatcher implements RequestMatcherInterface, ExplainsMismatch
+final class HostMatcher implements ExplainsMismatch, RequestMatcherInterface
 {
     public function matches(RecordedRequest $recorded, RecordedRequest $incoming): bool
     {

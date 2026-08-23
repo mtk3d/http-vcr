@@ -8,6 +8,7 @@ use DateInterval;
 use Exception;
 use HttpVcr\Bridge\PHPUnit\CassetteDirectory;
 use HttpVcr\Bridge\PHPUnit\UseCassette;
+use HttpVcr\Config;
 use HttpVcr\RecordMode;
 use HttpVcr\StrictMode;
 use PhpParser\ConstExprEvaluationException;
@@ -65,12 +66,12 @@ final class TestScanner
     private array $unanalyzed = [];
 
     /**
-     * @param list<string> $directories where the project keeps its tests — normally
-     *                                  {@see \HttpVcr\Config::testDirectories()}
+     * @param  list<string>  $directories  where the project keeps its tests — normally
+     *                                     {@see Config::testDirectories()}
      */
     public function __construct(private readonly array $directories)
     {
-        $this->parser = (new ParserFactory())->createForHostVersion();
+        $this->parser = (new ParserFactory)->createForHostVersion();
     }
 
     public function scan(): ScannedTests
@@ -121,8 +122,7 @@ final class TestScanner
      * an inherited test runs under the subclass's name, so it belongs to the subclass here
      * too.
      *
-     * @param array<string, ScannedClass> $classes
-     *
+     * @param  array<string, ScannedClass>  $classes
      * @return array<string, UseCassette|null>
      */
     private function methodsOf(ScannedClass $class, array $classes): array
@@ -131,7 +131,7 @@ final class TestScanner
         $seen = [$class->name => true];
         $parent = $class->parent;
 
-        while ($parent !== null && isset($classes[$parent]) && !isset($seen[$parent])) {
+        while ($parent !== null && isset($classes[$parent]) && ! isset($seen[$parent])) {
             $seen[$parent] = true;
 
             foreach ($classes[$parent]->methods as $name => $declared) {
@@ -151,9 +151,8 @@ final class TestScanner
      *
      * @template T
      *
-     * @param array<string, ScannedClass>  $classes
-     * @param callable(ScannedClass): ?T   $read
-     *
+     * @param  array<string, ScannedClass>  $classes
+     * @param  callable(ScannedClass): ?T  $read
      * @return T|null
      */
     private function inherited(ScannedClass $class, array $classes, callable $read): mixed
@@ -171,7 +170,7 @@ final class TestScanner
             $seen[$current->name] = true;
             $parent = $current->parent;
 
-            if ($parent === null || !isset($classes[$parent]) || isset($seen[$parent])) {
+            if ($parent === null || ! isset($classes[$parent]) || isset($seen[$parent])) {
                 return null;
             }
 
@@ -195,7 +194,7 @@ final class TestScanner
         try {
             $statements = $this->parser->parse($code);
         } catch (ParseError $error) {
-            $this->note($file, $error->getStartLine(), 'could not be parsed: ' . $error->getRawMessage());
+            $this->note($file, $error->getStartLine(), 'could not be parsed: '.$error->getRawMessage());
 
             return [];
         }
@@ -206,11 +205,11 @@ final class TestScanner
             return [];
         }
 
-        $statements = (new NodeTraverser(new NameResolver()))->traverse($statements);
+        $statements = (new NodeTraverser(new NameResolver))->traverse($statements);
 
         $classes = [];
 
-        foreach ((new NodeFinder())->findInstanceOf($statements, Class_::class) as $node) {
+        foreach ((new NodeFinder)->findInstanceOf($statements, Class_::class) as $node) {
             $name = $node->namespacedName?->toString();
 
             if ($name === null) {
@@ -255,7 +254,7 @@ final class TestScanner
      */
     private function isTest(ClassMethod $method): bool
     {
-        if (!$method->isPublic() || $method->isAbstract()) {
+        if (! $method->isPublic() || $method->isAbstract()) {
             return false;
         }
 
@@ -273,7 +272,7 @@ final class TestScanner
     }
 
     /**
-     * @param array<AttributeGroup> $groups
+     * @param  array<AttributeGroup>  $groups
      */
     private function useCassette(array $groups, string $file, string $class): ?UseCassette
     {
@@ -287,7 +286,7 @@ final class TestScanner
 
         $name = $arguments['name'] ?? null;
 
-        if (!is_string($name)) {
+        if (! is_string($name)) {
             return null;
         }
 
@@ -308,7 +307,7 @@ final class TestScanner
     }
 
     /**
-     * @param array<AttributeGroup> $groups
+     * @param  array<AttributeGroup>  $groups
      */
     private function cassetteDirectory(array $groups, string $file, string $class): ?string
     {
@@ -328,8 +327,7 @@ final class TestScanner
      * ones that turned out not to be constant expressions — those leave a note instead, so
      * a report can say the threshold is unknown rather than absent.
      *
-     * @param class-string $attribute
-     *
+     * @param  class-string  $attribute
      * @return array<string, mixed>
      */
     private function arguments(Attribute $node, string $attribute, string $file, string $class): array
@@ -364,7 +362,7 @@ final class TestScanner
     }
 
     /**
-     * @param class-string $attribute
+     * @param  class-string  $attribute
      */
     private function parameterName(Arg $argument, string $attribute, int $position): ?string
     {
@@ -420,7 +418,7 @@ final class TestScanner
         $class = $expression->class;
         $name = $expression->name;
 
-        if (!$class instanceof Name || !$name instanceof Identifier) {
+        if (! $class instanceof Name || ! $name instanceof Identifier) {
             throw new ConstExprEvaluationException('A dynamic class constant cannot be evaluated');
         }
 
@@ -428,9 +426,9 @@ final class TestScanner
             return $class->toString();
         }
 
-        $constant = $class->toString() . '::' . $name->toString();
+        $constant = $class->toString().'::'.$name->toString();
 
-        if (!defined($constant)) {
+        if (! defined($constant)) {
             throw new ConstExprEvaluationException(sprintf('%s is not defined here', $constant));
         }
 
@@ -446,14 +444,14 @@ final class TestScanner
     {
         $class = $expression->class;
 
-        if (!$class instanceof Name || $class->toString() !== DateInterval::class) {
+        if (! $class instanceof Name || $class->toString() !== DateInterval::class) {
             throw new ConstExprEvaluationException('Only new DateInterval(...) can be evaluated');
         }
 
         $arguments = [];
 
         foreach ($expression->args as $argument) {
-            if (!$argument instanceof Arg) {
+            if (! $argument instanceof Arg) {
                 throw new ConstExprEvaluationException('new DateInterval(...) cannot be evaluated from a spread');
             }
 
@@ -462,7 +460,7 @@ final class TestScanner
 
         $duration = $arguments[0] ?? null;
 
-        if (!is_string($duration)) {
+        if (! is_string($duration)) {
             throw new ConstExprEvaluationException('new DateInterval(...) takes a duration string');
         }
 
@@ -474,7 +472,7 @@ final class TestScanner
     }
 
     /**
-     * @param array<AttributeGroup> $groups
+     * @param  array<AttributeGroup>  $groups
      */
     private function attributeNamed(array $groups, string $type): ?Attribute
     {
@@ -488,8 +486,7 @@ final class TestScanner
     }
 
     /**
-     * @param array<AttributeGroup> $groups
-     *
+     * @param  array<AttributeGroup>  $groups
      * @return list<Attribute>
      */
     private function attributes(array $groups): array
@@ -510,7 +507,7 @@ final class TestScanner
      */
     private function strings(mixed $value): array
     {
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             return [];
         }
 
@@ -533,7 +530,7 @@ final class TestScanner
         $files = [];
 
         foreach ($this->directories as $directory) {
-            if (!is_dir($directory)) {
+            if (! is_dir($directory)) {
                 continue;
             }
 

@@ -23,8 +23,7 @@ final readonly class Redaction
         public string $name,
         public string $placeholder,
         private ?Closure $provider,
-    ) {
-    }
+    ) {}
 
     public static function of(
         RedactionTarget $target,
@@ -67,6 +66,6 @@ final readonly class Redaction
         $upper = strtoupper($name);
         $dashed = trim((string) preg_replace(['/[^A-Z0-9]+/', '/-+/'], '-', $upper), '-');
 
-        return '<REDACTED-' . $dashed . '>';
+        return '<REDACTED-'.$dashed.'>';
     }
 }

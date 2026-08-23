@@ -23,7 +23,7 @@ final class Psr17FactoryResolverTest extends TestCase
 {
     public function testDetectsAnInstalledImplementation(): void
     {
-        $resolver = new Psr17FactoryResolver();
+        $resolver = new Psr17FactoryResolver;
 
         self::assertInstanceOf(ResponseFactoryInterface::class, $resolver->responseFactory());
         self::assertInstanceOf(StreamFactoryInterface::class, $resolver->streamFactory());
@@ -31,7 +31,7 @@ final class Psr17FactoryResolverTest extends TestCase
 
     public function testResolvesTheTwoFactoriesOnlyTheSymfonyBridgeNeeds(): void
     {
-        $resolver = new Psr17FactoryResolver();
+        $resolver = new Psr17FactoryResolver;
 
         self::assertInstanceOf(RequestFactoryInterface::class, $resolver->requestFactory());
         self::assertInstanceOf(UriFactoryInterface::class, $resolver->uriFactory());
@@ -50,7 +50,7 @@ final class Psr17FactoryResolverTest extends TestCase
 
     public function testAnExplicitFactoryWinsOverDetection(): void
     {
-        $factory = new ResponseFactory();
+        $factory = new ResponseFactory;
 
         $resolver = new Psr17FactoryResolver([ResponseFactoryInterface::class => $factory]);
 
@@ -59,7 +59,7 @@ final class Psr17FactoryResolverTest extends TestCase
 
     public function testTheSameInstanceIsReusedOnceResolved(): void
     {
-        $resolver = new Psr17FactoryResolver();
+        $resolver = new Psr17FactoryResolver;
 
         self::assertSame($resolver->responseFactory(), $resolver->responseFactory());
     }
@@ -91,7 +91,7 @@ final class Psr17FactoryResolverTest extends TestCase
     public function testAnExplicitFactoryCoversAnInterfaceNothingElseProvides(): void
     {
         $resolver = new Psr17FactoryResolver(
-            [StreamFactoryInterface::class => new Psr17Factory()],
+            [StreamFactoryInterface::class => new Psr17Factory],
             [StreamFactoryInterface::class => []],
         );
 

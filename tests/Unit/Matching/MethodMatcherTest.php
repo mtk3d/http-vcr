@@ -14,7 +14,7 @@ final class MethodMatcherTest extends TestCase
 {
     public function testMatchesTheSameMethodWhateverItsCase(): void
     {
-        $matcher = new MethodMatcher();
+        $matcher = new MethodMatcher;
 
         self::assertTrue($matcher->matches(
             new RecordedRequest('GET', 'https://example.com'),
@@ -24,7 +24,7 @@ final class MethodMatcherTest extends TestCase
 
     public function testRejectsADifferentMethodAndSaysWhich(): void
     {
-        $matcher = new MethodMatcher();
+        $matcher = new MethodMatcher;
         $recorded = new RecordedRequest('GET', 'https://example.com');
         $incoming = new RecordedRequest('POST', 'https://example.com');
 

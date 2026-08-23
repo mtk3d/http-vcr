@@ -56,8 +56,8 @@ final class ProvidersCommand extends Command
     }
 
     /**
-     * @param array<string, Provider>                                              $configured
-     * @param array<string, array{cassettes: int, interactions: int, hosts: list<string>}>  $recorded
+     * @param  array<string, Provider>  $configured
+     * @param  array<string, array{cassettes: int, interactions: int, hosts: list<string>}>  $recorded
      */
     private function writeConfigured(OutputInterface $output, array $configured, array $recorded): void
     {
@@ -84,7 +84,7 @@ final class ProvidersCommand extends Command
     }
 
     /**
-     * @param array<string, array{cassettes: int, interactions: int, hosts: list<string>}> $implicit
+     * @param  array<string, array{cassettes: int, interactions: int, hosts: list<string>}>  $implicit
      */
     private function writeImplicit(OutputInterface $output, array $implicit): void
     {
@@ -99,14 +99,14 @@ final class ProvidersCommand extends Command
         $rows = [];
 
         foreach ($implicit as $host => $counts) {
-            $rows[] = ['  ' . $host, $this->counts($counts['cassettes'], $counts['interactions'])];
+            $rows[] = ['  '.$host, $this->counts($counts['cassettes'], $counts['interactions'])];
         }
 
         $this->writeTable($output, $rows);
     }
 
     /**
-     * @param list<list<string>> $rows
+     * @param  list<list<string>>  $rows
      */
     private function writeTable(OutputInterface $output, array $rows): void
     {
@@ -124,7 +124,7 @@ final class ProvidersCommand extends Command
             foreach ($row as $column => $cell) {
                 $line .= $column === array_key_last($row)
                     ? $cell
-                    : $cell . str_repeat(' ', $widths[$column] - mb_strlen($cell) + 2);
+                    : $cell.str_repeat(' ', $widths[$column] - mb_strlen($cell) + 2);
             }
 
             $output->writeln($line);

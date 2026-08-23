@@ -64,7 +64,7 @@ final class EraseTapeTest extends TestCase
     public function testABareBooleanIsRefusedRatherThanGuessedAt(string $value): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('VCR_ERASE_TAPE takes cassette selectors, not "' . $value . '"');
+        $this->expectExceptionMessage('VCR_ERASE_TAPE takes cassette selectors, not "'.$value.'"');
 
         EraseTape::parse($value);
     }

@@ -33,7 +33,7 @@ final class ForcedRecordingTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
 
@@ -55,7 +55,7 @@ final class ForcedRecordingTest extends TestCase
         ]);
         $_ENV['VCR_ERASE_TAPE'] = 'sync/order-flow';
 
-        $inner = (new FakeHttpClient())->willRespond('{"title":"new"}');
+        $inner = (new FakeHttpClient)->willRespond('{"title":"new"}');
         $vcr = new VcrClient($inner, 'sync/order-flow', persister: $this->persister());
         $response = $vcr->sendRequest(new Request('GET', 'https://shop.example.com/products/1'));
         $vcr->close();
@@ -73,7 +73,7 @@ final class ForcedRecordingTest extends TestCase
         ]);
         $_ENV['VCR_ERASE_TAPE'] = 'some/other-cassette';
 
-        $inner = new FakeHttpClient();
+        $inner = new FakeHttpClient;
         $response = (new VcrClient($inner, 'sync/order-flow', persister: $this->persister()))
             ->sendRequest(new Request('GET', 'https://shop.example.com/products/1'));
 
@@ -89,7 +89,7 @@ final class ForcedRecordingTest extends TestCase
         ]);
         $_ENV['VCR_ERASE_TAPE'] = 'all';
 
-        $inner = (new FakeHttpClient())->willRespond('{"title":"new"}');
+        $inner = (new FakeHttpClient)->willRespond('{"title":"new"}');
         $vcr = new VcrClient($inner, 'shopify/checkout', persister: $this->persister());
 
         $order = $vcr->sendRequest(new Request('GET', 'https://shop.example.com/orders'));
@@ -114,7 +114,7 @@ final class ForcedRecordingTest extends TestCase
         ]);
         $_ENV['VCR_ERASE_TAPE'] = '@shop.example.com';
 
-        $inner = (new FakeHttpClient())->willRespond('{"order":"new"}');
+        $inner = (new FakeHttpClient)->willRespond('{"order":"new"}');
         $vcr = new VcrClient($inner, 'sync/order-flow', persister: $this->persister());
 
         $ticket = $vcr->sendRequest(new Request('GET', 'https://acme.zendesk.com/tickets'));
@@ -138,7 +138,7 @@ final class ForcedRecordingTest extends TestCase
         ]);
         $_ENV['VCR_ERASE_TAPE'] = '@shopify';
 
-        $inner = (new FakeHttpClient())->willRespond('{"order":"new"}');
+        $inner = (new FakeHttpClient)->willRespond('{"order":"new"}');
         $vcr = new VcrClient($inner, 'sync/order-flow', persister: $this->persister());
 
         $ticket = $vcr->sendRequest(new Request('GET', 'https://acme.zendesk.com/tickets'));
@@ -157,7 +157,7 @@ final class ForcedRecordingTest extends TestCase
         ]);
         $_ENV['VCR_ERASE_TAPE'] = '@shop.example.com';
 
-        $inner = (new FakeHttpClient())->willRespond('{"order":"new"}');
+        $inner = (new FakeHttpClient)->willRespond('{"order":"new"}');
         $vcr = new VcrClient($inner, 'sync/order-flow', persister: $this->persister());
         $vcr->sendRequest(new Request('GET', 'https://shop.example.com/orders/1'));
         $vcr->sendRequest(new Request('GET', 'https://acme.zendesk.com/tickets'));
@@ -177,7 +177,7 @@ final class ForcedRecordingTest extends TestCase
         $before = $this->cassettes->read('shopify/checkout.json');
         $_ENV['VCR_ERASE_TAPE'] = 'all';
 
-        $inner = new FakeHttpClient();
+        $inner = new FakeHttpClient;
         $vcr = new VcrClient($inner, 'shopify/checkout', persister: $this->persister(), warn: $this->collect(...));
         $vcr->sendRequest(new Request('GET', 'https://shop.example.com/orders'));
         $vcr->close();
@@ -194,7 +194,7 @@ final class ForcedRecordingTest extends TestCase
         $_ENV['VCR_ERASE_TAPE'] = 'all';
 
         $vcr = new VcrClient(
-            new FakeHttpClient(),
+            new FakeHttpClient,
             'shopify/checkout',
             persister: $this->persister(),
             warn: $this->collect(...),
@@ -214,7 +214,7 @@ final class ForcedRecordingTest extends TestCase
         $_ENV['VCR_ERASE_TAPE'] = '@shop.example.com';
 
         $vcr = new VcrClient(
-            new FakeHttpClient(),
+            new FakeHttpClient,
             'sync/order-flow',
             persister: $this->persister(),
             warn: $this->collect(...),
@@ -234,7 +234,7 @@ final class ForcedRecordingTest extends TestCase
         $_ENV['VCR_ALLOW_RECORDING'] = '0';
         $_ENV['VCR_ERASE_TAPE'] = 'sync/order-flow';
 
-        $vcr = new VcrClient(new FakeHttpClient(), 'sync/order-flow', persister: $this->persister());
+        $vcr = new VcrClient(new FakeHttpClient, 'sync/order-flow', persister: $this->persister());
 
         try {
             $vcr->sendRequest(new Request('GET', 'https://shop.example.com/products/1'));
@@ -258,11 +258,11 @@ final class ForcedRecordingTest extends TestCase
     }
 
     /**
-     * @param list<array<string, mixed>> $interactions
+     * @param  list<array<string, mixed>>  $interactions
      */
     private function seed(string $cassette, array $interactions): void
     {
-        $this->cassettes->write($cassette . '.json', json_encode(
+        $this->cassettes->write($cassette.'.json', json_encode(
             ['schemaVersion' => 1, 'interactions' => $interactions],
             JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT,
         ));

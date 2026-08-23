@@ -33,7 +33,7 @@ final class StaleCassetteTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment(
             'VCR_ALLOW_RECORDING',
@@ -69,7 +69,7 @@ final class StaleCassetteTest extends TestCase
         $_ENV['VCR_ENFORCE_STALE_CHECK'] = '1';
 
         $this->expectException(StaleCassetteException::class);
-        $this->expectExceptionMessage('1 interaction in ' . $this->cassettes->path . '/shopify/get-product.json');
+        $this->expectExceptionMessage('1 interaction in '.$this->cassettes->path.'/shopify/get-product.json');
         $this->expectExceptionMessage('#1  GET https://api.example.com/products/1');
         $this->expectExceptionMessage('recorded 2026-08-01T12:00:00+00:00, stale since 2026-08-08T12:00:00+00:00');
         $this->expectExceptionMessage('VCR_ERASE_TAPE=shopify/get-product');
@@ -120,7 +120,7 @@ final class StaleCassetteTest extends TestCase
     {
         $_ENV['VCR_ENFORCE_STALE_CHECK'] = '1';
 
-        $inner = (new FakeHttpClient())->willRespond('{"id":1}');
+        $inner = (new FakeHttpClient)->willRespond('{"id":1}');
         $response = $this->client(self::RECORDED_AT, $inner)
             ->sendRequest(new Request('GET', 'https://api.example.com/products/1'));
 
@@ -129,7 +129,7 @@ final class StaleCassetteTest extends TestCase
 
     private function recordAt(string $now, string $path = '/products/1', RecordMode $mode = RecordMode::RecordIfAbsent): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"id":' . substr($path, -1) . '}');
+        $inner = (new FakeHttpClient)->willRespond('{"id":'.substr($path, -1).'}');
 
         $vcr = new VcrClient(
             $inner,
@@ -139,14 +139,14 @@ final class StaleCassetteTest extends TestCase
             persister: $this->cassettes->persister(),
         );
 
-        $vcr->sendRequest(new Request('GET', 'https://api.example.com' . $path));
+        $vcr->sendRequest(new Request('GET', 'https://api.example.com'.$path));
         $vcr->close();
     }
 
     private function client(string $now, ?FakeHttpClient $inner = null): VcrClient
     {
         return new VcrClient(
-            $inner ?? new FakeHttpClient(),
+            $inner ?? new FakeHttpClient,
             'shopify/get-product',
             RecordMode::RecordIfAbsent,
             staleAfter: new DateInterval('P7D'),

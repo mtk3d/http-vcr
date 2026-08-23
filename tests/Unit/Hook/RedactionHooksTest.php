@@ -33,7 +33,7 @@ final class RedactionHooksTest extends TestCase
     }
 
     /**
-     * @param array<string, list<string>> $headers
+     * @param  array<string, list<string>>  $headers
      */
     private static function request(
         string $uri = 'https://api.example.com/orders',
@@ -46,7 +46,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAValueIsReplacedWhereverItAppears(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redact('<API_KEY>', static fn (): string => 'secret-token');
 
         $recorded = $hooks->beforeRecord(self::interaction(
@@ -69,7 +69,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAValueIsPutBackOnPlayback(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redact('<API_KEY>', static fn (): string => 'secret-token');
 
         $replayed = $hooks->beforePlayback(self::interaction(
@@ -83,7 +83,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testTheRealValueIsReadWhenItIsNeededRatherThanWhenTheRuleIsDeclared(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $token = null;
         $hooks->redact('<API_KEY>', static function () use (&$token): ?string {
             return $token;
@@ -100,7 +100,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAHeaderIsRedactedInBothHalvesOfTheInteraction(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactHeader('X-Api-Key');
 
         $recorded = $hooks->beforeRecord(self::interaction(
@@ -114,7 +114,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testARedactedHeaderKeepsTheCapitalizationItWasSentWith(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactHeader('x-api-key');
 
         $recorded = $hooks->beforeRecord(self::interaction(self::request(headers: ['X-Api-Key' => ['secret']])));
@@ -124,7 +124,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAWriteOnlyHeaderRuleHasNothingToRestore(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactHeader('X-Api-Key');
 
         $replayed = $hooks->beforePlayback(self::interaction(
@@ -136,7 +136,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testATwoWayHeaderRuleRestoresTheRealValue(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactHeader('X-Api-Key', static fn (): string => 'secret-token');
 
         $replayed = $hooks->beforePlayback(self::interaction(
@@ -152,7 +152,7 @@ final class RedactionHooksTest extends TestCase
      */
     public function testRestoringLeavesAValueThatIsNotThePlaceholderAlone(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactHeader('X-Api-Key', static fn (): string => 'secret-token');
 
         $replayed = $hooks->beforePlayback(self::interaction(
@@ -164,7 +164,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAJsonFieldIsRedactedByPointer(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactJsonField('/customer/email');
 
         $recorded = $hooks->beforeRecord(self::interaction(
@@ -179,7 +179,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAJsonFieldRuleLeavesABodyWithoutThatFieldAlone(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactJsonField('/customer/email');
 
         $body = '{"customer":{"id":7}}';
@@ -190,7 +190,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAJsonFieldRuleLeavesANonJsonBodyAlone(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactJsonField('/email');
 
         $recorded = $hooks->beforeRecord(self::interaction(self::request(body: 'email=buyer@example.com')));
@@ -200,7 +200,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAQueryParameterIsRedactedInTheUrl(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactQueryParam('api_key');
 
         $recorded = $hooks->beforeRecord(self::interaction(
@@ -215,7 +215,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAQueryParameterIsRestoredUrlEncoded(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactQueryParam('api_key', static fn (): string => 'a b/c');
 
         $replayed = $hooks->beforePlayback(self::interaction(
@@ -227,7 +227,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAFormFieldIsRedactedInAFormEncodedBody(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactFormField('client_secret');
 
         $recorded = $hooks->beforeRecord(self::interaction(self::request(
@@ -243,7 +243,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAFormFieldRuleIgnoresABodyThatIsNotAForm(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactFormField('client_secret');
 
         $recorded = $hooks->beforeRecord(self::interaction(self::request(
@@ -260,7 +260,7 @@ final class RedactionHooksTest extends TestCase
      */
     public function testTheMessageOfARecordedFailureIsRedactedToo(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactQueryParam('api_key');
         $hooks->redact('<HOST_SECRET>', static fn (): string => 'internal-host');
 
@@ -278,14 +278,14 @@ final class RedactionHooksTest extends TestCase
 
         self::assertSame(
             'cURL error 6: Could not resolve <HOST_SECRET> '
-            . '(see https://api.example.com/orders?api_key=<REDACTED-API-KEY>)',
+            .'(see https://api.example.com/orders?api_key=<REDACTED-API-KEY>)',
             $recorded->error?->message,
         );
     }
 
     public function testABinaryBodyIsLeftAlone(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redact('<SECRET>', static fn (): string => "\x01\x02");
 
         $body = "\x00\x01\x02\x03";
@@ -296,7 +296,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testRulesApplyInRegistrationOrder(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redact('<OUTER>', static fn (): string => 'Bearer inner-token');
         $hooks->redact('<INNER>', static fn (): string => 'inner-token');
 
@@ -321,7 +321,7 @@ final class RedactionHooksTest extends TestCase
     #[DataProvider('sensitiveHeaders')]
     public function testRedactsTheAuthorizationHeadersWithNoConfigurationAtAll(string $header): void
     {
-        $recorded = (new RedactionHooks())->beforeRecord(self::interaction(
+        $recorded = (new RedactionHooks)->beforeRecord(self::interaction(
             self::request(headers: [$header => ['Bearer sk_live_4eC39H']]),
             new RecordedResponse(200, [$header => ['Bearer sk_live_4eC39H']]),
         ));
@@ -332,7 +332,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAutomaticRedactionRunsAheadOfEveryDeclaredRule(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redact('<TOKEN>', static fn (): string => 'sk_live_4eC39H');
 
         $recorded = $hooks->beforeRecord(self::interaction(
@@ -344,7 +344,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAnAutomaticallyRedactedHeaderStopsTellingTwoRequestsApart(): void
     {
-        $incoming = (new RedactionHooks())->forMatching(
+        $incoming = (new RedactionHooks)->forMatching(
             self::request(headers: ['Authorization' => ['Bearer sk_live_4eC39H']]),
         );
 
@@ -353,7 +353,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAnIncludedHeaderIsNeitherRedactedNorNormalizedForMatching(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->includeSensitiveHeaders(['authorization']);
 
         $request = self::request(headers: ['Authorization' => ['Bearer sk_live_4eC39H']]);
@@ -364,7 +364,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testIncludingOneHeaderLeavesTheOtherThreeRedacted(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->includeSensitiveHeaders(['Authorization']);
 
         $recorded = $hooks->beforeRecord(self::interaction(
@@ -377,7 +377,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testMatchingSeesOnlyTheWriteOnlyRulesAppliedToTheIncomingRequest(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $hooks->redactHeader('X-Api-Key');
         $hooks->redactHeader('X-Account', static fn (): string => 'acct-1');
 
@@ -391,7 +391,7 @@ final class RedactionHooksTest extends TestCase
 
     public function testAnInteractionWithNothingToRedactComesOutUnchanged(): void
     {
-        $hooks = new RedactionHooks();
+        $hooks = new RedactionHooks;
         $interaction = self::interaction(self::request());
 
         self::assertEquals($interaction, $hooks->beforeRecord($interaction));

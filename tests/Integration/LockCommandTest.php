@@ -29,7 +29,7 @@ final class LockCommandTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
@@ -133,31 +133,31 @@ final class LockCommandTest extends TestCase
     }
 
     /**
-     * @param array<string, string> $input
+     * @param  array<string, string>  $input
      */
     private function execute(string $command, array $input): CommandTester
     {
-        $tester = new CommandTester((new Application())->find($command));
+        $tester = new CommandTester((new Application)->find($command));
         $tester->execute($input);
 
         return $tester;
     }
 
     /**
-     * @param list<string> $paths
+     * @param  list<string>  $paths
      */
     private function record(string $cassette, array $paths): void
     {
-        $inner = new FakeHttpClient();
+        $inner = new FakeHttpClient;
 
         foreach ($paths as $path) {
-            $inner->willRespond('{"path":"' . $path . '"}');
+            $inner->willRespond('{"path":"'.$path.'"}');
         }
 
         $vcr = new VcrClient($inner, $cassette, persister: $this->cassettes->persister());
 
         foreach ($paths as $path) {
-            $vcr->sendRequest(new Request('GET', 'https://shop.example.com' . $path));
+            $vcr->sendRequest(new Request('GET', 'https://shop.example.com'.$path));
         }
 
         $vcr->close();

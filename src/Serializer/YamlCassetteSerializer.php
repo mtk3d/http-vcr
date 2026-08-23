@@ -32,7 +32,7 @@ final class YamlCassetteSerializer extends ArrayCassetteSerializer
 
     public function __construct()
     {
-        if (!class_exists(Yaml::class)) {
+        if (! class_exists(Yaml::class)) {
             throw MissingDependencyException::noYaml();
         }
     }
@@ -52,10 +52,10 @@ final class YamlCassetteSerializer extends ArrayCassetteSerializer
         try {
             $data = Yaml::parse($content);
         } catch (ParseException $exception) {
-            throw CassetteFormatException::malformed('is not valid YAML (' . $exception->getMessage() . ')');
+            throw CassetteFormatException::malformed('is not valid YAML ('.$exception->getMessage().')');
         }
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw CassetteFormatException::malformed('is not a YAML mapping');
         }
 

@@ -19,7 +19,7 @@ final class CassetteFile
     {
         $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             throw new LogicException('The cassette is not a JSON object.');
         }
 
@@ -85,7 +85,7 @@ final class CassetteFile
     {
         $headers = $this->part($index, $part)['headers'] ?? [];
 
-        if (!is_array($headers)) {
+        if (! is_array($headers)) {
             return [];
         }
 
@@ -180,14 +180,14 @@ final class CassetteFile
     {
         $interactions = $this->data['interactions'] ?? [];
 
-        if (!is_array($interactions)) {
+        if (! is_array($interactions)) {
             throw new LogicException('The cassette has no interactions.');
         }
 
         $typed = [];
 
         foreach ($interactions as $interaction) {
-            if (!is_array($interaction)) {
+            if (! is_array($interaction)) {
                 throw new LogicException('The cassette has a malformed interaction.');
             }
 
@@ -205,7 +205,7 @@ final class CassetteFile
     {
         $part = $this->interactions()[$index][$name] ?? null;
 
-        if (!is_array($part)) {
+        if (! is_array($part)) {
             throw new LogicException(sprintf('Interaction #%d has no %s.', $index + 1, $name));
         }
 
@@ -214,7 +214,7 @@ final class CassetteFile
     }
 
     /**
-     * @param array<string, mixed> $part
+     * @param  array<string, mixed>  $part
      */
     private function string(array $part, string $field): string
     {

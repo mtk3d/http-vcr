@@ -31,7 +31,7 @@ final class CassetteNotFoundException extends NoMatchingInteractionException
      * The cassette exists under other scopes, just not this one — the version bump from
      * §3.8, where listing the scopes on disk is what actually answers the question.
      *
-     * @param list<string> $existingScopes
+     * @param  list<string>  $existingScopes
      */
     public static function forScope(
         string $cassetteName,
@@ -41,7 +41,7 @@ final class CassetteNotFoundException extends NoMatchingInteractionException
     ): self {
         return new self(sprintf(
             'No cassette recorded for scope "%s" (base: %s). %s Mode is %s, which never records — '
-            . 'record it under RecordIfAbsent, or add the missing scope by hand.',
+            .'record it under RecordIfAbsent, or add the missing scope by hand.',
             $scope,
             $cassetteName,
             self::describeScopes($existingScopes),
@@ -50,7 +50,7 @@ final class CassetteNotFoundException extends NoMatchingInteractionException
     }
 
     /**
-     * @param list<string> $existingScopes
+     * @param  list<string>  $existingScopes
      */
     public static function describeScopes(array $existingScopes): string
     {

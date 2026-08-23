@@ -36,14 +36,12 @@ use stdClass;
  */
 final class HarCassetteExporter
 {
-    public function __construct(private readonly ?Config $config = null)
-    {
-    }
+    public function __construct(private readonly ?Config $config = null) {}
 
     /**
-     * @param string $cassette the cassette name, a path inside the cassette directory
-     *                         without an extension
-     * @param string $file     where to write the HAR
+     * @param  string  $cassette  the cassette name, a path inside the cassette directory
+     *                            without an extension
+     * @param  string  $file  where to write the HAR
      */
     public function export(string $cassette, string $file): void
     {
@@ -51,7 +49,7 @@ final class HarCassetteExporter
         $persister = $config->persister();
         $serializer = $config->serializer();
 
-        $content = $persister->read($cassette . '.' . $serializer->fileExtension());
+        $content = $persister->read($cassette.'.'.$serializer->fileExtension());
 
         if ($content === null) {
             throw new CassetteNotFoundException(sprintf(
@@ -85,9 +83,9 @@ final class HarCassetteExporter
                     'creator' => ['name' => 'http-vcr', 'version' => $this->version()],
                     'entries' => $entries,
                 ],
-            ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
+            ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n";
         } catch (JsonException $exception) {
-            throw CassetteFormatException::malformed('could not be written as HAR: ' . $exception->getMessage());
+            throw CassetteFormatException::malformed('could not be written as HAR: '.$exception->getMessage());
         }
     }
 
@@ -114,7 +112,7 @@ final class HarCassetteExporter
                 'headersSize' => -1,
                 'bodySize' => strlen($request->body),
             ],
-            'cache' => new stdClass(),
+            'cache' => new stdClass,
             'timings' => ['send' => -1, 'wait' => -1, 'receive' => -1],
         ];
 
@@ -176,8 +174,7 @@ final class HarCassetteExporter
     }
 
     /**
-     * @param array<string, list<string>> $headers
-     *
+     * @param  array<string, list<string>>  $headers
      * @return list<array{name: string, value: string}>
      */
     private function headers(array $headers): array
@@ -200,7 +197,7 @@ final class HarCassetteExporter
     {
         $query = parse_url($uri, PHP_URL_QUERY);
 
-        if (!is_string($query) || $query === '') {
+        if (! is_string($query) || $query === '') {
             return [];
         }
 
@@ -225,7 +222,7 @@ final class HarCassetteExporter
      */
     private function version(): string
     {
-        if (!class_exists(InstalledVersions::class) || !InstalledVersions::isInstalled('mtk3d/http-vcr')) {
+        if (! class_exists(InstalledVersions::class) || ! InstalledVersions::isInstalled('mtk3d/http-vcr')) {
             return 'unknown';
         }
 

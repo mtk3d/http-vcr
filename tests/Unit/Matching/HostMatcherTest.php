@@ -28,7 +28,7 @@ final class HostMatcherTest extends TestCase
     #[DataProvider('sameHost')]
     public function testMatchesOnTheHostAlone(string $recorded, string $incoming): void
     {
-        self::assertTrue((new HostMatcher())->matches(
+        self::assertTrue((new HostMatcher)->matches(
             new RecordedRequest('GET', $recorded),
             new RecordedRequest('GET', $incoming),
         ));
@@ -36,7 +36,7 @@ final class HostMatcherTest extends TestCase
 
     public function testRejectsADifferentHostAndNamesTheExpectedOne(): void
     {
-        $matcher = new HostMatcher();
+        $matcher = new HostMatcher;
         $recorded = new RecordedRequest('GET', 'https://example.com/products');
         $incoming = new RecordedRequest('GET', 'https://other.example.com/products');
 
@@ -46,7 +46,7 @@ final class HostMatcherTest extends TestCase
 
     public function testAcceptsTheMatchingPairSilently(): void
     {
-        $matcher = new HostMatcher();
+        $matcher = new HostMatcher;
 
         self::assertNull($matcher->explainMismatch(
             new RecordedRequest('GET', 'https://example.com/a'),

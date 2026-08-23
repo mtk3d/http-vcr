@@ -38,7 +38,7 @@ final class TransportErrorTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
     }
@@ -53,7 +53,7 @@ final class TransportErrorTest extends TestCase
     public function testByDefaultAFailureReachesTheCallerAndNothingIsWritten(): void
     {
         $failure = $this->networkFailure('cURL error 28: Operation timed out');
-        $inner = (new FakeHttpClient())->willThrow($failure);
+        $inner = (new FakeHttpClient)->willThrow($failure);
 
         try {
             $this->client($inner)->sendRequest($this->request());
@@ -67,7 +67,7 @@ final class TransportErrorTest extends TestCase
 
     public function testWithRecordTransportErrorsTheFailureIsStoredInPlaceOfAResponse(): void
     {
-        $inner = (new FakeHttpClient())->willThrow($this->networkFailure('cURL error 28: Operation timed out'));
+        $inner = (new FakeHttpClient)->willThrow($this->networkFailure('cURL error 28: Operation timed out'));
 
         try {
             $this->client($inner, recordTransportErrors: true)->sendRequest($this->request());
@@ -89,7 +89,7 @@ final class TransportErrorTest extends TestCase
         $request = $this->request();
 
         try {
-            $this->client(new FakeHttpClient())->sendRequest($request);
+            $this->client(new FakeHttpClient)->sendRequest($request);
             self::fail('the recorded failure should have been replayed');
         } catch (NetworkExceptionInterface $replayed) {
             self::assertInstanceOf(VcrNetworkException::class, $replayed);
@@ -106,7 +106,7 @@ final class TransportErrorTest extends TestCase
 
         $this->expectException(VcrRequestException::class);
 
-        $this->client(new FakeHttpClient())->sendRequest($this->request());
+        $this->client(new FakeHttpClient)->sendRequest($this->request());
     }
 
     public function testReplayNeverRebuildsTheOriginalClientsExceptionClass(): void
@@ -114,7 +114,7 @@ final class TransportErrorTest extends TestCase
         $this->recordFailure($this->networkFailure('cURL error 28: Operation timed out'));
 
         try {
-            $this->client(new FakeHttpClient())->sendRequest($this->request());
+            $this->client(new FakeHttpClient)->sendRequest($this->request());
             self::fail('the recorded failure should have been replayed');
         } catch (ClientExceptionInterface $replayed) {
             self::assertInstanceOf(VcrNetworkException::class, $replayed);
@@ -125,8 +125,8 @@ final class TransportErrorTest extends TestCase
 
     public function testAClientExceptionThatIsNeitherKindIsNotRecorded(): void
     {
-        $inner = (new FakeHttpClient())->willThrow(
-            new class ('something went sideways') extends RuntimeException implements ClientExceptionInterface {},
+        $inner = (new FakeHttpClient)->willThrow(
+            new class('something went sideways') extends RuntimeException implements ClientExceptionInterface {},
         );
 
         try {
@@ -141,7 +141,7 @@ final class TransportErrorTest extends TestCase
     {
         $this->recordFailure($this->networkFailure('cURL error 28: Operation timed out'));
 
-        $vcr = $this->client(new FakeHttpClient());
+        $vcr = $this->client(new FakeHttpClient);
 
         try {
             $vcr->sendRequest($this->request());
@@ -155,7 +155,7 @@ final class TransportErrorTest extends TestCase
 
     private function recordFailure(ClientExceptionInterface $failure): void
     {
-        $vcr = $this->client((new FakeHttpClient())->willThrow($failure), recordTransportErrors: true);
+        $vcr = $this->client((new FakeHttpClient)->willThrow($failure), recordTransportErrors: true);
 
         try {
             $vcr->sendRequest($this->request());
@@ -167,7 +167,8 @@ final class TransportErrorTest extends TestCase
 
     private function networkFailure(string $message): ClientExceptionInterface&NetworkExceptionInterface
     {
-        return new class ($message, $this->request()) extends RuntimeException implements NetworkExceptionInterface {
+        return new class($message, $this->request()) extends RuntimeException implements NetworkExceptionInterface
+        {
             public function __construct(string $message, private readonly RequestInterface $request)
             {
                 parent::__construct($message);
@@ -182,7 +183,8 @@ final class TransportErrorTest extends TestCase
 
     private function requestFailure(string $message): ClientExceptionInterface&RequestExceptionInterface
     {
-        return new class ($message, $this->request()) extends RuntimeException implements RequestExceptionInterface {
+        return new class($message, $this->request()) extends RuntimeException implements RequestExceptionInterface
+        {
             public function __construct(string $message, private readonly RequestInterface $request)
             {
                 parent::__construct($message);

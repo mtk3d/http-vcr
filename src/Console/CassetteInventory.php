@@ -100,7 +100,7 @@ final class CassetteInventory
 
     /**
      * @return array<string, array{cassettes: int, interactions: int, hosts: list<string>}>
-     *         keyed by provider name, in name order
+     *                                                                                      keyed by provider name, in name order
      */
     public function byProvider(): array
     {
@@ -115,12 +115,12 @@ final class CassetteInventory
                 $providers[$name] ??= ['cassettes' => 0, 'interactions' => 0, 'hosts' => []];
                 $providers[$name]['interactions'] += $interactions;
 
-                if (!isset($seen[$name])) {
+                if (! isset($seen[$name])) {
                     $seen[$name] = true;
-                    ++$providers[$name]['cassettes'];
+                    $providers[$name]['cassettes']++;
                 }
 
-                if (!in_array($host, $providers[$name]['hosts'], true)) {
+                if (! in_array($host, $providers[$name]['hosts'], true)) {
                     $providers[$name]['hosts'][] = $host;
                 }
             }

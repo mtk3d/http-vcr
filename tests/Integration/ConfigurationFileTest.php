@@ -29,10 +29,10 @@ final class ConfigurationFileTest extends TestCase
     {
         // realpath, because __DIR__ inside the written file resolves symlinks (/tmp on
         // macOS) and the assertions compare the two.
-        $this->project = (string) realpath(sys_get_temp_dir()) . '/http-vcr-project-' . bin2hex(random_bytes(6));
+        $this->project = (string) realpath(sys_get_temp_dir()).'/http-vcr-project-'.bin2hex(random_bytes(6));
 
-        mkdir($this->project . '/src/nested', 0o777, true);
-        file_put_contents($this->project . '/composer.json', '{}');
+        mkdir($this->project.'/src/nested', 0o777, true);
+        file_put_contents($this->project.'/composer.json', '{}');
     }
 
     protected function tearDown(): void
@@ -44,32 +44,32 @@ final class ConfigurationFileTest extends TestCase
 
     public function testFindsTheFileByWalkingUpFromWhereTheProcessStarted(): void
     {
-        $this->write($this->project . '/http-vcr.php', "cassetteDirectory: __DIR__ . '/tests/Recordings'");
+        $this->write($this->project.'/http-vcr.php', "cassetteDirectory: __DIR__ . '/tests/Recordings'");
 
-        $config = Config::discover($this->project . '/src/nested');
+        $config = Config::discover($this->project.'/src/nested');
 
         self::assertNotNull($config);
-        self::assertSame($this->project . '/tests/Recordings', $config->cassetteDirectory());
+        self::assertSame($this->project.'/tests/Recordings', $config->cassetteDirectory());
     }
 
     public function testTheSearchStopsAtTheProjectRootRatherThanReachingIntoWhateverIsAbove(): void
     {
-        $this->write($this->project . '/http-vcr.php', "cassetteDirectory: '/should/not/be/found'");
+        $this->write($this->project.'/http-vcr.php', "cassetteDirectory: '/should/not/be/found'");
 
-        mkdir($this->project . '/packages/inner', 0o777, true);
-        file_put_contents($this->project . '/packages/inner/composer.json', '{}');
+        mkdir($this->project.'/packages/inner', 0o777, true);
+        file_put_contents($this->project.'/packages/inner/composer.json', '{}');
 
-        self::assertNull(Config::discover($this->project . '/packages/inner'));
+        self::assertNull(Config::discover($this->project.'/packages/inner'));
     }
 
     public function testNoFileIsNotAnErrorItIsJustTheDefaults(): void
     {
-        self::assertNull(Config::discover($this->project . '/src/nested'));
+        self::assertNull(Config::discover($this->project.'/src/nested'));
     }
 
     public function testAFileThatReturnsSomethingElseSaysSoRatherThanFailingLater(): void
     {
-        file_put_contents($this->project . '/http-vcr.php', "<?php\n\nreturn ['cassetteDirectory' => 'nope'];\n");
+        file_put_contents($this->project.'/http-vcr.php', "<?php\n\nreturn ['cassetteDirectory' => 'nope'];\n");
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('has to return HttpVcr\Config::create(...); it returned array.');
@@ -81,18 +81,18 @@ final class ConfigurationFileTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        Config::loadFile($this->project . '/nowhere.php');
+        Config::loadFile($this->project.'/nowhere.php');
     }
 
     public function testConfigureOverridesTheFileFieldByFieldRatherThanWholesale(): void
     {
-        $cassettes = new CassetteDirectory();
+        $cassettes = new CassetteDirectory;
         $this->write(
-            $this->project . '/http-vcr.php',
+            $this->project.'/http-vcr.php',
             "cassetteDirectory: '/from/the/file', inlineBodyLimit: 4096",
         );
 
-        Config::useFile($this->project . '/http-vcr.php');
+        Config::useFile($this->project.'/http-vcr.php');
         VcrClient::configure(persister: $cassettes->persister());
 
         // The file said both of these and the call said neither, so both survive.
@@ -103,11 +103,11 @@ final class ConfigurationFileTest extends TestCase
 
     public function testTheCliTakesTheFileNamedOnItsCommandLine(): void
     {
-        $this->write($this->project . '/elsewhere.php', "cassetteDirectory: '/named/on/the/command/line'");
+        $this->write($this->project.'/elsewhere.php', "cassetteDirectory: '/named/on/the/command/line'");
 
-        (new Application())->doRun(
-            new ArrayInput(['command' => 'list', '--config' => $this->project . '/elsewhere.php']),
-            new NullOutput(),
+        (new Application)->doRun(
+            new ArrayInput(['command' => 'list', '--config' => $this->project.'/elsewhere.php']),
+            new NullOutput,
         );
 
         self::assertSame('/named/on/the/command/line', Config::global()->cassetteDirectory());
@@ -123,7 +123,7 @@ final class ConfigurationFileTest extends TestCase
 
     private function remove(string $directory): void
     {
-        if (!is_dir($directory)) {
+        if (! is_dir($directory)) {
             return;
         }
 
@@ -132,7 +132,7 @@ final class ConfigurationFileTest extends TestCase
                 continue;
             }
 
-            $path = $directory . '/' . $entry;
+            $path = $directory.'/'.$entry;
             is_dir($path) ? $this->remove($path) : unlink($path);
         }
 

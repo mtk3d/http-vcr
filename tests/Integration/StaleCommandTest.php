@@ -34,8 +34,8 @@ final class StaleCommandTest extends TestCase
     {
         Config::reset();
 
-        $this->cassettes = new CassetteDirectory();
-        $this->project = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
+        $this->project = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
@@ -146,9 +146,9 @@ final class StaleCommandTest extends TestCase
 
     private function declare(string $class, string $cassette, ?string $staleAfter): void
     {
-        $argument = $staleAfter === null ? '' : ', staleAfter: ' . $staleAfter;
+        $argument = $staleAfter === null ? '' : ', staleAfter: '.$staleAfter;
 
-        $this->project->write($class . '.php', <<<PHP
+        $this->project->write($class.'.php', <<<PHP
             <?php
             namespace App\\Tests;
 
@@ -163,14 +163,14 @@ final class StaleCommandTest extends TestCase
     }
 
     /**
-     * @param list<string> $paths
-     * @param list<string> $recordedAt one moment per path
+     * @param  list<string>  $paths
+     * @param  list<string>  $recordedAt  one moment per path
      */
     private function record(string $cassette, array $paths, array $recordedAt): void
     {
         foreach ($paths as $index => $path) {
-            $inner = new FakeHttpClient();
-            $inner->willRespond('{"path":"' . $path . '"}');
+            $inner = new FakeHttpClient;
+            $inner->willRespond('{"path":"'.$path.'"}');
 
             $vcr = new VcrClient(
                 $inner,
@@ -180,14 +180,14 @@ final class StaleCommandTest extends TestCase
                 clock: new FrozenClock(new DateTimeImmutable($recordedAt[$index])),
             );
 
-            $vcr->sendRequest(new Request('GET', 'https://shop.example.com' . $path));
+            $vcr->sendRequest(new Request('GET', 'https://shop.example.com'.$path));
             $vcr->close();
         }
     }
 
     private function execute(): CommandTester
     {
-        $tester = new CommandTester((new Application())->find('stale'));
+        $tester = new CommandTester((new Application)->find('stale'));
         $tester->execute([]);
 
         return $tester;

@@ -24,11 +24,9 @@ final class DeferredClient implements ClientInterface
     private ?ClientInterface $client = null;
 
     /**
-     * @param Closure(): ClientInterface $resolve
+     * @param  Closure(): ClientInterface  $resolve
      */
-    public function __construct(private readonly Closure $resolve)
-    {
-    }
+    public function __construct(private readonly Closure $resolve) {}
 
     public function sendRequest(RequestInterface $request): ResponseInterface
     {

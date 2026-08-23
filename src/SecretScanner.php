@@ -66,7 +66,7 @@ final class SecretScanner
      * the cassette is already on disk, and what to do about a finding depends on context
      * the library doesn't have.
      *
-     * @param list<SecretFinding> $findings
+     * @param  list<SecretFinding>  $findings
      */
     public static function warning(string $cassette, int $recorded, array $findings): string
     {
@@ -89,7 +89,7 @@ final class SecretScanner
     }
 
     /**
-     * @param list<SecretFinding> $findings
+     * @param  list<SecretFinding>  $findings
      */
     private function scanRequest(RecordedRequest $request, array &$findings): void
     {
@@ -99,7 +99,7 @@ final class SecretScanner
     }
 
     /**
-     * @param list<SecretFinding> $findings
+     * @param  list<SecretFinding>  $findings
      */
     private function scanResponse(RecordedResponse $response, array &$findings): void
     {
@@ -108,28 +108,28 @@ final class SecretScanner
     }
 
     /**
-     * @param array<string, list<string>> $headers
-     * @param list<SecretFinding>         $findings
+     * @param  array<string, list<string>>  $headers
+     * @param  list<SecretFinding>  $findings
      */
     private function scanHeaders(array $headers, string $where, array &$findings): void
     {
         foreach ($headers as $name => $values) {
             foreach ($values as $value) {
                 if ($this->isCredential($name, $value)) {
-                    $findings[] = new SecretFinding($where . '.' . strtolower($name), $value);
+                    $findings[] = new SecretFinding($where.'.'.strtolower($name), $value);
                 }
             }
         }
     }
 
     /**
-     * @param list<SecretFinding> $findings
+     * @param  list<SecretFinding>  $findings
      */
     private function scanQuery(string $uri, array &$findings): void
     {
         $query = parse_url($uri, PHP_URL_QUERY);
 
-        if (!is_string($query)) {
+        if (! is_string($query)) {
             return;
         }
 
@@ -141,8 +141,8 @@ final class SecretScanner
     }
 
     /**
-     * @param list<string>        $contentType
-     * @param list<SecretFinding> $findings
+     * @param  list<string>  $contentType
+     * @param  list<SecretFinding>  $findings
      */
     private function scanBody(string $body, ?string $encoding, array $contentType, string $where, array &$findings): void
     {
@@ -168,13 +168,13 @@ final class SecretScanner
     }
 
     /**
-     * @param list<SecretFinding> $findings
+     * @param  list<SecretFinding>  $findings
      */
     private function scanJson(mixed $document, string $path, string $where, array &$findings): void
     {
         if ($document instanceof stdClass) {
             foreach (get_object_vars($document) as $key => $value) {
-                $this->scanJson($value, $path . '/' . $key, $where, $findings);
+                $this->scanJson($value, $path.'/'.$key, $where, $findings);
             }
 
             return;
@@ -182,7 +182,7 @@ final class SecretScanner
 
         if (is_array($document)) {
             foreach ($document as $index => $value) {
-                $this->scanJson($value, $path . '/' . $index, $where, $findings);
+                $this->scanJson($value, $path.'/'.$index, $where, $findings);
             }
 
             return;
@@ -200,7 +200,7 @@ final class SecretScanner
      * unmistakable shapes apply here: without a field name to go on, anything looser would
      * report every long identifier in every payload.
      *
-     * @param list<SecretFinding> $findings
+     * @param  list<SecretFinding>  $findings
      */
     private function scanText(string $text, string $where, array &$findings): void
     {
@@ -270,8 +270,7 @@ final class SecretScanner
     }
 
     /**
-     * @param list<SecretFinding> $findings
-     *
+     * @param  list<SecretFinding>  $findings
      * @return list<SecretFinding>
      */
     private function deduplicate(array $findings): array
@@ -284,7 +283,7 @@ final class SecretScanner
             // in the response as well as the request, is one finding to act on.
             $key = $finding->value;
 
-            if (!isset($seen[$key])) {
+            if (! isset($seen[$key])) {
                 $seen[$key] = true;
                 $unique[] = $finding;
             }

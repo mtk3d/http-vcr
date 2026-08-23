@@ -51,7 +51,7 @@ final class ScanSecretsCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $config = Config::global();
-        $scanner = new SecretScanner();
+        $scanner = new SecretScanner;
         $secrets = $this->declaredSecrets($config);
 
         $found = 0;
@@ -63,7 +63,7 @@ final class ScanSecretsCommand extends Command
             $editor = new CassetteEditor($config, $directory);
 
             foreach ($editor->all() as $file) {
-                ++$scanned;
+                $scanned++;
 
                 try {
                     $cassette = $editor->read($file);
@@ -91,7 +91,7 @@ final class ScanSecretsCommand extends Command
                     continue;
                 }
 
-                ++$cassettes;
+                $cassettes++;
                 $found += count($lines);
 
                 $output->writeln(sprintf('<info>%s</info>', $editor->describe($file)));
@@ -127,7 +127,7 @@ final class ScanSecretsCommand extends Command
         $directories = [null];
 
         foreach ((new TestScanner($config->testDirectories()))->scan()->declarations as $declaration) {
-            if ($declaration->directory !== null && !in_array($declaration->directory, $directories, true)) {
+            if ($declaration->directory !== null && ! in_array($declaration->directory, $directories, true)) {
                 $directories[] = $declaration->directory;
             }
         }
@@ -158,8 +158,7 @@ final class ScanSecretsCommand extends Command
     }
 
     /**
-     * @param array<string, string> $secrets
-     *
+     * @param  array<string, string>  $secrets
      * @return list<SecretFinding>
      */
     private function literals(Interaction $interaction, array $secrets): array
@@ -171,7 +170,7 @@ final class ScanSecretsCommand extends Command
         $places = ['request.uri' => $interaction->request->uri];
 
         foreach ($interaction->request->headers as $name => $values) {
-            $places['request.headers.' . strtolower($name)] = implode(', ', $values);
+            $places['request.headers.'.strtolower($name)] = implode(', ', $values);
         }
 
         if ($interaction->request->bodyEncoding === null) {
@@ -180,7 +179,7 @@ final class ScanSecretsCommand extends Command
 
         if ($interaction->response !== null) {
             foreach ($interaction->response->headers as $name => $values) {
-                $places['response.headers.' . strtolower($name)] = implode(', ', $values);
+                $places['response.headers.'.strtolower($name)] = implode(', ', $values);
             }
 
             if ($interaction->response->bodyEncoding === null) {

@@ -28,7 +28,7 @@ final class BinaryBodyTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
     }
@@ -42,8 +42,8 @@ final class BinaryBodyTest extends TestCase
 
     public function testABinaryResponseIsStoredAsBase64AndReplayedByteForByte(): void
     {
-        $png = "\x89PNG\r\n\x1a\n" . random_bytes(64);
-        $inner = (new FakeHttpClient())->willRespond(new Response(200, ['Content-Type' => 'image/png'], $png));
+        $png = "\x89PNG\r\n\x1a\n".random_bytes(64);
+        $inner = (new FakeHttpClient)->willRespond(new Response(200, ['Content-Type' => 'image/png'], $png));
 
         $recorded = $this->client($inner)->sendRequest($this->request());
 
@@ -52,7 +52,7 @@ final class BinaryBodyTest extends TestCase
         self::assertSame('base64', $cassette->bodyEncoding(0));
         self::assertSame(base64_encode($png), $cassette->rawResponseBody(0));
 
-        $replayed = $this->client(new FakeHttpClient())->sendRequest($this->request());
+        $replayed = $this->client(new FakeHttpClient)->sendRequest($this->request());
         self::assertSame($png, (string) $replayed->getBody());
     }
 
@@ -72,7 +72,7 @@ final class BinaryBodyTest extends TestCase
     #[DataProvider('textualContentTypes')]
     public function testTextStaysReadableInTheFile(string $contentType): void
     {
-        $inner = (new FakeHttpClient())->willRespond(new Response(200, ['Content-Type' => $contentType], '{"title":"Łódź"}'));
+        $inner = (new FakeHttpClient)->willRespond(new Response(200, ['Content-Type' => $contentType], '{"title":"Łódź"}'));
 
         $this->client($inner)->sendRequest($this->request());
 
@@ -84,18 +84,18 @@ final class BinaryBodyTest extends TestCase
     public function testContentThatClaimsToBeTextButIsNotValidUtf8IsStoredAsBytesAnyway(): void
     {
         $latin1 = "caf\xE9";
-        $inner = (new FakeHttpClient())->willRespond(new Response(200, ['Content-Type' => 'text/plain'], $latin1));
+        $inner = (new FakeHttpClient)->willRespond(new Response(200, ['Content-Type' => 'text/plain'], $latin1));
 
         $this->client($inner)->sendRequest($this->request());
 
         self::assertSame('base64', $this->cassettes->cassette('api/download.json')->bodyEncoding(0));
-        self::assertSame($latin1, (string) $this->client(new FakeHttpClient())->sendRequest($this->request())->getBody());
+        self::assertSame($latin1, (string) $this->client(new FakeHttpClient)->sendRequest($this->request())->getBody());
     }
 
     public function testABinaryRequestBodyIsEncodedToo(): void
     {
         $bytes = random_bytes(32);
-        $inner = (new FakeHttpClient())->willRespond('{"ok":true}');
+        $inner = (new FakeHttpClient)->willRespond('{"ok":true}');
         $request = new Request('POST', 'https://api.example.com/upload', ['Content-Type' => 'application/octet-stream'], $bytes);
 
         $this->client($inner)->sendRequest($request);
@@ -107,7 +107,7 @@ final class BinaryBodyTest extends TestCase
 
     public function testAnEmptyBodyIsNeverEncoded(): void
     {
-        $inner = (new FakeHttpClient())->willRespond(new Response(204, ['Content-Type' => 'image/png'], ''));
+        $inner = (new FakeHttpClient)->willRespond(new Response(204, ['Content-Type' => 'image/png'], ''));
 
         $this->client($inner)->sendRequest($this->request());
 

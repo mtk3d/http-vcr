@@ -26,7 +26,7 @@ final class ExtendCassetteTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
@@ -44,7 +44,7 @@ final class ExtendCassetteTest extends TestCase
     {
         $this->record('shopify/catalog', 'https://shop.example.com/products/1.json', '{"id":1}');
 
-        $inner = (new FakeHttpClient())->willRespond('{"id":2}');
+        $inner = (new FakeHttpClient)->willRespond('{"id":2}');
         $response = $this->client($inner, 'shopify/catalog')
             ->sendRequest(new Request('GET', 'https://shop.example.com/products/2.json'));
 
@@ -61,7 +61,7 @@ final class ExtendCassetteTest extends TestCase
     {
         $this->record('shopify/catalog', 'https://shop.example.com/products/1.json', '{"id":1}');
 
-        $inner = new FakeHttpClient();
+        $inner = new FakeHttpClient;
         $response = $this->client($inner, 'shopify/catalog')
             ->sendRequest(new Request('GET', 'https://shop.example.com/products/1.json'));
 
@@ -72,7 +72,7 @@ final class ExtendCassetteTest extends TestCase
 
     public function testItRecordsFromScratchWhenThereIsNoCassetteYet(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"id":1}');
+        $inner = (new FakeHttpClient)->willRespond('{"id":1}');
 
         $this->client($inner, 'shopify/catalog')
             ->sendRequest(new Request('GET', 'https://shop.example.com/products/1.json'));
@@ -87,7 +87,7 @@ final class ExtendCassetteTest extends TestCase
 
         $_ENV['VCR_ALLOW_RECORDING'] = '0';
 
-        $vcr = $this->client(new FakeHttpClient(), 'shopify/catalog');
+        $vcr = $this->client(new FakeHttpClient, 'shopify/catalog');
         $replayed = $vcr->sendRequest(new Request('GET', 'https://shop.example.com/products/1.json'));
         self::assertSame('{"id":1}', (string) $replayed->getBody());
 
@@ -100,7 +100,7 @@ final class ExtendCassetteTest extends TestCase
 
     private function record(string $cassette, string $uri, string $body): void
     {
-        $this->client((new FakeHttpClient())->willRespond($body), $cassette, RecordMode::RecordIfAbsent)
+        $this->client((new FakeHttpClient)->willRespond($body), $cassette, RecordMode::RecordIfAbsent)
             ->sendRequest(new Request('GET', $uri));
     }
 

@@ -51,6 +51,6 @@ final class RegexUrlScopeResolverTest extends TestCase
 
     public function testTheNullResolverNeverScopesAnything(): void
     {
-        self::assertNull((new NullScopeResolver())->resolve(new Request('GET', 'https://shop.example.com/v2/x')));
+        self::assertNull((new NullScopeResolver)->resolve(new Request('GET', 'https://shop.example.com/v2/x')));
     }
 }

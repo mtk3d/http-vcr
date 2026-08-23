@@ -23,8 +23,8 @@ use Psr\Http\Message\RequestInterface;
 final class RegexUrlScopeResolver implements CassetteScopeResolverInterface
 {
     /**
-     * @param string $pattern matched against the full URI, so it can key on the host as
-     *                        readily as on the path
+     * @param  string  $pattern  matched against the full URI, so it can key on the host as
+     *                           readily as on the path
      */
     public function __construct(private readonly string $pattern)
     {
@@ -41,10 +41,10 @@ final class RegexUrlScopeResolver implements CassetteScopeResolverInterface
             return null;
         }
 
-        if (!isset($matches['scope']) || !is_string($matches['scope'])) {
+        if (! isset($matches['scope']) || ! is_string($matches['scope'])) {
             throw new InvalidArgumentException(sprintf(
                 'The pattern "%s" matched %s but has no group named "scope", so there is nothing to '
-                . 'name the cassette file with. Write it as (?<scope>...).',
+                .'name the cassette file with. Write it as (?<scope>...).',
                 $this->pattern,
                 (string) $request->getUri(),
             ));

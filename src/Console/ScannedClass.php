@@ -14,9 +14,9 @@ use HttpVcr\Bridge\PHPUnit\UseCassette;
 final readonly class ScannedClass
 {
     /**
-     * @param array<string, UseCassette|null> $methods the class's own test methods, in the
-     *                                                 order they are written, each with the
-     *                                                 attribute it carries itself
+     * @param  array<string, UseCassette|null>  $methods  the class's own test methods, in the
+     *                                                    order they are written, each with the
+     *                                                    attribute it carries itself
      */
     public function __construct(
         public string $name,
@@ -27,6 +27,5 @@ final readonly class ScannedClass
         public ?UseCassette $cassette,
         public ?string $directory,
         public array $methods,
-    ) {
-    }
+    ) {}
 }

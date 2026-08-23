@@ -27,7 +27,7 @@ final class HarCassetteTest extends TestCase
 {
     public function testAnEntryBecomesAnInteraction(): void
     {
-        $cassette = (new HarCassetteImporter())->convert($this->har([
+        $cassette = (new HarCassetteImporter)->convert($this->har([
             [
                 'startedDateTime' => '2026-08-21T10:00:00.000Z',
                 'request' => [
@@ -67,9 +67,9 @@ final class HarCassetteTest extends TestCase
 
     public function testABase64EntryComesBackAsTheBytesItStandsFor(): void
     {
-        $bytes = "\x89PNG\r\n\x1a\n" . str_repeat("\x00\xff", 8);
+        $bytes = "\x89PNG\r\n\x1a\n".str_repeat("\x00\xff", 8);
 
-        $cassette = (new HarCassetteImporter())->convert($this->har([
+        $cassette = (new HarCassetteImporter)->convert($this->har([
             [
                 'startedDateTime' => '2026-08-21T10:00:00.000Z',
                 'request' => ['method' => 'GET', 'url' => 'https://example.com/logo.png', 'headers' => []],
@@ -90,7 +90,7 @@ final class HarCassetteTest extends TestCase
 
     public function testARequestTheBrowserSawFailIsImportedAsARecordedFailure(): void
     {
-        $cassette = (new HarCassetteImporter())->convert($this->har([
+        $cassette = (new HarCassetteImporter)->convert($this->har([
             [
                 'startedDateTime' => '2026-08-21T10:00:00.000Z',
                 'request' => ['method' => 'GET', 'url' => 'https://example.com/slow', 'headers' => []],
@@ -130,14 +130,14 @@ final class HarCassetteTest extends TestCase
             ),
         ]);
 
-        $restored = (new HarCassetteImporter())->convert((new HarCassetteExporter())->toHar($cassette));
+        $restored = (new HarCassetteImporter)->convert((new HarCassetteExporter)->toHar($cassette));
 
         self::assertEquals($cassette, $restored);
     }
 
     public function testTheExportIsAHarFileWithWhatAToolReadingItExpects(): void
     {
-        $har = json_decode((new HarCassetteExporter())->toHar(new Cassette([
+        $har = json_decode((new HarCassetteExporter)->toHar(new Cassette([
             Interaction::recorded(
                 new RecordedRequest('GET', 'https://example.com/products?page=2'),
                 new RecordedResponse(200, ['Content-Type' => ['application/json']], '{"ok":true}'),
@@ -170,7 +170,7 @@ final class HarCassetteTest extends TestCase
         $this->expectException(CassetteFormatException::class);
         $this->expectExceptionMessage('is not a HAR file');
 
-        (new HarCassetteImporter())->convert('{"something":"else"}');
+        (new HarCassetteImporter)->convert('{"something":"else"}');
     }
 
     public function testTextThatIsNotJsonAtAllSaysThatInstead(): void
@@ -178,15 +178,15 @@ final class HarCassetteTest extends TestCase
         $this->expectException(CassetteFormatException::class);
         $this->expectExceptionMessage('is not valid JSON');
 
-        (new HarCassetteImporter())->convert('<html></html>');
+        (new HarCassetteImporter)->convert('<html></html>');
     }
 
     public function testAHarFileBecomesACassetteWhereTheProjectKeepsThem(): void
     {
-        $cassettes = new CassetteDirectory();
+        $cassettes = new CassetteDirectory;
         $config = Config::create(persister: $cassettes->persister());
 
-        $file = $cassettes->path . '/captured.har';
+        $file = $cassettes->path.'/captured.har';
         $cassettes->write('captured.har', $this->har([
             [
                 'startedDateTime' => '2026-08-21T10:00:00.000Z',
@@ -204,7 +204,7 @@ final class HarCassetteTest extends TestCase
 
             self::assertTrue($cassettes->has('shopify/get-product.json'));
 
-            (new HarCassetteExporter($config))->export('shopify/get-product', $cassettes->path . '/out.har');
+            (new HarCassetteExporter($config))->export('shopify/get-product', $cassettes->path.'/out.har');
 
             self::assertSame(
                 '{"ok":true}',
@@ -224,7 +224,7 @@ final class HarCassetteTest extends TestCase
     }
 
     /**
-     * @param list<array<string, mixed>> $entries
+     * @param  list<array<string, mixed>>  $entries
      */
     private function har(array $entries): string
     {

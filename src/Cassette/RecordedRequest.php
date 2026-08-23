@@ -13,10 +13,10 @@ namespace HttpVcr\Cassette;
 final readonly class RecordedRequest
 {
     /**
-     * @param array<string, list<string>> $headers      header names as sent, values as a list
-     * @param string|null                 $bodyEncoding 'base64' when the body is binary, null
-     *                                                  when it is text; how a cassette has to
-     *                                                  store it, not what it means
+     * @param  array<string, list<string>>  $headers  header names as sent, values as a list
+     * @param  string|null  $bodyEncoding  'base64' when the body is binary, null
+     *                                     when it is text; how a cassette has to
+     *                                     store it, not what it means
      */
     public function __construct(
         public string $method,
@@ -24,8 +24,7 @@ final readonly class RecordedRequest
         public array $headers = [],
         public string $body = '',
         public ?string $bodyEncoding = null,
-    ) {
-    }
+    ) {}
 
     public function withUri(string $uri): self
     {
@@ -33,7 +32,7 @@ final readonly class RecordedRequest
     }
 
     /**
-     * @param array<string, list<string>> $headers
+     * @param  array<string, list<string>>  $headers
      */
     public function withHeaders(array $headers): self
     {
@@ -41,7 +40,7 @@ final readonly class RecordedRequest
     }
 
     /**
-     * @param string|list<string> $value
+     * @param  string|list<string>  $value
      */
     public function withHeader(string $name, string|array $value): self
     {

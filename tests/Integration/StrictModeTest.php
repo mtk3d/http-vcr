@@ -28,7 +28,7 @@ final class StrictModeTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
@@ -152,7 +152,7 @@ final class StrictModeTest extends TestCase
 
     public function testWhatTheSessionRecordedItselfIsNotJudged(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"cart":1}')->willRespond('{"order":1}');
+        $inner = (new FakeHttpClient)->willRespond('{"cart":1}')->willRespond('{"order":1}');
 
         $vcr = $this->client('shopify/checkout', StrictMode::AllPlayed, $inner);
         $vcr->sendRequest(new Request('GET', 'https://shop.example.com/cart'));
@@ -184,7 +184,7 @@ final class StrictModeTest extends TestCase
 
     private function lockIsFree(string $cassette): bool
     {
-        $handle = fopen($this->cassettes->path . '/.http-vcr/' . $cassette . '.cassette-lock', 'c');
+        $handle = fopen($this->cassettes->path.'/.http-vcr/'.$cassette.'.cassette-lock', 'c');
         self::assertIsResource($handle);
 
         $free = flock($handle, LOCK_EX | LOCK_NB);
@@ -196,7 +196,7 @@ final class StrictModeTest extends TestCase
 
     private function recordTwo(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"cart":1}')->willRespond('{"order":1}');
+        $inner = (new FakeHttpClient)->willRespond('{"cart":1}')->willRespond('{"order":1}');
         $vcr = new VcrClient($inner, 'shopify/checkout', persister: $this->cassettes->persister());
 
         $vcr->sendRequest(new Request('GET', 'https://shop.example.com/cart'));
@@ -212,7 +212,7 @@ final class StrictModeTest extends TestCase
         RecordMode $mode = RecordMode::RecordIfAbsent,
     ): VcrClient {
         return new VcrClient(
-            $inner ?? new FakeHttpClient(),
+            $inner ?? new FakeHttpClient,
             $cassette,
             $mode,
             strictMode: $strictMode,

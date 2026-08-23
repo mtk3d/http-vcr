@@ -29,7 +29,7 @@ final class CompressedResponseTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
     }
@@ -54,7 +54,7 @@ final class CompressedResponseTest extends TestCase
     public function testTheRecordingRunSeesTheSameResponseTheReplayingRunWill(): void
     {
         $recorded = $this->client($this->gzipped('{"title":"T-Shirt"}'))->sendRequest($this->request());
-        $replayed = $this->client(new FakeHttpClient())->sendRequest($this->request());
+        $replayed = $this->client(new FakeHttpClient)->sendRequest($this->request());
 
         self::assertSame('{"title":"T-Shirt"}', (string) $recorded->getBody());
         self::assertSame('{"title":"T-Shirt"}', (string) $replayed->getBody());
@@ -66,7 +66,7 @@ final class CompressedResponseTest extends TestCase
     {
         $body = '{"title":"T-Shirt"}';
         $compressed = (string) gzencode($body);
-        $inner = (new FakeHttpClient())->willRespond(new Response(200, [
+        $inner = (new FakeHttpClient)->willRespond(new Response(200, [
             'Content-Encoding' => 'gzip',
             'Content-Length' => (string) strlen($compressed),
         ], $compressed));
@@ -78,10 +78,10 @@ final class CompressedResponseTest extends TestCase
 
     public function testDeflateIsAcceptedInBothSpellingsFoundInTheWild(): void
     {
-        $zlibWrapped = (new FakeHttpClient())->willRespond(
+        $zlibWrapped = (new FakeHttpClient)->willRespond(
             new Response(200, ['Content-Encoding' => 'deflate'], (string) gzcompress('zlib-wrapped')),
         );
-        $raw = (new FakeHttpClient())->willRespond(
+        $raw = (new FakeHttpClient)->willRespond(
             new Response(200, ['Content-Encoding' => 'deflate'], (string) gzdeflate('raw')),
         );
 
@@ -92,7 +92,7 @@ final class CompressedResponseTest extends TestCase
     public function testCompressionItselfCanBeWhatIsUnderTest(): void
     {
         $compressed = (string) gzencode('{"title":"T-Shirt"}');
-        $inner = (new FakeHttpClient())->willRespond(new Response(200, ['Content-Encoding' => 'gzip'], $compressed));
+        $inner = (new FakeHttpClient)->willRespond(new Response(200, ['Content-Encoding' => 'gzip'], $compressed));
 
         $vcr = new VcrClient(
             $inner,
@@ -110,7 +110,7 @@ final class CompressedResponseTest extends TestCase
 
     public function testAnEncodingThisBuildCannotDecompressIsStoredExactlyAsItArrived(): void
     {
-        $inner = (new FakeHttpClient())->willRespond(
+        $inner = (new FakeHttpClient)->willRespond(
             new Response(200, ['Content-Encoding' => 'exotic-v9'], 'whatever that is'),
         );
 
@@ -125,7 +125,7 @@ final class CompressedResponseTest extends TestCase
 
     private function gzipped(string $body): FakeHttpClient
     {
-        return (new FakeHttpClient())->willRespond(
+        return (new FakeHttpClient)->willRespond(
             new Response(200, ['Content-Encoding' => 'gzip', 'Content-Type' => 'application/json'], (string) gzencode($body)),
         );
     }

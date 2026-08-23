@@ -8,11 +8,12 @@ use Attribute;
 use DateInterval;
 use HttpVcr\RecordMode;
 use HttpVcr\StrictMode;
+use HttpVcr\VcrClient;
 
 /**
  * The cassette a test replays from, and how (§3.12).
  *
- * Every field is a {@see \HttpVcr\VcrClient} constructor parameter under the same name —
+ * Every field is a {@see VcrClient} constructor parameter under the same name —
  * the attribute adds nothing of its own, it only says which of them this test wants.
  *
  * On a class it is sugar for putting the identical attribute on every test method in it,
@@ -30,17 +31,17 @@ use HttpVcr\StrictMode;
 final readonly class UseCassette
 {
     /**
-     * @param string             $name        a path inside the cassette directory, without an
-     *                                        extension: `shopify/get-product`
-     * @param StrictMode|null    $strictMode  null leaves it to the project configuration, which
-     *                                        asserts nothing about replay by default (§3.6)
-     * @param DateInterval|null  $staleAfter  how long this recording stays fresh; null tracks
-     *                                        nothing (§3.7)
-     * @param list<string>       $requiresEnv variables this cassette needs before it may record,
-     *                                        on top of whatever its provider declared (§3.12)
-     * @param bool               $locked      locks the whole file for the length of the run, above
-     *                                        anything the data says and above every environment
-     *                                        variable (§3.1)
+     * @param  string  $name  a path inside the cassette directory, without an
+     *                        extension: `shopify/get-product`
+     * @param  StrictMode|null  $strictMode  null leaves it to the project configuration, which
+     *                                       asserts nothing about replay by default (§3.6)
+     * @param  DateInterval|null  $staleAfter  how long this recording stays fresh; null tracks
+     *                                         nothing (§3.7)
+     * @param  list<string>  $requiresEnv  variables this cassette needs before it may record,
+     *                                     on top of whatever its provider declared (§3.12)
+     * @param  bool  $locked  locks the whole file for the length of the run, above
+     *                        anything the data says and above every environment
+     *                        variable (§3.1)
      */
     public function __construct(
         public string $name,
@@ -49,6 +50,5 @@ final readonly class UseCassette
         public ?DateInterval $staleAfter = null,
         public array $requiresEnv = [],
         public bool $locked = false,
-    ) {
-    }
+    ) {}
 }

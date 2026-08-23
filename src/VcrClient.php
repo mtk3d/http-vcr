@@ -68,16 +68,16 @@ final class VcrClient implements ClientInterface
     private readonly Config $config;
 
     /**
-     * @param ClientInterface|null          $inner       the real client, used only when actually recording
-     * @param list<RequestMatcherInterface> $matchers    empty means the project default set
-     * @param list<string>                  $requiresEnv variables checked when this cassette is about
-     *                                                   to record something for real (§3.12)
-     * @param (callable(string): void)|null $warn        where the session's warnings go — the
-     *                                                   secret scan's findings, and a forced
-     *                                                   recording a lock made a no-op. Standard
-     *                                                   error without one; a test harness passes
-     *                                                   its own so a run can report them together
-     *                                                   rather than scattered through the output
+     * @param  ClientInterface|null  $inner  the real client, used only when actually recording
+     * @param  list<RequestMatcherInterface>  $matchers  empty means the project default set
+     * @param  list<string>  $requiresEnv  variables checked when this cassette is about
+     *                                     to record something for real (§3.12)
+     * @param  (callable(string): void)|null  $warn  where the session's warnings go — the
+     *                                               secret scan's findings, and a forced
+     *                                               recording a lock made a no-op. Standard
+     *                                               error without one; a test harness passes
+     *                                               its own so a run can report them together
+     *                                               rather than scattered through the output
      */
     public function __construct(
         private ?ClientInterface $inner,
@@ -128,7 +128,7 @@ final class VcrClient implements ClientInterface
             $locked,
             $inlineBodyLimit ?? $config->inlineBodyLimit(),
             $scopeResolver ?? $config->scopeResolver(),
-            scanner: $config->scanRecordingsForSecrets() ? new SecretScanner() : null,
+            scanner: $config->scanRecordingsForSecrets() ? new SecretScanner : null,
             warn: $warn === null ? null : $warn(...),
         );
 
@@ -143,11 +143,11 @@ final class VcrClient implements ClientInterface
      * throws, so that two tests in one process can't see different defaults depending on
      * the order they ran in.
      *
-     * @param list<RequestMatcherInterface>    $defaultMatchers
-     * @param array<string, callable(): mixed> $redact    project-wide redaction rules
-     * @param array<string, Provider>          $providers          named APIs, recognised by host
-     * @param list<string>                     $testDirectories    where the CLI scans for tests
-     * @param (callable(): ClientInterface)|null $innerClientFactory the client #[UseCassette] records through
+     * @param  list<RequestMatcherInterface>  $defaultMatchers
+     * @param  array<string, callable(): mixed>  $redact  project-wide redaction rules
+     * @param  array<string, Provider>  $providers  named APIs, recognised by host
+     * @param  list<string>  $testDirectories  where the CLI scans for tests
+     * @param  (callable(): ClientInterface)|null  $innerClientFactory  the client #[UseCassette] records through
      */
     public static function configure(
         ?string $cassetteDirectory = null,
@@ -219,8 +219,8 @@ final class VcrClient implements ClientInterface
      * into the recorded request before matching compares it, and into the response before
      * the code under test receives it (§3.4).
      *
-     * @param callable(): mixed $value read when it is needed, not when this is called, so
-     *                                 a test may set the variable it reads afterwards
+     * @param  callable(): mixed  $value  read when it is needed, not when this is called, so
+     *                                    a test may set the variable it reads afterwards
      */
     public function redact(string $placeholder, callable $value): void
     {
@@ -230,10 +230,10 @@ final class VcrClient implements ClientInterface
     }
 
     /**
-     * @param (callable(): mixed)|null $value without it the rule is write-only: the header
-     *                                        is stored redacted, the code under test sees
-     *                                        the placeholder on replay, and the header
-     *                                        stops distinguishing interactions (§3.3)
+     * @param  (callable(): mixed)|null  $value  without it the rule is write-only: the header
+     *                                           is stored redacted, the code under test sees
+     *                                           the placeholder on replay, and the header
+     *                                           stops distinguishing interactions (§3.3)
      */
     public function redactHeader(string $name, ?callable $value = null): void
     {
@@ -243,8 +243,8 @@ final class VcrClient implements ClientInterface
     }
 
     /**
-     * @param string                   $pointer a JSON Pointer into the body: `/customer/email`
-     * @param (callable(): mixed)|null $value
+     * @param  string  $pointer  a JSON Pointer into the body: `/customer/email`
+     * @param  (callable(): mixed)|null  $value
      */
     public function redactJsonField(string $pointer, ?callable $value = null): void
     {
@@ -254,7 +254,7 @@ final class VcrClient implements ClientInterface
     }
 
     /**
-     * @param (callable(): mixed)|null $value
+     * @param  (callable(): mixed)|null  $value
      */
     public function redactQueryParam(string $name, ?callable $value = null): void
     {
@@ -264,7 +264,7 @@ final class VcrClient implements ClientInterface
     }
 
     /**
-     * @param (callable(): mixed)|null $value
+     * @param  (callable(): mixed)|null  $value
      */
     public function redactFormField(string $name, ?callable $value = null): void
     {
@@ -278,7 +278,7 @@ final class VcrClient implements ClientInterface
      * Proxy-Authorization, Cookie, Set-Cookie — back out of redaction, for a test that
      * verifies the header itself. It starts distinguishing interactions again too (§3.3).
      *
-     * @param list<string> $names
+     * @param  list<string>  $names
      */
     public function includeSensitiveHeaders(array $names): void
     {
@@ -291,7 +291,7 @@ final class VcrClient implements ClientInterface
      * Registers a hook that sees each interaction on its way to the cassette, and may
      * change it or return null to keep it out of the file altogether (§3.5).
      *
-     * @param callable(Interaction): ?Interaction $hook
+     * @param  callable(Interaction): ?Interaction  $hook
      */
     public function beforeRecord(callable $hook): void
     {
@@ -304,7 +304,7 @@ final class VcrClient implements ClientInterface
      * Registers a hook that sees each recorded interaction on its way back out — before
      * the matchers compare anything, so a request changed here is the one matching sees.
      *
-     * @param callable(Interaction): Interaction $hook
+     * @param  callable(Interaction): Interaction  $hook
      */
     public function beforePlayback(callable $hook): void
     {
@@ -366,14 +366,14 @@ final class VcrClient implements ClientInterface
      */
     private function configuring(string $method): void
     {
-        if (!$this->cassette->hasStarted()) {
+        if (! $this->cassette->hasStarted()) {
             return;
         }
 
         throw new LogicException(sprintf(
             '%s() has to be called before the first request of this cassette session. An interaction has '
-            . 'already been through the pipeline it configures, so registering it now would cover part of '
-            . 'the run and not the rest.',
+            .'already been through the pipeline it configures, so registering it now would cover part of '
+            .'the run and not the rest.',
             $method,
         ));
     }
@@ -403,7 +403,7 @@ final class VcrClient implements ClientInterface
             return $this->record($cassette, $request, $incoming);
         }
 
-        if (!$cassette->cassetteExists()) {
+        if (! $cassette->cassetteExists()) {
             throw $scope === null
                 ? CassetteNotFoundException::at($cassette->location(), $incoming)
                 : CassetteNotFoundException::forScope(
@@ -430,7 +430,7 @@ final class VcrClient implements ClientInterface
         if ($this->inner === null) {
             throw new LogicException(
                 'This VcrClient was built without an inner client, so it can only replay. '
-                . 'Pass the real PSR-18 client to the constructor to record with it.',
+                .'Pass the real PSR-18 client to the constructor to record with it.',
             );
         }
 
@@ -513,7 +513,7 @@ final class VcrClient implements ClientInterface
             default => null,
         };
 
-        if (!$this->recordTransportErrors || $category === null) {
+        if (! $this->recordTransportErrors || $category === null) {
             return;
         }
 
@@ -561,7 +561,7 @@ final class VcrClient implements ClientInterface
     {
         $encoding = strtolower(trim($response->getHeaderLine('Content-Encoding')));
 
-        if (!$this->decodeCompressedResponse || $encoding === '' || $encoding === 'identity' || $body === '') {
+        if (! $this->decodeCompressedResponse || $encoding === '' || $encoding === 'identity' || $body === '') {
             return [$response, $body];
         }
 
@@ -598,7 +598,7 @@ final class VcrClient implements ClientInterface
      */
     private function inflateDeflate(string $body): string|false
     {
-        if (!function_exists('gzuncompress')) {
+        if (! function_exists('gzuncompress')) {
             return false;
         }
 
@@ -671,8 +671,7 @@ final class VcrClient implements ClientInterface
      *
      * @template T of MessageInterface
      *
-     * @param T $message
-     *
+     * @param  T  $message
      * @return array{T, string}
      */
     private function buffer(MessageInterface $message): array

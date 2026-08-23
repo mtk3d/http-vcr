@@ -35,15 +35,13 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
     /** @var array<string, resource> */
     private array $locks = [];
 
-    public function __construct(private readonly string $directory)
-    {
-    }
+    public function __construct(private readonly string $directory) {}
 
     public function read(string $key): ?string
     {
         $path = $this->path($key);
 
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             return null;
         }
 
@@ -61,7 +59,7 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
         $path = $this->path($key);
         $directory = dirname($path);
 
-        if (!is_dir($directory) && !@mkdir($directory, 0o777, true) && !is_dir($directory)) {
+        if (! is_dir($directory) && ! @mkdir($directory, 0o777, true) && ! is_dir($directory)) {
             throw new RuntimeException(sprintf('Could not create directory %s.', $directory));
         }
 
@@ -71,7 +69,7 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
             throw new RuntimeException(sprintf('Could not create a temporary file in %s.', $directory));
         }
 
-        if (file_put_contents($temporary, $content) === false || !rename($temporary, $path)) {
+        if (file_put_contents($temporary, $content) === false || ! rename($temporary, $path)) {
             @unlink($temporary);
 
             throw new RuntimeException(sprintf('Could not write %s.', $path));
@@ -96,11 +94,11 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
 
     public function list(string $extension, string $prefix = ''): iterable
     {
-        if (!is_dir($this->directory)) {
+        if (! is_dir($this->directory)) {
             return;
         }
 
-        $suffix = '.' . $extension;
+        $suffix = '.'.$extension;
         $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(
             $this->directory,
             FilesystemIterator::SKIP_DOTS,
@@ -112,13 +110,13 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
         foreach ($files as $file) {
             $path = $file->getPathname();
 
-            if (!str_ends_with($path, $suffix)) {
+            if (! str_ends_with($path, $suffix)) {
                 continue;
             }
 
             $name = substr($path, strlen($this->directory) + 1, -strlen($suffix));
 
-            if (str_starts_with($name, self::INTERNAL_DIRECTORY . '/')) {
+            if (str_starts_with($name, self::INTERNAL_DIRECTORY.'/')) {
                 continue;
             }
 
@@ -146,7 +144,7 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
         $path = $this->lockPath($key);
         $directory = dirname($path);
 
-        if (!is_dir($directory) && !@mkdir($directory, 0o777, true) && !is_dir($directory)) {
+        if (! is_dir($directory) && ! @mkdir($directory, 0o777, true) && ! is_dir($directory)) {
             throw new RuntimeException(sprintf('Could not create directory %s.', $directory));
         }
 
@@ -158,7 +156,7 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
             throw new RuntimeException(sprintf('Could not open the lock file %s.', $path));
         }
 
-        if (!flock($handle, LOCK_EX)) {
+        if (! flock($handle, LOCK_EX)) {
             fclose($handle);
 
             throw new RuntimeException(sprintf('Could not lock %s.', $path));
@@ -187,9 +185,9 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
      */
     private function ignoreInternalDirectory(): void
     {
-        $gitignore = $this->directory . '/' . self::INTERNAL_DIRECTORY . '/.gitignore';
+        $gitignore = $this->directory.'/'.self::INTERNAL_DIRECTORY.'/.gitignore';
 
-        if (!file_exists($gitignore)) {
+        if (! file_exists($gitignore)) {
             @file_put_contents($gitignore, "*\n");
         }
     }
@@ -200,12 +198,12 @@ final class FilesystemCassettePersister implements CassettePersisterInterface, S
      */
     private function lockPath(string $key): string
     {
-        return $this->directory . '/' . self::INTERNAL_DIRECTORY . '/' . $this->relativePath($key);
+        return $this->directory.'/'.self::INTERNAL_DIRECTORY.'/'.$this->relativePath($key);
     }
 
     private function path(string $key): string
     {
-        return $this->directory . '/' . $this->relativePath($key);
+        return $this->directory.'/'.$this->relativePath($key);
     }
 
     /**

@@ -56,7 +56,8 @@ final class CompositeMatcherTest extends TestCase
 
     public function testAMatcherThatCannotExplainItselfIsReportedByNameAlone(): void
     {
-        $silent = new class () implements RequestMatcherInterface {
+        $silent = new class implements RequestMatcherInterface
+        {
             public function matches(RecordedRequest $recorded, RecordedRequest $incoming): bool
             {
                 return false;
@@ -82,6 +83,6 @@ final class CompositeMatcherTest extends TestCase
 
     private function defaultSet(): CompositeMatcher
     {
-        return new CompositeMatcher(new MethodMatcher(), new UriMatcher(), new QueryStringMatcher());
+        return new CompositeMatcher(new MethodMatcher, new UriMatcher, new QueryStringMatcher);
     }
 }

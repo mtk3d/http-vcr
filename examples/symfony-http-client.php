@@ -26,9 +26,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class ProductCatalog
 {
-    public function __construct(private readonly HttpClientInterface $http)
-    {
-    }
+    public function __construct(private readonly HttpClientInterface $http) {}
 
     /**
      * @return array<string, mixed>
@@ -36,7 +34,7 @@ final class ProductCatalog
     public function product(int $id): array
     {
         return $this->http
-            ->request('GET', 'https://shop.myshopify.com/admin/api/2024-01/products/' . $id . '.json', [
+            ->request('GET', 'https://shop.myshopify.com/admin/api/2024-01/products/'.$id.'.json', [
                 'headers' => ['Accept' => 'application/json'],
             ])
             ->toArray();

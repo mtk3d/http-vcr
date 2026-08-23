@@ -24,7 +24,7 @@ final class YamlCassetteSerializerTest extends TestCase
 {
     public function testTheFileExtensionIsWhatTheKeyIsBuiltFrom(): void
     {
-        self::assertSame('yaml', (new YamlCassetteSerializer())->fileExtension());
+        self::assertSame('yaml', (new YamlCassetteSerializer)->fileExtension());
     }
 
     public function testKeepsEverythingThroughARoundTrip(): void
@@ -49,7 +49,7 @@ final class YamlCassetteSerializerTest extends TestCase
             ),
         ]);
 
-        $serializer = new YamlCassetteSerializer();
+        $serializer = new YamlCassetteSerializer;
 
         self::assertEquals($cassette, $serializer->deserialize($serializer->serialize($cassette)));
     }
@@ -64,14 +64,14 @@ final class YamlCassetteSerializerTest extends TestCase
             ),
         ]);
 
-        $serializer = new YamlCassetteSerializer();
+        $serializer = new YamlCassetteSerializer;
 
         self::assertEquals($cassette, $serializer->deserialize($serializer->serialize($cassette)));
     }
 
     public function testABodyWithNewlinesIsWrittenAsABlockRatherThanEscapedOntoOneLine(): void
     {
-        $yaml = (new YamlCassetteSerializer())->serialize(new Cassette([
+        $yaml = (new YamlCassetteSerializer)->serialize(new Cassette([
             Interaction::recorded(
                 new RecordedRequest('GET', 'https://example.com/page'),
                 new RecordedResponse(200, ['Content-Type' => ['text/html']], "<html>\n  <body>Łódź</body>\n</html>"),
@@ -86,7 +86,7 @@ final class YamlCassetteSerializerTest extends TestCase
 
     public function testBinaryContentIsStoredTheSameWayEitherFormatWouldStoreIt(): void
     {
-        $bytes = "\x89PNG\r\n\x1a\n" . random_bytes(16);
+        $bytes = "\x89PNG\r\n\x1a\n".random_bytes(16);
 
         $cassette = new Cassette([
             Interaction::recorded(
@@ -96,7 +96,7 @@ final class YamlCassetteSerializerTest extends TestCase
             ),
         ]);
 
-        $yaml = new YamlCassetteSerializer();
+        $yaml = new YamlCassetteSerializer;
         $restored = $yaml->deserialize($yaml->serialize($cassette));
 
         self::assertSame($bytes, $restored->interactions[0]->response?->body);
@@ -113,8 +113,8 @@ final class YamlCassetteSerializerTest extends TestCase
             ),
         ]);
 
-        $yaml = new YamlCassetteSerializer();
-        $json = new JsonCassetteSerializer();
+        $yaml = new YamlCassetteSerializer;
+        $json = new JsonCassetteSerializer;
 
         self::assertEquals(
             $json->deserialize($json->serialize($cassette)),
@@ -127,7 +127,7 @@ final class YamlCassetteSerializerTest extends TestCase
         $this->expectException(CassetteFormatException::class);
         $this->expectExceptionMessage('is not valid YAML');
 
-        (new YamlCassetteSerializer())->deserialize("interactions:\n  - foo: [unclosed\n");
+        (new YamlCassetteSerializer)->deserialize("interactions:\n  - foo: [unclosed\n");
     }
 
     public function testAYamlDocumentThatIsNotACassetteSaysWhatIsMissing(): void
@@ -135,6 +135,6 @@ final class YamlCassetteSerializerTest extends TestCase
         $this->expectException(CassetteFormatException::class);
         $this->expectExceptionMessage('has no schemaVersion');
 
-        (new YamlCassetteSerializer())->deserialize("interactions: []\n");
+        (new YamlCassetteSerializer)->deserialize("interactions: []\n");
     }
 }

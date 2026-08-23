@@ -88,12 +88,12 @@ final class CassetteManager
         private readonly bool $repeatablePlayback = false,
         private readonly bool $locked = false,
         private readonly int $inlineBodyLimit = 1_048_576,
-        public readonly HookRegistry $hooks = new HookRegistry(),
-        public readonly RedactionHooks $redaction = new RedactionHooks(),
+        public readonly HookRegistry $hooks = new HookRegistry,
+        public readonly RedactionHooks $redaction = new RedactionHooks,
         private readonly ?SecretScanner $scanner = null,
         private readonly ?Closure $warn = null,
     ) {
-        $this->cassette = new Cassette();
+        $this->cassette = new Cassette;
     }
 
     /**
@@ -128,7 +128,7 @@ final class CassetteManager
      */
     public function existingScopes(): array
     {
-        $prefix = $this->name . '.';
+        $prefix = $this->name.'.';
         $scopes = [];
 
         foreach ($this->persister->list($this->serializer->fileExtension(), $prefix) as $found) {
@@ -161,13 +161,13 @@ final class CassetteManager
             // live one at all (§3.4).
             $interaction = $this->hooks->beforePlayback($interaction);
 
-            if (!$this->matcher->matches($interaction->request, $incoming)) {
+            if (! $this->matcher->matches($interaction->request, $incoming)) {
                 continue;
             }
 
             $this->played[$position] = ($this->played[$position] ?? 0) + 1;
 
-            if ($position < $this->baseline && !$this->isRepeatable($interaction)) {
+            if ($position < $this->baseline && ! $this->isRepeatable($interaction)) {
                 $this->sequence[] = $position;
             }
 
@@ -425,7 +425,7 @@ final class CassetteManager
      */
     private function reportLockedCassette(): void
     {
-        if (!$this->eraseTapeHadNoEffect || $this->reportedLock) {
+        if (! $this->eraseTapeHadNoEffect || $this->reportedLock) {
             return;
         }
 
@@ -507,7 +507,7 @@ final class CassetteManager
      */
     private function refuseStaleCassette(): void
     {
-        if ($this->staleAfter === null || !$this->environment->enforcesStaleCheck()) {
+        if ($this->staleAfter === null || ! $this->environment->enforcesStaleCheck()) {
             return;
         }
 
@@ -541,7 +541,7 @@ final class CassetteManager
             return;
         }
 
-        if ($this->mode === RecordMode::RecordIfAbsent && !$this->existed) {
+        if ($this->mode === RecordMode::RecordIfAbsent && ! $this->existed) {
             $this->openForFirstRecording();
 
             return;
@@ -561,7 +561,7 @@ final class CassetteManager
      */
     private function openForExtending(): void
     {
-        if (!$this->environment->isRecordingAllowed()) {
+        if (! $this->environment->isRecordingAllowed()) {
             // Replaying what is already there is unaffected: only the branch that would
             // have appended something is blocked, and it says so when a request reaches it.
             $this->recordingBlocked = $this->environment->recordingBlockedBecause();
@@ -585,7 +585,7 @@ final class CassetteManager
      */
     private function openErased(): void
     {
-        if (!$this->environment->isRecordingAllowed()) {
+        if (! $this->environment->isRecordingAllowed()) {
             throw RecordingNotAllowedException::forErasedCassette(
                 $this->name,
                 (string) $this->environment->recordingBlockedBecause(),
@@ -610,7 +610,7 @@ final class CassetteManager
         // of them would be noise on the normal path.
         $this->eraseTapeHadNoEffect = $recorded->interactions !== [] && $this->allLocked($recorded->interactions);
 
-        if (!$this->eraseTapeHadNoEffect && $this->existed) {
+        if (! $this->eraseTapeHadNoEffect && $this->existed) {
             $this->persist();
         }
     }
@@ -623,7 +623,7 @@ final class CassetteManager
      */
     private function openForFirstRecording(): void
     {
-        if (!$this->environment->isRecordingAllowed()) {
+        if (! $this->environment->isRecordingAllowed()) {
             // No lock, no directory to create: a run that isn't allowed to record must be
             // able to work off a cassette directory it can only read.
             $this->recordingBlocked = $this->environment->recordingBlockedBecause();
@@ -642,11 +642,11 @@ final class CassetteManager
         }
 
         $this->recording = true;
-        $this->cassette = new Cassette();
+        $this->cassette = new Cassette;
     }
 
     /**
-     * @param list<Interaction> $interactions
+     * @param  list<Interaction>  $interactions
      */
     private function allLocked(array $interactions): bool
     {
@@ -655,7 +655,7 @@ final class CassetteManager
         }
 
         foreach ($interactions as $interaction) {
-            if (!$interaction->locked) {
+            if (! $interaction->locked) {
                 return false;
             }
         }
@@ -687,7 +687,7 @@ final class CassetteManager
         $content = $this->persister->read($this->key());
 
         if ($content === null) {
-            return new Cassette();
+            return new Cassette;
         }
 
         try {
@@ -719,7 +719,7 @@ final class CassetteManager
 
     private function takeLock(): void
     {
-        if ($this->persister instanceof SupportsSessionLocking && !$this->holdsLock) {
+        if ($this->persister instanceof SupportsSessionLocking && ! $this->holdsLock) {
             $this->persister->lock($this->lockKey());
             $this->holdsLock = true;
         }
@@ -735,12 +735,12 @@ final class CassetteManager
 
     private function key(): string
     {
-        return $this->fileName() . '.' . $this->serializer->fileExtension();
+        return $this->fileName().'.'.$this->serializer->fileExtension();
     }
 
     private function lockKey(): string
     {
-        return $this->fileName() . '.' . self::LOCK_EXTENSION;
+        return $this->fileName().'.'.self::LOCK_EXTENSION;
     }
 
     /**
@@ -749,6 +749,6 @@ final class CassetteManager
      */
     private function fileName(): string
     {
-        return $this->scope === null ? $this->name : $this->name . '.' . $this->scope;
+        return $this->scope === null ? $this->name : $this->name.'.'.$this->scope;
     }
 }

@@ -34,8 +34,8 @@ final class ScanSecretsCommandTest extends TestCase
     {
         Config::reset();
 
-        $this->cassettes = new CassetteDirectory();
-        $this->project = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
+        $this->project = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
@@ -118,7 +118,7 @@ final class ScanSecretsCommandTest extends TestCase
     public function testASidecarBodyIsScannedLikeAnyOtherBody(): void
     {
         $this->configure(inlineBodyLimit: 32);
-        $this->record('billing/charge', new Response(200, ['Content-Type' => 'text/plain'], str_repeat('padding ', 20) . 'Bearer 8f3c2a9b1d4e6f70a2b5c8d1'));
+        $this->record('billing/charge', new Response(200, ['Content-Type' => 'text/plain'], str_repeat('padding ', 20).'Bearer 8f3c2a9b1d4e6f70a2b5c8d1'));
 
         self::assertTrue($this->hasSidecar(), 'the body was supposed to land in a sidecar file');
 
@@ -140,7 +140,7 @@ final class ScanSecretsCommandTest extends TestCase
     }
 
     /**
-     * @param array<string, callable(): mixed> $redact
+     * @param  array<string, callable(): mixed>  $redact
      */
     private function configure(array $redact = [], ?int $inlineBodyLimit = null): void
     {
@@ -153,11 +153,11 @@ final class ScanSecretsCommandTest extends TestCase
     }
 
     /**
-     * @param (callable(VcrClient): void)|null $configure
+     * @param  (callable(VcrClient): void)|null  $configure
      */
     private function record(string $cassette, ResponseInterface $response, ?callable $configure = null): void
     {
-        $inner = new FakeHttpClient();
+        $inner = new FakeHttpClient;
         $inner->willRespond($response);
 
         $vcr = new VcrClient(
@@ -178,15 +178,15 @@ final class ScanSecretsCommandTest extends TestCase
 
     private function hasSidecar(): bool
     {
-        return glob($this->cassettes->path . '/billing/*.bin') !== [];
+        return glob($this->cassettes->path.'/billing/*.bin') !== [];
     }
 
     /**
-     * @param array<string, bool> $input
+     * @param  array<string, bool>  $input
      */
     private function execute(array $input = []): CommandTester
     {
-        $tester = new CommandTester((new Application())->find('scan-secrets'));
+        $tester = new CommandTester((new Application)->find('scan-secrets'));
         $tester->execute($input);
 
         return $tester;

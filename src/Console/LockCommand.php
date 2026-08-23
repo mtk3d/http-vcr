@@ -126,7 +126,7 @@ final class LockCommand extends Command
 
     private function flip(Interaction $interaction, int &$changed): Interaction
     {
-        ++$changed;
+        $changed++;
 
         return $interaction->withLocked($this->lock);
     }

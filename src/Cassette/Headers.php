@@ -14,8 +14,7 @@ namespace HttpVcr\Cassette;
 final class Headers
 {
     /**
-     * @param array<string, list<string>> $headers
-     *
+     * @param  array<string, list<string>>  $headers
      * @return list<string>
      */
     public static function get(array $headers, string $name): array
@@ -30,9 +29,8 @@ final class Headers
     }
 
     /**
-     * @param array<string, list<string>> $headers
-     * @param string|list<string>         $value
-     *
+     * @param  array<string, list<string>>  $headers
+     * @param  string|list<string>  $value
      * @return array<string, list<string>>
      */
     public static function with(array $headers, string $name, string|array $value): array
@@ -44,8 +42,7 @@ final class Headers
     }
 
     /**
-     * @param array<string, list<string>> $headers
-     *
+     * @param  array<string, list<string>>  $headers
      * @return array<string, list<string>>
      */
     public static function without(array $headers, string $name): array
@@ -60,8 +57,7 @@ final class Headers
     }
 
     /**
-     * @param array<string, list<string>> $headers
-     *
+     * @param  array<string, list<string>>  $headers
      * @return array<string, list<string>> the same headers with every name lowercased,
      *                                     values of names differing only in case merged
      */

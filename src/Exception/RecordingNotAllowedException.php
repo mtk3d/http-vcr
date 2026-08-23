@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HttpVcr\Exception;
 
 use HttpVcr\Cassette\RecordedRequest;
+use HttpVcr\Environment;
 use RuntimeException;
 
 /**
@@ -16,14 +17,14 @@ use RuntimeException;
 final class RecordingNotAllowedException extends RuntimeException implements VcrException
 {
     /**
-     * @param string $cause why recording is disabled, named precisely enough to act on —
-     *                      see {@see \HttpVcr\Environment::recordingBlockedBecause()}
+     * @param  string  $cause  why recording is disabled, named precisely enough to act on —
+     *                         see {@see Environment::recordingBlockedBecause()}
      */
     public static function forErasedCassette(string $cassetteName, string $cause): self
     {
         return new self(sprintf(
             'Recording is disabled by %s, ignoring VCR_ERASE_TAPE — cassette "%s" was left alone rather '
-            . 'than erased with no way to record it again.',
+            .'than erased with no way to record it again.',
             $cause,
             $cassetteName,
         ));
@@ -35,7 +36,7 @@ final class RecordingNotAllowedException extends RuntimeException implements Vcr
      * because the same run with recording allowed would have recorded the new scope and
      * passed (§3.8).
      *
-     * @param list<string> $existingScopes
+     * @param  list<string>  $existingScopes
      */
     public static function forScope(
         string $cassetteName,
@@ -56,7 +57,7 @@ final class RecordingNotAllowedException extends RuntimeException implements Vcr
     {
         return new self(sprintf(
             "Recording is disabled by %s, so %s %s could not be recorded into %s.\n"
-            . 'Set VCR_ALLOW_RECORDING=1 to record it.',
+            .'Set VCR_ALLOW_RECORDING=1 to record it.',
             $cause,
             $incoming->method,
             $incoming->uri,

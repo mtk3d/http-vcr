@@ -21,17 +21,15 @@ final class Environment
     private const CI_VARIABLES = ['CI', 'CONTINUOUS_INTEGRATION', 'BUILD_NUMBER', 'JENKINS_URL', 'TEAMCITY_VERSION'];
 
     /**
-     * @param array<string, string>   $variables
-     * @param array<string, Provider> $providers the APIs this project has named, which is
-     *                                           what a `@name` in VCR_ERASE_TAPE resolves
-     *                                           against before falling back to a bare host
+     * @param  array<string, string>  $variables
+     * @param  array<string, Provider>  $providers  the APIs this project has named, which is
+     *                                              what a `@name` in VCR_ERASE_TAPE resolves
+     *                                              against before falling back to a bare host
      */
-    public function __construct(private array $variables = [], private array $providers = [])
-    {
-    }
+    public function __construct(private array $variables = [], private array $providers = []) {}
 
     /**
-     * @param array<string, Provider> $providers
+     * @param  array<string, Provider>  $providers
      */
     public static function fromSystem(array $providers = []): self
     {
@@ -64,8 +62,7 @@ final class Environment
      * the snapshot covers the VCR_* rules, which have to be settled when the session opens,
      * while a credential may well be put in place by the test's own setUp().
      *
-     * @param list<string> $names
-     *
+     * @param  list<string>  $names
      * @return list<string>
      */
     public function missing(array $names): array
@@ -75,7 +72,7 @@ final class Environment
         foreach ($names as $name) {
             $value = $this->variables[$name] ?? $_ENV[$name] ?? $_SERVER[$name] ?? getenv($name);
 
-            if (!is_string($value) || trim($value) === '') {
+            if (! is_string($value) || trim($value) === '') {
                 $missing[] = $name;
             }
         }
@@ -152,7 +149,7 @@ final class Environment
             return null;
         }
 
-        return !in_array(strtolower($value), ['0', 'false'], true);
+        return ! in_array(strtolower($value), ['0', 'false'], true);
     }
 
     private function detectedCiVariable(): ?string
@@ -175,6 +172,6 @@ final class Environment
     {
         $value = $this->variables[$name] ?? '';
 
-        return $value !== '' && !in_array(strtolower($value), ['0', 'false'], true);
+        return $value !== '' && ! in_array(strtolower($value), ['0', 'false'], true);
     }
 }

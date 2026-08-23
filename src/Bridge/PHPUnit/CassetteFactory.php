@@ -45,7 +45,7 @@ final class CassetteFactory
      * then the class chain. A method-level attribute replaces a class-level one outright
      * rather than merging with it.
      *
-     * @param class-string $class
+     * @param  class-string  $class
      */
     public function declaredBy(string $class, string $method): ?UseCassette
     {
@@ -62,7 +62,7 @@ final class CassetteFactory
      * The directory this class's cassettes live in, looked for up the inheritance chain
      * because PHP does not carry attributes to a subclass on its own.
      *
-     * @param class-string $class
+     * @param  class-string  $class
      */
     public function directoryFor(string $class): ?string
     {
@@ -72,9 +72,8 @@ final class CassetteFactory
     /**
      * @template T of object
      *
-     * @param class-string    $class
-     * @param class-string<T> $attribute
-     *
+     * @param  class-string  $class
+     * @param  class-string<T>  $attribute
      * @return T|null
      */
     private function upTheChain(string $class, string $attribute): ?object
@@ -97,8 +96,7 @@ final class CassetteFactory
     /**
      * @template T of object
      *
-     * @param list<ReflectionAttribute<T>> $attributes
-     *
+     * @param  list<ReflectionAttribute<T>>  $attributes
      * @return T|null
      */
     private function attribute(array $attributes): ?object

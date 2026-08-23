@@ -16,14 +16,13 @@ final readonly class SecretFinding
     private const EXCERPT_LENGTH = 16;
 
     /**
-     * @param string $location where the value sits, as `response.body (/refresh_token)`
-     * @param string $value    the value itself, never printed in full
+     * @param  string  $location  where the value sits, as `response.body (/refresh_token)`
+     * @param  string  $value  the value itself, never printed in full
      */
     public function __construct(
         public string $location,
         public string $value,
-    ) {
-    }
+    ) {}
 
     /**
      * Enough of the value to recognize it in the cassette, and no more — a warning about a
@@ -32,7 +31,7 @@ final readonly class SecretFinding
     public function excerpt(): string
     {
         return strlen($this->value) > self::EXCERPT_LENGTH
-            ? substr($this->value, 0, self::EXCERPT_LENGTH) . '…'
+            ? substr($this->value, 0, self::EXCERPT_LENGTH).'…'
             : $this->value;
     }
 }

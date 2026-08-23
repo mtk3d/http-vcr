@@ -29,7 +29,7 @@ final class WithInnerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->persister = new InMemoryCassettePersister();
+        $this->persister = new InMemoryCassettePersister;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
@@ -44,8 +44,8 @@ final class WithInnerTest extends TestCase
 
     public function testTheRealRequestGoesToTheClientSuppliedPerRequest(): void
     {
-        $constructed = new FakeHttpClient();
-        $perRequest = (new FakeHttpClient())->willRespond('{"from":"the handler stack"}');
+        $constructed = new FakeHttpClient;
+        $perRequest = (new FakeHttpClient)->willRespond('{"from":"the handler stack"}');
         $vcr = $this->client($constructed);
 
         $response = $vcr->withInner($perRequest)->sendRequest(new Request('GET', 'https://api.example.com/products'));
@@ -57,7 +57,7 @@ final class WithInnerTest extends TestCase
 
     public function testAClientBuiltWithoutAnInnerOneRecordsThroughTheClientWithInnerSupplies(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"id":1}');
+        $inner = (new FakeHttpClient)->willRespond('{"id":1}');
         $vcr = $this->client(null);
 
         $vcr->withInner($inner)->sendRequest(new Request('GET', 'https://api.example.com/products'));
@@ -82,7 +82,7 @@ final class WithInnerTest extends TestCase
             }
             JSON);
 
-        $inner = new FakeHttpClient();
+        $inner = new FakeHttpClient;
         $vcr = $this->client($inner);
         $request = new Request('GET', 'https://api.example.com/products');
 
@@ -97,7 +97,7 @@ final class WithInnerTest extends TestCase
 
     public function testConfigurationIsFrozenByARequestSentThroughASatelliteInstance(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"id":1}');
+        $inner = (new FakeHttpClient)->willRespond('{"id":1}');
         $vcr = $this->client(null);
 
         $vcr->withInner($inner)->sendRequest(new Request('GET', 'https://api.example.com/products'));
@@ -110,7 +110,7 @@ final class WithInnerTest extends TestCase
 
     public function testASatelliteGoingOutOfScopeDoesNotEndTheSession(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"id":1}');
+        $inner = (new FakeHttpClient)->willRespond('{"id":1}');
         $vcr = $this->client(null);
 
         $satellite = $vcr->withInner($inner);

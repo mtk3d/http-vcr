@@ -14,9 +14,9 @@ use RuntimeException;
 class NoMatchingInteractionException extends RuntimeException implements VcrException
 {
     /**
-     * @param array<int, Mismatch> $mismatches the first matcher to reject each unconsumed
-     *                                         interaction, keyed by its position in the
-     *                                         cassette, counting from 1
+     * @param  array<int, Mismatch>  $mismatches  the first matcher to reject each unconsumed
+     *                                            interaction, keyed by its position in the
+     *                                            cassette, counting from 1
      */
     public static function forRequest(
         RecordedRequest $incoming,
@@ -32,7 +32,7 @@ class NoMatchingInteractionException extends RuntimeException implements VcrExce
         );
 
         if ($mismatches === []) {
-            return new self($message . sprintf(
+            return new self($message.sprintf(
                 '%s already consumed.',
                 $interactionCount === 1 ? 'its one interaction was' : "all {$interactionCount} interactions were",
             ));
@@ -44,7 +44,7 @@ class NoMatchingInteractionException extends RuntimeException implements VcrExce
             $lines[] = sprintf('  #%d  %s', $position, $mismatch->describe());
         }
 
-        return new self($message . sprintf(
+        return new self($message.sprintf(
             "%d unconsumed interaction%s:\n%s",
             count($lines),
             count($lines) === 1 ? '' : 's',

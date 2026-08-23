@@ -41,7 +41,7 @@ jobs:
       - run: vendor/bin/phpstan analyse --no-progress
 
   coding-standards:
-    name: PHP-CS-Fixer
+    name: Pint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,4 +53,4 @@ jobs:
 
       - uses: ramsey/composer-install@v3
 
-      - run: vendor/bin/php-cs-fixer fix --dry-run --diff
+      - run: vendor/bin/pint --test

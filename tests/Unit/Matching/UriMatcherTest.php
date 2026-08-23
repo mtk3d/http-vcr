@@ -30,7 +30,7 @@ final class UriMatcherTest extends TestCase
     #[DataProvider('equivalentUris')]
     public function testTreatsEquivalentSpellingsAsTheSameUri(string $recorded, string $incoming): void
     {
-        self::assertTrue((new UriMatcher())->matches(
+        self::assertTrue((new UriMatcher)->matches(
             new RecordedRequest('GET', $recorded),
             new RecordedRequest('GET', $incoming),
         ));
@@ -76,7 +76,7 @@ final class UriMatcherTest extends TestCase
     #[DataProvider('differentUris')]
     public function testRejectsADifferentUriAndNamesTheComponent(string $recorded, string $incoming, string $detail): void
     {
-        $matcher = new UriMatcher();
+        $matcher = new UriMatcher;
         $recordedRequest = new RecordedRequest('GET', $recorded);
         $incomingRequest = new RecordedRequest('GET', $incoming);
 

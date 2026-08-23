@@ -30,7 +30,7 @@ final class VcrClientTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
 
@@ -49,7 +49,7 @@ final class VcrClientTest extends TestCase
 
     public function testRecordsARealRequestWhenThereIsNoCassetteYet(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"title":"T-Shirt"}');
+        $inner = (new FakeHttpClient)->willRespond('{"title":"T-Shirt"}');
         $vcr = $this->client($inner, 'shopify/get-product');
 
         $response = $vcr->sendRequest(new Request('GET', 'https://shop.example.com/products/1.json'));
@@ -69,7 +69,7 @@ final class VcrClientTest extends TestCase
     {
         $this->record('shopify/get-product', 'https://shop.example.com/products/1.json', '{"title":"T-Shirt"}');
 
-        $inner = new FakeHttpClient();
+        $inner = new FakeHttpClient;
         $response = $this->client($inner, 'shopify/get-product')
             ->sendRequest(new Request('GET', 'https://shop.example.com/products/1.json'));
 
@@ -79,12 +79,12 @@ final class VcrClientTest extends TestCase
 
     public function testAReplayedResponseCarriesTheRecordedStatusAndHeaders(): void
     {
-        $inner = (new FakeHttpClient())->willRespond(
+        $inner = (new FakeHttpClient)->willRespond(
             new Response(201, ['Content-Type' => 'application/json', 'X-Request-Id' => 'abc'], '{"id":7}'),
         );
         $this->client($inner, 'orders/create')->sendRequest(new Request('POST', 'https://api.example.com/orders'));
 
-        $response = $this->client(new FakeHttpClient(), 'orders/create')
+        $response = $this->client(new FakeHttpClient, 'orders/create')
             ->sendRequest(new Request('POST', 'https://api.example.com/orders'));
 
         self::assertSame(201, $response->getStatusCode());
@@ -95,7 +95,7 @@ final class VcrClientTest extends TestCase
 
     public function testTheRequestBodyIsRecordedAndLeftReadableForTheCodeUnderTest(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"ok":true}');
+        $inner = (new FakeHttpClient)->willRespond('{"ok":true}');
         $request = new Request('POST', 'https://api.example.com/orders', [], '{"amount":100}');
 
         $this->client($inner, 'orders/create')->sendRequest($request);
@@ -113,16 +113,16 @@ final class VcrClientTest extends TestCase
         $this->expectExceptionMessage('1 unconsumed interaction:');
         $this->expectExceptionMessage('#1  UriMatcher: expected path "/products/1.json"');
 
-        $this->client(new FakeHttpClient(), 'shopify/get-product')
+        $this->client(new FakeHttpClient, 'shopify/get-product')
             ->sendRequest(new Request('GET', 'https://shop.example.com/products/2.json'));
     }
 
     public function testPlaybackOnlyWithNoCassetteFailsRatherThanRecording(): void
     {
         $this->expectException(CassetteNotFoundException::class);
-        $this->expectExceptionMessage('No cassette at ' . $this->cassettes->path . '/shopify/get-product.json');
+        $this->expectExceptionMessage('No cassette at '.$this->cassettes->path.'/shopify/get-product.json');
 
-        $this->client(new FakeHttpClient(), 'shopify/get-product', RecordMode::PlaybackOnly)
+        $this->client(new FakeHttpClient, 'shopify/get-product', RecordMode::PlaybackOnly)
             ->sendRequest(new Request('GET', 'https://shop.example.com/products/1.json'));
     }
 
@@ -134,7 +134,7 @@ final class VcrClientTest extends TestCase
         $this->expectExceptionMessage('Recording is disabled by VCR_ALLOW_RECORDING=0');
         $this->expectExceptionMessage('GET https://shop.example.com/products/1.json');
 
-        $this->client(new FakeHttpClient(), 'shopify/get-product')
+        $this->client(new FakeHttpClient, 'shopify/get-product')
             ->sendRequest(new Request('GET', 'https://shop.example.com/products/1.json'));
     }
 
@@ -146,7 +146,7 @@ final class VcrClientTest extends TestCase
         $this->expectException(RecordingNotAllowedException::class);
         $this->expectExceptionMessage('CI detection (CI=true is set, VCR_ALLOW_RECORDING is not)');
 
-        $this->client(new FakeHttpClient(), 'shopify/get-product')
+        $this->client(new FakeHttpClient, 'shopify/get-product')
             ->sendRequest(new Request('GET', 'https://shop.example.com/products/1.json'));
     }
 
@@ -155,7 +155,7 @@ final class VcrClientTest extends TestCase
         $_ENV['VCR_ALLOW_RECORDING'] = '0';
 
         try {
-            $this->client(new FakeHttpClient(), 'shopify/get-product')
+            $this->client(new FakeHttpClient, 'shopify/get-product')
                 ->sendRequest(new Request('GET', 'https://shop.example.com/products/1.json'));
         } catch (RecordingNotAllowedException) {
         }
@@ -179,7 +179,7 @@ final class VcrClientTest extends TestCase
 
     private function record(string $cassette, string $uri, string $body): void
     {
-        $this->client((new FakeHttpClient())->willRespond($body), $cassette)
+        $this->client((new FakeHttpClient)->willRespond($body), $cassette)
             ->sendRequest(new Request('GET', $uri));
     }
 

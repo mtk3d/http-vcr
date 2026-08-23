@@ -14,7 +14,7 @@ use HttpVcr\Cassette\RecordedRequest;
  * In the default matcher set, so `?page=1` and `?page=2` never quietly replay each
  * other's recording.
  */
-final class QueryStringMatcher implements RequestMatcherInterface, ExplainsMismatch
+final class QueryStringMatcher implements ExplainsMismatch, RequestMatcherInterface
 {
     public function matches(RecordedRequest $recorded, RecordedRequest $incoming): bool
     {
@@ -27,7 +27,7 @@ final class QueryStringMatcher implements RequestMatcherInterface, ExplainsMisma
         $actual = $this->parse($incoming->uri);
 
         foreach ($expected as $name => $values) {
-            if (!array_key_exists($name, $actual)) {
+            if (! array_key_exists($name, $actual)) {
                 return sprintf('parameter "%s" missing', $name);
             }
 
@@ -42,7 +42,7 @@ final class QueryStringMatcher implements RequestMatcherInterface, ExplainsMisma
         }
 
         foreach ($actual as $name => $values) {
-            if (!array_key_exists($name, $expected)) {
+            if (! array_key_exists($name, $expected)) {
                 return sprintf('unexpected parameter "%s"', $name);
             }
         }
@@ -58,7 +58,7 @@ final class QueryStringMatcher implements RequestMatcherInterface, ExplainsMisma
     {
         $query = parse_url($uri, PHP_URL_QUERY);
 
-        if (!is_string($query) || $query === '') {
+        if (! is_string($query) || $query === '') {
             return [];
         }
 
@@ -78,15 +78,15 @@ final class QueryStringMatcher implements RequestMatcherInterface, ExplainsMisma
     }
 
     /**
-     * @param list<string|null> $values
+     * @param  list<string|null>  $values
      */
     private function describe(array $values): string
     {
         $quoted = array_map(
-            static fn (?string $value): string => $value === null ? '(no value)' : '"' . $value . '"',
+            static fn (?string $value): string => $value === null ? '(no value)' : '"'.$value.'"',
             $values,
         );
 
-        return count($quoted) === 1 ? $quoted[0] : '[' . implode(', ', $quoted) . ']';
+        return count($quoted) === 1 ? $quoted[0] : '['.implode(', ', $quoted).']';
     }
 }

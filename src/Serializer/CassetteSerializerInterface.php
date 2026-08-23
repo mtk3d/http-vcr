@@ -19,8 +19,8 @@ use HttpVcr\Persistence\SidecarBodies;
 interface CassetteSerializerInterface
 {
     /**
-     * @param SidecarBodies|null $bodies where bodies too large to sit in the file itself go;
-     *                                   null keeps every body inline, whatever its size
+     * @param  SidecarBodies|null  $bodies  where bodies too large to sit in the file itself go;
+     *                                      null keeps every body inline, whatever its size
      */
     public function serialize(Cassette $cassette, ?SidecarBodies $bodies = null): string;
 

@@ -45,8 +45,8 @@ final class RedactionHooks
     /**
      * Replaces a literal value with $placeholder wherever it occurs in an interaction.
      *
-     * @param callable(): mixed $value the real value, read when it is needed rather than
-     *                                 when the rule is declared
+     * @param  callable(): mixed  $value  the real value, read when it is needed rather than
+     *                                    when the rule is declared
      */
     public function redact(string $placeholder, callable $value): void
     {
@@ -54,10 +54,10 @@ final class RedactionHooks
     }
 
     /**
-     * @param (callable(): mixed)|null $value without it the rule is write-only: the header
-     *                                        goes to disk redacted and nothing can restore
-     *                                        it, so it also stops distinguishing
-     *                                        interactions for matching
+     * @param  (callable(): mixed)|null  $value  without it the rule is write-only: the header
+     *                                           goes to disk redacted and nothing can restore
+     *                                           it, so it also stops distinguishing
+     *                                           interactions for matching
      */
     public function redactHeader(string $name, ?callable $value = null): void
     {
@@ -65,8 +65,8 @@ final class RedactionHooks
     }
 
     /**
-     * @param string                   $pointer a JSON Pointer: `/customer/email`
-     * @param (callable(): mixed)|null $value
+     * @param  string  $pointer  a JSON Pointer: `/customer/email`
+     * @param  (callable(): mixed)|null  $value
      */
     public function redactJsonField(string $pointer, ?callable $value = null): void
     {
@@ -74,7 +74,7 @@ final class RedactionHooks
     }
 
     /**
-     * @param (callable(): mixed)|null $value
+     * @param  (callable(): mixed)|null  $value
      */
     public function redactQueryParam(string $name, ?callable $value = null): void
     {
@@ -82,7 +82,7 @@ final class RedactionHooks
     }
 
     /**
-     * @param (callable(): mixed)|null $value
+     * @param  (callable(): mixed)|null  $value
      */
     public function redactFormField(string $name, ?callable $value = null): void
     {
@@ -94,7 +94,7 @@ final class RedactionHooks
      * that verifies the authorization header itself. It returns to the pool matching looks
      * at as well — one deliberate decision rather than two settings that have to agree.
      *
-     * @param list<string> $names
+     * @param  list<string>  $names
      */
     public function includeSensitiveHeaders(array $names): void
     {
@@ -136,7 +136,7 @@ final class RedactionHooks
     }
 
     /**
-     * @param list<Redaction> $rules
+     * @param  list<Redaction>  $rules
      */
     private function apply(Interaction $interaction, array $rules, bool $restore): Interaction
     {
@@ -160,7 +160,7 @@ final class RedactionHooks
     }
 
     /**
-     * @param list<Redaction> $rules
+     * @param  list<Redaction>  $rules
      */
     private function request(RecordedRequest $request, array $rules, bool $restore): RecordedRequest
     {
@@ -174,7 +174,7 @@ final class RedactionHooks
     }
 
     /**
-     * @param list<Redaction> $rules
+     * @param  list<Redaction>  $rules
      */
     private function response(RecordedResponse $response, array $rules, bool $restore): RecordedResponse
     {
@@ -187,9 +187,8 @@ final class RedactionHooks
     }
 
     /**
-     * @param array<string, list<string>> $headers
-     * @param list<Redaction>             $rules
-     *
+     * @param  array<string, list<string>>  $headers
+     * @param  list<Redaction>  $rules
      * @return array<string, list<string>>
      */
     private function headers(array $headers, array $rules, bool $restore): array
@@ -197,10 +196,8 @@ final class RedactionHooks
         foreach ($rules as $rule) {
             foreach ($headers as $name => $values) {
                 $headers[$name] = match (true) {
-                    $rule->target === RedactionTarget::Header && strcasecmp($name, $rule->name) === 0
-                        => $this->replaceValues($values, $rule, $restore),
-                    $rule->target === RedactionTarget::Value
-                        => array_map(fn (string $value): string => $this->literal($value, $rule, $restore), $values),
+                    $rule->target === RedactionTarget::Header && strcasecmp($name, $rule->name) === 0 => $this->replaceValues($values, $rule, $restore),
+                    $rule->target === RedactionTarget::Value => array_map(fn (string $value): string => $this->literal($value, $rule, $restore), $values),
                     default => $values,
                 };
             }
@@ -210,8 +207,7 @@ final class RedactionHooks
     }
 
     /**
-     * @param list<string> $values
-     *
+     * @param  list<string>  $values
      * @return list<string>
      */
     private function replaceValues(array $values, Redaction $rule, bool $restore): array
@@ -223,7 +219,7 @@ final class RedactionHooks
     }
 
     /**
-     * @param list<Redaction> $rules
+     * @param  list<Redaction>  $rules
      */
     private function uri(string $uri, array $rules, bool $restore): string
     {
@@ -239,8 +235,8 @@ final class RedactionHooks
     }
 
     /**
-     * @param list<string>    $contentType
-     * @param list<Redaction> $rules
+     * @param  list<string>  $contentType
+     * @param  list<Redaction>  $rules
      */
     private function body(string $body, ?string $encoding, array $contentType, array $rules, bool $restore): string
     {
@@ -265,7 +261,7 @@ final class RedactionHooks
     }
 
     /**
-     * @param list<Redaction> $rules
+     * @param  list<Redaction>  $rules
      */
     private function text(string $text, array $rules, bool $restore): string
     {
@@ -293,8 +289,8 @@ final class RedactionHooks
         $query = $fragment === false ? $rest : substr($rest, 0, $fragment);
 
         return substr($uri, 0, $mark + 1)
-            . $this->pairs($query, $rule, $restore)
-            . ($fragment === false ? '' : substr($rest, $fragment));
+            .$this->pairs($query, $rule, $restore)
+            .($fragment === false ? '' : substr($rest, $fragment));
     }
 
     /**
@@ -318,7 +314,7 @@ final class RedactionHooks
                 // The placeholder goes in literally: percent-encoded it would be neither
                 // readable in a diff nor recognizable to a secret scanner.
                 $pairs[$index] = substr($pair, 0, $separator + 1)
-                    . ($restore ? rawurlencode($replacement) : $replacement);
+                    .($restore ? rawurlencode($replacement) : $replacement);
             }
         }
 
@@ -334,12 +330,12 @@ final class RedactionHooks
         // The value runs to the next parameter or to whatever closed the URL — a message
         // quoting one usually wraps it in brackets or quotes, and swallowing those would
         // redact the punctuation along with the secret.
-        $pattern = '/([?&]' . preg_quote($rule->name, '/') . '=)([^&\s"\'<>)\]}]*)/';
+        $pattern = '/([?&]'.preg_quote($rule->name, '/').'=)([^&\s"\'<>)\]}]*)/';
 
         $replaced = preg_replace_callback($pattern, function (array $match) use ($rule, $restore): string {
             $replacement = $this->substitute(urldecode((string) $match[2]), $rule, $restore);
 
-            return (string) $match[1] . match (true) {
+            return (string) $match[1].match (true) {
                 $replacement === null => (string) $match[2],
                 $restore => rawurlencode($replacement),
                 default => $replacement,
@@ -407,7 +403,7 @@ final class RedactionHooks
      */
     private function substitute(string $current, Redaction $rule, bool $restore): ?string
     {
-        if (!$restore) {
+        if (! $restore) {
             return $current === $rule->placeholder ? null : $rule->placeholder;
         }
 
@@ -427,7 +423,7 @@ final class RedactionHooks
         $automatic = [];
 
         foreach (self::SENSITIVE_HEADERS as $name) {
-            if (!$this->isIncluded($name)) {
+            if (! $this->isIncluded($name)) {
                 $automatic[] = Redaction::of(RedactionTarget::Header, $name, Redaction::placeholderFor($name));
             }
         }
@@ -463,6 +459,6 @@ final class RedactionHooks
      */
     private function oneWay(): array
     {
-        return array_values(array_filter($this->all(), static fn (Redaction $rule): bool => !$rule->isTwoWay()));
+        return array_values(array_filter($this->all(), static fn (Redaction $rule): bool => ! $rule->isTwoWay()));
     }
 }

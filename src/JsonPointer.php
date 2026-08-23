@@ -37,8 +37,7 @@ final class JsonPointer
     }
 
     /**
-     * @param list<string> $tokens
-     *
+     * @param  list<string>  $tokens
      * @return array{mixed}|null the value wrapped in a one-element list, or null when the
      *                           document has no member there — so that a member holding
      *                           null stays distinguishable from an absent one
@@ -69,7 +68,7 @@ final class JsonPointer
      * member isn't there: neither a matcher nor a redaction rule has any business inventing
      * a field the traffic didn't carry.
      *
-     * @param list<string> $tokens
+     * @param  list<string>  $tokens
      */
     public static function with(mixed $document, array $tokens, mixed $value): mixed
     {
@@ -79,7 +78,7 @@ final class JsonPointer
     /**
      * The document without the member at $tokens, or unchanged when it isn't there.
      *
-     * @param list<string> $tokens
+     * @param  list<string>  $tokens
      */
     public static function without(mixed $document, array $tokens): mixed
     {
@@ -87,9 +86,9 @@ final class JsonPointer
     }
 
     /**
-     * @param list<string>  $tokens
-     * @param array{mixed}|null $value the replacement wrapped in a one-element list, or
-     *                                 null to remove the member
+     * @param  list<string>  $tokens
+     * @param  array{mixed}|null  $value  the replacement wrapped in a one-element list, or
+     *                                    null to remove the member
      */
     private static function replace(mixed $document, array $tokens, ?array $value): mixed
     {

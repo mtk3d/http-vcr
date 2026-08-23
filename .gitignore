@@ -2,6 +2,6 @@
 /.phpunit.cache/
 /docs/book/
 .phpunit.result.cache
-.php-cs-fixer.cache
+/.pint.cache
 .DS_Store
 /composer.lock

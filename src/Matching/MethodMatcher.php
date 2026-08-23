@@ -10,7 +10,7 @@ use HttpVcr\Cassette\RecordedRequest;
  * Compares the HTTP method, case-insensitively — methods are uppercase by convention,
  * and a client that spells one differently still means the same method.
  */
-final class MethodMatcher implements RequestMatcherInterface, ExplainsMismatch
+final class MethodMatcher implements ExplainsMismatch, RequestMatcherInterface
 {
     public function matches(RecordedRequest $recorded, RecordedRequest $incoming): bool
     {

@@ -22,7 +22,7 @@ final class TestScannerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->directory = new CassetteDirectory();
+        $this->directory = new CassetteDirectory;
     }
 
     protected function tearDown(): void
@@ -152,7 +152,7 @@ final class TestScannerTest extends TestCase
         $declarations = $this->scan()->declarations;
 
         self::assertCount(1, $declarations);
-        self::assertSame($this->directory->path . '/Module/Cassettes', $declarations[0]->directory);
+        self::assertSame($this->directory->path.'/Module/Cassettes', $declarations[0]->directory);
     }
 
     public function testAnAbstractParentDeclaresForItsSubclassesAndNotForItself(): void
@@ -262,7 +262,7 @@ final class TestScannerTest extends TestCase
 
     public function testADirectoryThatIsNotThereScansToNothing(): void
     {
-        $scanned = (new TestScanner([$this->directory->path . '/nowhere']))->scan();
+        $scanned = (new TestScanner([$this->directory->path.'/nowhere']))->scan();
 
         self::assertSame([], $scanned->declarations);
         self::assertSame([], $scanned->unanalyzed);
@@ -296,8 +296,7 @@ final class TestScannerTest extends TestCase
     }
 
     /**
-     * @param list<CassetteDeclaration> $declarations
-     *
+     * @param  list<CassetteDeclaration>  $declarations
      * @return array<string, string>
      */
     private function named(array $declarations): array

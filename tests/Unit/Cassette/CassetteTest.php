@@ -18,7 +18,7 @@ final class CassetteTest extends TestCase
 {
     public function testANewCassetteCarriesTheCurrentSchemaVersionAndNoInteractions(): void
     {
-        $cassette = new Cassette();
+        $cassette = new Cassette;
 
         self::assertSame(Cassette::CURRENT_SCHEMA_VERSION, $cassette->schemaVersion);
         self::assertTrue($cassette->isEmpty());

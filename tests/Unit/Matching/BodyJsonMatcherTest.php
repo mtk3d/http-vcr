@@ -35,7 +35,7 @@ final class BodyJsonMatcherTest extends TestCase
     #[DataProvider('equivalentDocuments')]
     public function testComparesJsonSemantically(string $recorded, string $incoming): void
     {
-        self::assertTrue((new BodyJsonMatcher())->matches(self::request($recorded), self::request($incoming)));
+        self::assertTrue((new BodyJsonMatcher)->matches(self::request($recorded), self::request($incoming)));
     }
 
     /**
@@ -58,7 +58,7 @@ final class BodyJsonMatcherTest extends TestCase
     #[DataProvider('differentDocuments')]
     public function testNamesTheFieldThatDiffers(string $recorded, string $incoming, string $detail): void
     {
-        $matcher = new BodyJsonMatcher();
+        $matcher = new BodyJsonMatcher;
 
         self::assertFalse($matcher->matches(self::request($recorded), self::request($incoming)));
         self::assertSame($detail, $matcher->explainMismatch(self::request($recorded), self::request($incoming)));
@@ -66,7 +66,7 @@ final class BodyJsonMatcherTest extends TestCase
 
     public function testFallsBackToARawComparisonWhenEitherSideIsNotJson(): void
     {
-        $matcher = new BodyJsonMatcher();
+        $matcher = new BodyJsonMatcher;
 
         self::assertTrue($matcher->matches(self::request('name=acme'), self::request('name=acme')));
         self::assertFalse($matcher->matches(self::request('name=acme'), self::request('name=other')));
@@ -78,7 +78,7 @@ final class BodyJsonMatcherTest extends TestCase
 
     public function testIgnoresAFieldThatChangesEveryRun(): void
     {
-        $matcher = (new BodyJsonMatcher())->ignoreJsonField('/transactionId');
+        $matcher = (new BodyJsonMatcher)->ignoreJsonField('/transactionId');
 
         self::assertTrue($matcher->matches(
             self::request('{"transactionId":"11111111-1111-1111-1111-111111111111","amount":100}'),
@@ -92,7 +92,7 @@ final class BodyJsonMatcherTest extends TestCase
 
     public function testIgnoresANestedFieldAndOneMissingOnOneSide(): void
     {
-        $matcher = (new BodyJsonMatcher())->ignoreJsonField('/meta/requestedAt');
+        $matcher = (new BodyJsonMatcher)->ignoreJsonField('/meta/requestedAt');
 
         self::assertTrue($matcher->matches(
             self::request('{"meta":{"requestedAt":"2026-01-01T00:00:00Z","page":1}}'),
@@ -102,7 +102,7 @@ final class BodyJsonMatcherTest extends TestCase
 
     public function testMatchesAFieldByPatternInsteadOfByValue(): void
     {
-        $matcher = (new BodyJsonMatcher())->matchJsonField('/requestId', '/^[0-9a-f-]{36}$/');
+        $matcher = (new BodyJsonMatcher)->matchJsonField('/requestId', '/^[0-9a-f-]{36}$/');
 
         self::assertTrue($matcher->matches(
             self::request('{"requestId":"11111111-1111-1111-1111-111111111111"}'),
@@ -112,7 +112,7 @@ final class BodyJsonMatcherTest extends TestCase
 
     public function testRejectsAPatternedFieldThatDoesNotLookRight(): void
     {
-        $matcher = (new BodyJsonMatcher())->matchJsonField('/requestId', '/^[0-9a-f-]{36}$/');
+        $matcher = (new BodyJsonMatcher)->matchJsonField('/requestId', '/^[0-9a-f-]{36}$/');
         $recorded = self::request('{"requestId":"11111111-1111-1111-1111-111111111111"}');
         $incoming = self::request('{"requestId":"nope"}');
 
@@ -125,7 +125,7 @@ final class BodyJsonMatcherTest extends TestCase
 
     public function testRejectsAPatternedFieldThatIsAbsent(): void
     {
-        $matcher = (new BodyJsonMatcher())->matchJsonField('/requestId', '/^\d+$/');
+        $matcher = (new BodyJsonMatcher)->matchJsonField('/requestId', '/^\d+$/');
 
         self::assertSame(
             'field "requestId" missing',
@@ -135,7 +135,7 @@ final class BodyJsonMatcherTest extends TestCase
 
     public function testBuildersReturnANewMatcherRatherThanConfiguringThisOne(): void
     {
-        $matcher = new BodyJsonMatcher();
+        $matcher = new BodyJsonMatcher;
         $configured = $matcher->ignoreJsonField('/a')->matchJsonField('/b', '/^\d+$/');
 
         self::assertNotSame($matcher, $configured);
@@ -147,12 +147,12 @@ final class BodyJsonMatcherTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        (new BodyJsonMatcher())->matchJsonField('/requestId', 'not-a-regex');
+        (new BodyJsonMatcher)->matchJsonField('/requestId', 'not-a-regex');
     }
 
     public function testExplainsNothingWhenTheDocumentsAgree(): void
     {
-        self::assertNull((new BodyJsonMatcher())->explainMismatch(
+        self::assertNull((new BodyJsonMatcher)->explainMismatch(
             self::request('{"a":1}'),
             self::request('{"a":1}'),
         ));

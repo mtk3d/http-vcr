@@ -56,10 +56,10 @@ final class Config
     private static bool $frozen = false;
 
     /**
-     * @param list<RequestMatcherInterface>    $defaultMatchers
-     * @param array<string, callable(): mixed> $redact
-     * @param array<string, Provider>          $providers
-     * @param list<string>                     $testDirectories
+     * @param  list<RequestMatcherInterface>  $defaultMatchers
+     * @param  array<string, callable(): mixed>  $redact
+     * @param  array<string, Provider>  $providers
+     * @param  list<string>  $testDirectories
      */
     private function __construct(
         private readonly ?string $cassetteDirectory,
@@ -85,15 +85,15 @@ final class Config
     }
 
     /**
-     * @param list<RequestMatcherInterface>    $defaultMatchers empty means Method + Uri + QueryString
-     * @param array<string, callable(): mixed> $redact          placeholder to value provider, for a
-     *                                                          secret every cassette in the project
-     *                                                          would otherwise have to redact itself
-     * @param array<string, Provider>          $providers       named APIs, recognised by host (§3.12)
-     * @param list<string>                     $testDirectories where the CLI looks for the test
-     *                                                          files it scans; nothing else reads it
-     * @param (callable(): ClientInterface)|null $innerClientFactory the real client #[UseCassette]
-     *                                                              records through
+     * @param  list<RequestMatcherInterface>  $defaultMatchers  empty means Method + Uri + QueryString
+     * @param  array<string, callable(): mixed>  $redact  placeholder to value provider, for a
+     *                                                    secret every cassette in the project
+     *                                                    would otherwise have to redact itself
+     * @param  array<string, Provider>  $providers  named APIs, recognised by host (§3.12)
+     * @param  list<string>  $testDirectories  where the CLI looks for the test
+     *                                         files it scans; nothing else reads it
+     * @param  (callable(): ClientInterface)|null  $innerClientFactory  the real client #[UseCassette]
+     *                                                                  records through
      */
     public static function create(
         ?string $cassetteDirectory = null,
@@ -177,11 +177,11 @@ final class Config
     public static function discover(string $directory): ?self
     {
         while ($directory !== '') {
-            if (is_file($directory . '/' . self::FILE)) {
-                return self::loadFile($directory . '/' . self::FILE);
+            if (is_file($directory.'/'.self::FILE)) {
+                return self::loadFile($directory.'/'.self::FILE);
             }
 
-            if (is_file($directory . '/composer.json')) {
+            if (is_file($directory.'/composer.json')) {
                 return null;
             }
 
@@ -199,13 +199,13 @@ final class Config
 
     public static function loadFile(string $path): self
     {
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             throw new InvalidArgumentException(sprintf('There is no configuration file at %s.', $path));
         }
 
         $config = require $path;
 
-        if (!$config instanceof self) {
+        if (! $config instanceof self) {
             throw new LogicException(sprintf(
                 '%s has to return HttpVcr\Config::create(...); it returned %s.',
                 $path,
@@ -221,8 +221,8 @@ final class Config
         if (self::$frozen) {
             throw new LogicException(
                 'VcrClient::configure() has to be called before the first VcrClient is constructed — '
-                . 'a PHPUnit bootstrap, typically. Configuration that can change mid-run would make two '
-                . 'tests in one process depend on the order they happen to run in.',
+                .'a PHPUnit bootstrap, typically. Configuration that can change mid-run would make two '
+                .'tests in one process depend on the order they happen to run in.',
             );
         }
     }
@@ -276,7 +276,7 @@ final class Config
 
     public function serializer(): CassetteSerializerInterface
     {
-        return $this->serializer ?? new JsonCassetteSerializer();
+        return $this->serializer ?? new JsonCassetteSerializer;
     }
 
     public function persister(): CassettePersisterInterface
@@ -291,7 +291,7 @@ final class Config
     {
         return $this->defaultMatchers !== []
             ? $this->defaultMatchers
-            : [new MethodMatcher(), new UriMatcher(), new QueryStringMatcher()];
+            : [new MethodMatcher, new UriMatcher, new QueryStringMatcher];
     }
 
     /**
@@ -320,7 +320,7 @@ final class Config
      */
     public function scopeResolver(): CassetteScopeResolverInterface
     {
-        return $this->scopeResolver ?? new NullScopeResolver();
+        return $this->scopeResolver ?? new NullScopeResolver;
     }
 
     /**
@@ -392,7 +392,7 @@ final class Config
                         if ($name !== $other && Provider::overlap($pattern, $rivalPattern)) {
                             throw new LogicException(sprintf(
                                 'Providers "%s" (%s) and "%s" (%s) both claim the same host. One host '
-                                . 'belongs to one API, so that a selector always means the same thing.',
+                                .'belongs to one API, so that a selector always means the same thing.',
                                 $name,
                                 $pattern,
                                 $other,
@@ -407,7 +407,7 @@ final class Config
 
     public function clock(): ClockInterface
     {
-        return $this->clock ?? new SystemClock();
+        return $this->clock ?? new SystemClock;
     }
 
     /**
@@ -434,7 +434,7 @@ final class Config
      */
     public function cassetteDirectory(): string
     {
-        return $this->cassetteDirectory ?? self::projectRoot() . '/tests/Cassettes';
+        return $this->cassetteDirectory ?? self::projectRoot().'/tests/Cassettes';
     }
 
     /**
@@ -445,7 +445,7 @@ final class Config
      */
     public function testDirectories(): array
     {
-        return $this->testDirectories !== [] ? $this->testDirectories : [self::projectRoot() . '/tests'];
+        return $this->testDirectories !== [] ? $this->testDirectories : [self::projectRoot().'/tests'];
     }
 
     /**
@@ -461,7 +461,7 @@ final class Config
         if ($this->innerClientFactory !== null) {
             $client = ($this->innerClientFactory)();
 
-            if (!$client instanceof ClientInterface) {
+            if (! $client instanceof ClientInterface) {
                 throw new LogicException(sprintf(
                     'innerClientFactory has to return a PSR-18 client; it returned %s.',
                     get_debug_type($client),
@@ -494,7 +494,7 @@ final class Config
             default => [],
         });
 
-        if (!$client instanceof ClientInterface) {
+        if (! $client instanceof ClientInterface) {
             throw MissingDependencyException::noHttpClient(array_keys(self::CLIENTS));
         }
 
@@ -509,7 +509,7 @@ final class Config
             return '.';
         }
 
-        while (!is_file($directory . '/composer.json')) {
+        while (! is_file($directory.'/composer.json')) {
             $parent = dirname($directory);
 
             if ($parent === $directory) {

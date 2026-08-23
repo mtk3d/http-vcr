@@ -28,10 +28,10 @@ final class Application extends ConsoleApplication
         // ^6.4 || ^7.0 || ^8.0, and the two singular methods do not both exist across that
         // range — add() was removed in 8.0, addCommand() only arrived in 7.4.
         $this->addCommands([
-            new StaleCommand(),
-            new ProvidersCommand(),
-            new TestsCommand(),
-            new ScanSecretsCommand(),
+            new StaleCommand,
+            new ProvidersCommand,
+            new TestsCommand,
+            new ScanSecretsCommand,
             new LockCommand(lock: true),
             new LockCommand(lock: false),
         ]);

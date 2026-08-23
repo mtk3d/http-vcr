@@ -47,7 +47,7 @@ final class TestsCommand extends Command
 
         $provider = $input->getOption('provider');
 
-        if (!is_string($provider) || $provider === '') {
+        if (! is_string($provider) || $provider === '') {
             $errors->writeln('<error>Which API? Name it with --provider=<name>.</error>');
 
             return Command::FAILURE;
@@ -69,7 +69,7 @@ final class TestsCommand extends Command
             $known = array_merge($known, array_keys($inventory->byProvider()));
         }
 
-        if (!in_array($provider, $known, true)) {
+        if (! in_array($provider, $known, true)) {
             $errors->writeln($this->unknown($provider, array_keys($config->providers()), $known));
 
             return Command::FAILURE;
@@ -107,7 +107,7 @@ final class TestsCommand extends Command
     }
 
     /**
-     * @param array<string, string> $matches test name => the cassette it was found through
+     * @param  array<string, string>  $matches  test name => the cassette it was found through
      */
     private function report(OutputInterface $output, string $provider, array $matches, ScannedTests $scanned): void
     {
@@ -115,7 +115,7 @@ final class TestsCommand extends Command
             $output->writeln(sprintf('No test touches %s.', $provider));
             $output->writeln(
                 'A test is found through its cassette, so one that has never been recorded '
-                . 'cannot appear here — record it with an unfiltered run first.',
+                .'cannot appear here — record it with an unfiltered run first.',
             );
         } else {
             $count = count($matches);
@@ -141,7 +141,7 @@ final class TestsCommand extends Command
             $output->writeln('<comment>Declarations the scan could not read in full:</comment>');
 
             foreach ($scanned->unanalyzed as $note) {
-                $output->writeln('  ' . $note);
+                $output->writeln('  '.$note);
             }
         }
     }
@@ -152,7 +152,7 @@ final class TestsCommand extends Command
      * tail is where a test's own name ends, not the end of the string, which would drop
      * every data set of a test that has one.
      *
-     * @param list<string> $tests
+     * @param  list<string>  $tests
      */
     private function regex(array $tests): string
     {
@@ -162,15 +162,15 @@ final class TestsCommand extends Command
             return '/^(?!)/';
         }
 
-        return '/^(' . implode('|', array_map(
+        return '/^('.implode('|', array_map(
             static fn (string $test): string => preg_quote($test, '/'),
             $tests,
-        )) . ')(?:$|#| with data set)/';
+        )).')(?:$|#| with data set)/';
     }
 
     /**
-     * @param list<string> $configured
-     * @param list<string> $known
+     * @param  list<string>  $configured
+     * @param  list<string>  $known
      */
     private function unknown(string $provider, array $configured, array $known): string
     {

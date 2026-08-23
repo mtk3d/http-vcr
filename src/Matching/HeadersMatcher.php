@@ -22,16 +22,16 @@ use HttpVcr\Cassette\RecordedRequest;
  * Names are folded to lowercase before comparing: PSR-7 treats them as case-insensitive,
  * but a cassette keeps the capitalization an API used and a local client picks its own.
  */
-final class HeadersMatcher implements RequestMatcherInterface, ExplainsMismatch
+final class HeadersMatcher implements ExplainsMismatch, RequestMatcherInterface
 {
     /** @var list<string> */
     private readonly array $headers;
 
     /**
-     * @param list<string> $headers the header names to compare; empty means every header
-     *                              the recorded request carries
-     * @param bool         $exact   require the same set of headers on both sides, rather
-     *                              than the recorded ones being present among the incoming
+     * @param  list<string>  $headers  the header names to compare; empty means every header
+     *                                 the recorded request carries
+     * @param  bool  $exact  require the same set of headers on both sides, rather
+     *                       than the recorded ones being present among the incoming
      */
     public function __construct(array $headers = [], private readonly bool $exact = false)
     {
@@ -60,15 +60,15 @@ final class HeadersMatcher implements RequestMatcherInterface, ExplainsMismatch
     }
 
     /**
-     * @param list<string>|null $expected
-     * @param list<string>|null $actual
+     * @param  list<string>|null  $expected
+     * @param  list<string>|null  $actual
      */
     private function compare(string $name, ?array $expected, ?array $actual): ?string
     {
         // Nothing was recorded under this name, so in subset mode there is nothing to
         // require; in exact mode carrying it anyway is the mismatch.
         if ($expected === null) {
-            return $actual === null || !$this->exact ? null : sprintf('unexpected header "%s"', $name);
+            return $actual === null || ! $this->exact ? null : sprintf('unexpected header "%s"', $name);
         }
 
         if ($actual === null) {
@@ -88,9 +88,8 @@ final class HeadersMatcher implements RequestMatcherInterface, ExplainsMismatch
     }
 
     /**
-     * @param array<string, list<string>> $expected
-     * @param array<string, list<string>> $actual
-     *
+     * @param  array<string, list<string>>  $expected
+     * @param  array<string, list<string>>  $actual
      * @return list<string> the header names this matcher has an opinion about
      */
     private function names(array $expected, array $actual): array
@@ -109,12 +108,12 @@ final class HeadersMatcher implements RequestMatcherInterface, ExplainsMismatch
     }
 
     /**
-     * @param list<string> $values
+     * @param  list<string>  $values
      */
     private function describe(array $values): string
     {
-        $quoted = array_map(static fn (string $value): string => '"' . $value . '"', $values);
+        $quoted = array_map(static fn (string $value): string => '"'.$value.'"', $values);
 
-        return count($quoted) === 1 ? $quoted[0] : '[' . implode(', ', $quoted) . ']';
+        return count($quoted) === 1 ? $quoted[0] : '['.implode(', ', $quoted).']';
     }
 }

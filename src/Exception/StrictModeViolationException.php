@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace HttpVcr\Exception;
 
 use HttpVcr\Cassette\Interaction;
+use HttpVcr\StrictMode;
 use RuntimeException;
 
 /**
- * The cassette closed without satisfying the {@see \HttpVcr\StrictMode} it was opened
+ * The cassette closed without satisfying the {@see StrictMode} it was opened
  * with (§3.6).
  *
  * Not a matching failure: every request the code made was answered. What failed is the
@@ -18,7 +19,7 @@ use RuntimeException;
 final class StrictModeViolationException extends RuntimeException implements VcrException
 {
     /**
-     * @param array<int, Interaction> $unplayed keyed by position in the cassette, from 0
+     * @param  array<int, Interaction>  $unplayed  keyed by position in the cassette, from 0
      */
     public static function unplayed(string $cassetteLocation, array $unplayed, int $total): self
     {
@@ -53,8 +54,8 @@ final class StrictModeViolationException extends RuntimeException implements Vcr
     ): self {
         return new self(sprintf(
             "StrictMode::InOrder: %s was replayed out of the order it was recorded in.\n"
-            . "  #%d  %s %s  came after\n"
-            . '  #%d  %s %s',
+            ."  #%d  %s %s  came after\n"
+            .'  #%d  %s %s',
             $cassetteLocation,
             $position + 1,
             $interaction->request->method,

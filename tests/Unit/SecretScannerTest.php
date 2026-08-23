@@ -22,7 +22,7 @@ use RuntimeException;
 final class SecretScannerTest extends TestCase
 {
     /**
-     * @param array<string, list<string>> $headers
+     * @param  array<string, list<string>>  $headers
      */
     private static function interaction(
         string $uri = 'https://api.example.com/orders',
@@ -44,7 +44,7 @@ final class SecretScannerTest extends TestCase
     {
         return array_map(
             static fn (SecretFinding $finding): string => $finding->location,
-            (new SecretScanner())->scan($interaction),
+            (new SecretScanner)->scan($interaction),
         );
     }
 
@@ -69,7 +69,7 @@ final class SecretScannerTest extends TestCase
     #[DataProvider('credentialShapedValues')]
     public function testFindsACredentialShapeInAResponseBody(string $secret): void
     {
-        $interaction = self::interaction(response: new RecordedResponse(200, [], 'the key is ' . $secret));
+        $interaction = self::interaction(response: new RecordedResponse(200, [], 'the key is '.$secret));
 
         self::assertSame(['response.body'], self::locations($interaction));
     }
@@ -189,7 +189,7 @@ final class SecretScannerTest extends TestCase
             response: new RecordedResponse(200, [], '{"key":"tk_live_9f8e7d6c5b4a3210FEDCBA"}'),
         );
 
-        self::assertCount(1, (new SecretScanner())->scan($interaction));
+        self::assertCount(1, (new SecretScanner)->scan($interaction));
     }
 
     public function testTheWarningNamesTheCassetteAndShowsOnlyEnoughOfTheValue(): void
@@ -198,8 +198,8 @@ final class SecretScannerTest extends TestCase
 
         self::assertSame(
             "http-vcr: recorded 1 interaction → tests/Cassettes/payments.json\n"
-            . "  response.body carries a credential-shaped value, stored unredacted:\n"
-            . "    \"tk_live_9f8e7d6c…\"\n",
+            ."  response.body carries a credential-shaped value, stored unredacted:\n"
+            ."    \"tk_live_9f8e7d6c…\"\n",
             SecretScanner::warning('tests/Cassettes/payments.json', 1, $findings),
         );
     }

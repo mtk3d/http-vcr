@@ -10,7 +10,7 @@ use HttpVcr\Cassette\RecordedRequest;
  * Compares request bodies byte for byte. Two bodies that differ only in whitespace are
  * different requests here — {@see BodyJsonMatcher} is the one that reads JSON as JSON.
  */
-final class BodyMatcher implements RequestMatcherInterface, ExplainsMismatch
+final class BodyMatcher implements ExplainsMismatch, RequestMatcherInterface
 {
     public function matches(RecordedRequest $recorded, RecordedRequest $incoming): bool
     {

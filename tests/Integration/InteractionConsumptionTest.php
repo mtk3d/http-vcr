@@ -26,7 +26,7 @@ final class InteractionConsumptionTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
 
@@ -45,7 +45,7 @@ final class InteractionConsumptionTest extends TestCase
     {
         $this->recordTwice();
 
-        $vcr = new VcrClient(new FakeHttpClient(), 'retry/poll', persister: $this->persister());
+        $vcr = new VcrClient(new FakeHttpClient, 'retry/poll', persister: $this->persister());
 
         self::assertSame('{"status":"pending"}', (string) $vcr->sendRequest($this->request())->getBody());
         self::assertSame('{"status":"done"}', (string) $vcr->sendRequest($this->request())->getBody());
@@ -55,7 +55,7 @@ final class InteractionConsumptionTest extends TestCase
     {
         $this->recordTwice();
 
-        $vcr = new VcrClient(new FakeHttpClient(), 'retry/poll', persister: $this->persister());
+        $vcr = new VcrClient(new FakeHttpClient, 'retry/poll', persister: $this->persister());
         $vcr->sendRequest($this->request());
         $vcr->sendRequest($this->request());
 
@@ -69,8 +69,8 @@ final class InteractionConsumptionTest extends TestCase
     {
         $this->recordTwice();
 
-        $first = new VcrClient(new FakeHttpClient(), 'retry/poll', persister: $this->persister());
-        $second = new VcrClient(new FakeHttpClient(), 'retry/poll', persister: $this->persister());
+        $first = new VcrClient(new FakeHttpClient, 'retry/poll', persister: $this->persister());
+        $second = new VcrClient(new FakeHttpClient, 'retry/poll', persister: $this->persister());
 
         self::assertSame('{"status":"pending"}', (string) $first->sendRequest($this->request())->getBody());
         self::assertSame('{"status":"pending"}', (string) $second->sendRequest($this->request())->getBody());
@@ -81,7 +81,7 @@ final class InteractionConsumptionTest extends TestCase
         $this->recordTwice();
 
         $vcr = new VcrClient(
-            new FakeHttpClient(),
+            new FakeHttpClient,
             'retry/poll',
             repeatablePlayback: true,
             persister: $this->persister(),
@@ -109,7 +109,7 @@ final class InteractionConsumptionTest extends TestCase
             }
             JSON);
 
-        $vcr = new VcrClient(new FakeHttpClient(), 'retry/poll', persister: $this->persister());
+        $vcr = new VcrClient(new FakeHttpClient, 'retry/poll', persister: $this->persister());
 
         self::assertSame('{"status":"pending"}', (string) $vcr->sendRequest($this->request())->getBody());
         self::assertSame('{"status":"pending"}', (string) $vcr->sendRequest($this->request())->getBody());
@@ -128,7 +128,7 @@ final class InteractionConsumptionTest extends TestCase
 
     public function testUnlessTheCassetteIsRepeatableInWhichCaseOneRecordingServesTheRepeats(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"status":"pending"}');
+        $inner = (new FakeHttpClient)->willRespond('{"status":"pending"}');
 
         $vcr = new VcrClient(
             $inner,
@@ -146,7 +146,7 @@ final class InteractionConsumptionTest extends TestCase
 
     private function recordTwice(): void
     {
-        $inner = (new FakeHttpClient())
+        $inner = (new FakeHttpClient)
             ->willRespond('{"status":"pending"}')
             ->willRespond('{"status":"done"}');
 

@@ -29,9 +29,9 @@ final class QueryStringMatcherTest extends TestCase
     #[DataProvider('equivalentQueries')]
     public function testTreatsTheSameParametersAsAMatchWhateverTheirOrder(string $recorded, string $incoming): void
     {
-        self::assertTrue((new QueryStringMatcher())->matches(
-            new RecordedRequest('GET', 'https://example.com' . $recorded),
-            new RecordedRequest('GET', 'https://example.com' . $incoming),
+        self::assertTrue((new QueryStringMatcher)->matches(
+            new RecordedRequest('GET', 'https://example.com'.$recorded),
+            new RecordedRequest('GET', 'https://example.com'.$incoming),
         ));
     }
 
@@ -54,9 +54,9 @@ final class QueryStringMatcherTest extends TestCase
     #[DataProvider('differentQueries')]
     public function testRejectsDifferentParametersAndNamesTheOffendingOne(string $recorded, string $incoming, string $detail): void
     {
-        $matcher = new QueryStringMatcher();
-        $recordedRequest = new RecordedRequest('GET', 'https://example.com/products' . $recorded);
-        $incomingRequest = new RecordedRequest('GET', 'https://example.com/products' . $incoming);
+        $matcher = new QueryStringMatcher;
+        $recordedRequest = new RecordedRequest('GET', 'https://example.com/products'.$recorded);
+        $incomingRequest = new RecordedRequest('GET', 'https://example.com/products'.$incoming);
 
         self::assertFalse($matcher->matches($recordedRequest, $incomingRequest));
         self::assertSame($detail, $matcher->explainMismatch($recordedRequest, $incomingRequest));

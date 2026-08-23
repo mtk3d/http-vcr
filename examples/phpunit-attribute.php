@@ -22,6 +22,7 @@ declare(strict_types=1);
  * rather than handing back a client with no cassette behind it.
  */
 
+use GuzzleHttp\Psr7\Request;
 use HttpVcr\Bridge\PHPUnit\CassetteDirectory;
 use HttpVcr\Bridge\PHPUnit\InteractsWithCassettes;
 use HttpVcr\Bridge\PHPUnit\UseCassette;
@@ -37,7 +38,7 @@ use PHPUnit\Framework\TestCase;
  *
  * Keep such a base class under `testDirectories`, or the CLI's parser never sees it.
  */
-#[CassetteDirectory(__DIR__ . '/Cassettes')]
+#[CassetteDirectory(__DIR__.'/Cassettes')]
 abstract class BillingTestCase extends TestCase
 {
     use InteractsWithCassettes;
@@ -53,7 +54,7 @@ final class ChargeTest extends BillingTestCase
     public function testItChargesTheCard(): void
     {
         $response = $this->vcrClient()->sendRequest(
-            new GuzzleHttp\Psr7\Request('POST', 'https://api.stripe.com/v1/charges'),
+            new Request('POST', 'https://api.stripe.com/v1/charges'),
         );
 
         $this->assertSame(200, $response->getStatusCode());

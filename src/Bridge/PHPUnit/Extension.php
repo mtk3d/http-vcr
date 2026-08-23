@@ -34,8 +34,8 @@ final class Extension implements PHPUnitExtension
         $warnings = RunWarnings::collect();
 
         $facade->registerSubscribers(
-            new OpensDeclaredCassette(new CassetteFactory()),
-            new ClosesOpenCassette(),
+            new OpensDeclaredCassette(new CassetteFactory),
+            new ClosesOpenCassette,
             new ReportsWhatTheRunFound($warnings),
         );
     }

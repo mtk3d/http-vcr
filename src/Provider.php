@@ -20,18 +20,17 @@ namespace HttpVcr;
 final readonly class Provider
 {
     /**
-     * @param list<string> $hosts       glob patterns matched against the host alone — no
-     *                                  scheme, port or path — case-insensitively:
-     *                                  `*.myshopify.com` covers any subdomain,
-     *                                  `account-a.zendesk.com` only that exact host
-     * @param list<string> $requiresEnv names checked when a request to one of these hosts
-     *                                  is about to be recorded for real
+     * @param  list<string>  $hosts  glob patterns matched against the host alone — no
+     *                               scheme, port or path — case-insensitively:
+     *                               `*.myshopify.com` covers any subdomain,
+     *                               `account-a.zendesk.com` only that exact host
+     * @param  list<string>  $requiresEnv  names checked when a request to one of these hosts
+     *                                     is about to be recorded for real
      */
     public function __construct(
         public array $hosts = [],
         public array $requiresEnv = [],
-    ) {
-    }
+    ) {}
 
     public function covers(string $host): bool
     {
@@ -61,6 +60,6 @@ final readonly class Provider
      */
     private static function expression(string $pattern): string
     {
-        return '/^' . str_replace('\*', '.*', preg_quote($pattern, '/')) . '$/i';
+        return '/^'.str_replace('\*', '.*', preg_quote($pattern, '/')).'$/i';
     }
 }

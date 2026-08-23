@@ -15,9 +15,7 @@ use Psr\Clock\ClockInterface;
  */
 final class FrozenClock implements ClockInterface
 {
-    public function __construct(private DateTimeImmutable $now)
-    {
-    }
+    public function __construct(private DateTimeImmutable $now) {}
 
     public static function at(string $time): self
     {

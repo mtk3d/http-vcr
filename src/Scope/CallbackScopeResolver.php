@@ -17,7 +17,7 @@ final class CallbackScopeResolver implements CassetteScopeResolverInterface
     private readonly Closure $resolve;
 
     /**
-     * @param callable(RequestInterface): ?string $resolve null for a request that isn't scoped
+     * @param  callable(RequestInterface): ?string  $resolve  null for a request that isn't scoped
      */
     public function __construct(callable $resolve)
     {

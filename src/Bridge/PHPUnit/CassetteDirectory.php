@@ -21,7 +21,5 @@ use Attribute;
 #[Attribute(Attribute::TARGET_CLASS)]
 final readonly class CassetteDirectory
 {
-    public function __construct(public string $path)
-    {
-    }
+    public function __construct(public string $path) {}
 }

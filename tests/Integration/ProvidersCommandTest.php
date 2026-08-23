@@ -32,7 +32,7 @@ final class ProvidersCommandTest extends TestCase
     {
         Config::reset();
 
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI', 'SHOPIFY_API_KEY');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
@@ -119,7 +119,7 @@ final class ProvidersCommandTest extends TestCase
     }
 
     /**
-     * @param array<string, Provider> $providers
+     * @param  array<string, Provider>  $providers
      */
     private function configure(array $providers): void
     {
@@ -127,11 +127,11 @@ final class ProvidersCommandTest extends TestCase
     }
 
     /**
-     * @param list<string> $urls
+     * @param  list<string>  $urls
      */
     private function record(string $cassette, array $urls): void
     {
-        $inner = new FakeHttpClient();
+        $inner = new FakeHttpClient;
 
         foreach ($urls as $url) {
             $inner->willRespond('{}');
@@ -148,7 +148,7 @@ final class ProvidersCommandTest extends TestCase
 
     private function execute(): CommandTester
     {
-        $tester = new CommandTester((new Application())->find('providers'));
+        $tester = new CommandTester((new Application)->find('providers'));
         $tester->execute([]);
 
         return $tester;

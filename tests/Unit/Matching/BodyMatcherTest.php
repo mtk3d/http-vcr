@@ -19,7 +19,7 @@ final class BodyMatcherTest extends TestCase
 
     public function testMatchesAnIdenticalBody(): void
     {
-        $matcher = new BodyMatcher();
+        $matcher = new BodyMatcher;
 
         self::assertTrue($matcher->matches(self::request('{"a":1}'), self::request('{"a":1}')));
         self::assertNull($matcher->explainMismatch(self::request('{"a":1}'), self::request('{"a":1}')));
@@ -31,22 +31,22 @@ final class BodyMatcherTest extends TestCase
      */
     public function testRejectsABodyThatDiffersOnlyInFormatting(): void
     {
-        self::assertFalse((new BodyMatcher())->matches(self::request('{"a":1}'), self::request('{ "a": 1 }')));
+        self::assertFalse((new BodyMatcher)->matches(self::request('{"a":1}'), self::request('{ "a": 1 }')));
     }
 
     public function testShowsBothBodiesWhenTheyDiffer(): void
     {
         self::assertSame(
             'expected "{"a":1}", got "{"a":2}"',
-            (new BodyMatcher())->explainMismatch(self::request('{"a":1}'), self::request('{"a":2}')),
+            (new BodyMatcher)->explainMismatch(self::request('{"a":1}'), self::request('{"a":2}')),
         );
     }
 
     public function testTruncatesALongBodyInTheMessage(): void
     {
         self::assertSame(
-            'expected "' . str_repeat('a', 60) . '…", got "b"',
-            (new BodyMatcher())->explainMismatch(self::request(str_repeat('a', 200)), self::request('b')),
+            'expected "'.str_repeat('a', 60).'…", got "b"',
+            (new BodyMatcher)->explainMismatch(self::request(str_repeat('a', 200)), self::request('b')),
         );
     }
 
@@ -54,7 +54,7 @@ final class BodyMatcherTest extends TestCase
     {
         self::assertSame(
             'binary body: expected 4 bytes, got 3',
-            (new BodyMatcher())->explainMismatch(
+            (new BodyMatcher)->explainMismatch(
                 self::request("\x00\x01\x02\x03", 'base64'),
                 self::request("\x00\x01\x02", 'base64'),
             ),
@@ -63,7 +63,7 @@ final class BodyMatcherTest extends TestCase
 
     public function testMatchesAnIdenticalBinaryBody(): void
     {
-        self::assertTrue((new BodyMatcher())->matches(
+        self::assertTrue((new BodyMatcher)->matches(
             self::request("\x00\x01", 'base64'),
             self::request("\x00\x01", 'base64'),
         ));

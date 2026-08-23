@@ -30,7 +30,7 @@ final class SymfonyHttpClientTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
@@ -51,7 +51,7 @@ final class SymfonyHttpClientTest extends TestCase
 
     public function testRecordsACallMadeThroughSymfonysOwnSignature(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"title":"T-Shirt"}');
+        $inner = (new FakeHttpClient)->willRespond('{"title":"T-Shirt"}');
         $client = new VcrHttpClient($this->vcr($inner));
 
         $response = $client->request('GET', 'https://shop.example.com/products/1.json');
@@ -78,7 +78,7 @@ final class SymfonyHttpClientTest extends TestCase
 
     public function testAnErrorStatusBehavesTheWayASymfonyResponseDoes(): void
     {
-        $inner = (new FakeHttpClient())->willRespond(new Response(404, [], '{"error":"gone"}'));
+        $inner = (new FakeHttpClient)->willRespond(new Response(404, [], '{"error":"gone"}'));
         $client = new VcrHttpClient($this->vcr($inner));
 
         $response = $client->request('GET', 'https://shop.example.com/products/9.json');
@@ -92,7 +92,7 @@ final class SymfonyHttpClientTest extends TestCase
 
     public function testTheOptionsSymfonyExpandsReachTheCassetteExpanded(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"ok":true}');
+        $inner = (new FakeHttpClient)->willRespond('{"ok":true}');
         $client = new VcrHttpClient($this->vcr($inner));
 
         $client->request('POST', 'https://shop.example.com/products', [
@@ -114,7 +114,7 @@ final class SymfonyHttpClientTest extends TestCase
 
     public function testWithOptionsMergesDefaultsIntoANewInstance(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"ok":true}');
+        $inner = (new FakeHttpClient)->willRespond('{"ok":true}');
         $client = new VcrHttpClient($this->vcr($inner));
 
         $configured = $client->withOptions([
@@ -150,7 +150,7 @@ final class SymfonyHttpClientTest extends TestCase
 
     private function record(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"title":"T-Shirt"}');
+        $inner = (new FakeHttpClient)->willRespond('{"title":"T-Shirt"}');
 
         (new VcrHttpClient($this->vcr($inner)))->request('GET', 'https://shop.example.com/products/1.json');
     }

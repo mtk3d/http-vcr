@@ -83,7 +83,7 @@ final class VcrHttpClient implements HttpClientInterface
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param  array<string, mixed>  $options
      */
     public function request(string $method, string $url, array $options = []): ResponseInterface
     {
@@ -105,7 +105,7 @@ final class VcrHttpClient implements HttpClientInterface
     }
 
     /**
-     * @param ResponseInterface|iterable<array-key, ResponseInterface> $responses
+     * @param  ResponseInterface|iterable<array-key, ResponseInterface>  $responses
      */
     public function stream(iterable|ResponseInterface $responses, ?float $timeout = null): ResponseStreamInterface
     {
@@ -113,7 +113,7 @@ final class VcrHttpClient implements HttpClientInterface
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param  array<string, mixed>  $options
      */
     private function psrRequest(string $method, string $url, array $options): RequestInterface
     {
@@ -157,7 +157,7 @@ final class VcrHttpClient implements HttpClientInterface
             return (string) stream_get_contents($body);
         }
 
-        if (!$body instanceof Closure) {
+        if (! $body instanceof Closure) {
             return '';
         }
 

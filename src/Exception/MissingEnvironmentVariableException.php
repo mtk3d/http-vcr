@@ -15,8 +15,8 @@ use RuntimeException;
 final class MissingEnvironmentVariableException extends RuntimeException implements VcrException
 {
     /**
-     * @param list<array{names: list<string>, source: string}> $missing what is missing, and
-     *                                                                 which declaration asked for it
+     * @param  list<array{names: list<string>, source: string}>  $missing  what is missing, and
+     *                                                                     which declaration asked for it
      */
     public static function beforeRecording(string $cassette, array $missing): self
     {

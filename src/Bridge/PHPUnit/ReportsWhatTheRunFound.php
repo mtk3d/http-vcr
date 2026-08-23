@@ -19,9 +19,7 @@ use PHPUnit\Event\TestRunner\ExecutionFinishedSubscriber;
  */
 final class ReportsWhatTheRunFound implements ExecutionFinishedSubscriber
 {
-    public function __construct(private readonly RunWarnings $warnings)
-    {
-    }
+    public function __construct(private readonly RunWarnings $warnings) {}
 
     public function notify(ExecutionFinished $event): void
     {

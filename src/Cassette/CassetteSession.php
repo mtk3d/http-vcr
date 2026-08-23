@@ -53,9 +53,9 @@ final class CassetteSession
         private readonly bool $repeatablePlayback = false,
         private readonly bool $locked = false,
         private readonly int $inlineBodyLimit = 1_048_576,
-        private readonly CassetteScopeResolverInterface $scopes = new NullScopeResolver(),
-        public readonly HookRegistry $hooks = new HookRegistry(),
-        public readonly RedactionHooks $redaction = new RedactionHooks(),
+        private readonly CassetteScopeResolverInterface $scopes = new NullScopeResolver,
+        public readonly HookRegistry $hooks = new HookRegistry,
+        public readonly RedactionHooks $redaction = new RedactionHooks,
         private readonly ?SecretScanner $scanner = null,
         private readonly ?Closure $warn = null,
     ) {

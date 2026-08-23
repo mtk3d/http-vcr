@@ -25,7 +25,7 @@ final class CompositeMatcher implements RequestMatcherInterface
     }
 
     /**
-     * @param list<RequestMatcherInterface> $matchers
+     * @param  list<RequestMatcherInterface>  $matchers
      */
     public static function of(array $matchers): self
     {

@@ -28,7 +28,7 @@ final class StreamHandlingTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
     }
@@ -42,7 +42,7 @@ final class StreamHandlingTest extends TestCase
 
     public function testARequestBodyThatCannotBeRewoundStillReachesTheRealClient(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"ok":true}');
+        $inner = (new FakeHttpClient)->willRespond('{"ok":true}');
         $request = (new Request('POST', 'https://api.example.com/upload'))
             ->withBody(new UnrewindableStream('{"amount":100}'));
 
@@ -55,7 +55,7 @@ final class StreamHandlingTest extends TestCase
     public function testAResponseBodyThatCannotBeRewoundIsStillReadableByTheCodeUnderTest(): void
     {
         $streamed = (new Response(200))->withBody(new UnrewindableStream('{"title":"T-Shirt"}'));
-        $inner = (new FakeHttpClient())->willRespond($streamed);
+        $inner = (new FakeHttpClient)->willRespond($streamed);
 
         $response = $this->client($inner)->sendRequest(new Request('GET', 'https://api.example.com/upload'));
 
@@ -65,7 +65,7 @@ final class StreamHandlingTest extends TestCase
 
     public function testASeekableBodyIsHandedBackAsTheSameStreamRewound(): void
     {
-        $inner = (new FakeHttpClient())->willRespond('{"ok":true}');
+        $inner = (new FakeHttpClient)->willRespond('{"ok":true}');
         $request = new Request('POST', 'https://api.example.com/upload', [], '{"amount":100}');
         $body = $request->getBody();
 

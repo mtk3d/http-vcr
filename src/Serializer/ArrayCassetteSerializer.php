@@ -31,7 +31,7 @@ use Throwable;
 abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
 {
     /**
-     * @param array{schemaVersion: int, interactions: list<array<string, mixed>>} $data
+     * @param  array{schemaVersion: int, interactions: list<array<string, mixed>>}  $data
      */
     abstract protected function encode(array $data): string;
 
@@ -85,7 +85,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
 
         $schemaVersion = $data['schemaVersion'] ?? null;
 
-        if (!is_int($schemaVersion)) {
+        if (! is_int($schemaVersion)) {
             throw CassetteFormatException::malformed('has no schemaVersion');
         }
 
@@ -95,7 +95,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
 
         $interactions = $data['interactions'] ?? [];
 
-        if (!is_array($interactions) || !array_is_list($interactions)) {
+        if (! is_array($interactions) || ! array_is_list($interactions)) {
             throw CassetteFormatException::malformed('has no list of interactions');
         }
 
@@ -110,7 +110,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
 
     private function interaction(mixed $data, int $position, ?SidecarBodies $bodies): Interaction
     {
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw CassetteFormatException::malformed(sprintf('has a malformed interaction #%d', $position));
         }
 
@@ -170,8 +170,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
     }
 
     /**
-     * @param array<mixed> $data
-     *
+     * @param  array<mixed>  $data
      * @return array{string, string|null}
      */
     private function storedBody(array $data, int $position, ?SidecarBodies $bodies): array
@@ -188,7 +187,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
 
             $sha256 = $data['bodySha256'] ?? null;
 
-            if (!is_string($sha256)) {
+            if (! is_string($sha256)) {
                 throw CassetteFormatException::malformed(sprintf(
                     'has a bodyRef without a bodySha256 in interaction #%d',
                     $position,
@@ -227,7 +226,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
 
     private function error(mixed $data, int $position): RecordedError
     {
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw CassetteFormatException::malformed(sprintf('has a malformed interaction #%d', $position));
         }
 
@@ -236,7 +235,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
         if ($category === null) {
             throw CassetteFormatException::malformed(sprintf(
                 'has an interaction #%d recording a failure without a known errorCategory '
-                . '("network" or "request")',
+                .'("network" or "request")',
                 $position,
             ));
         }
@@ -250,7 +249,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
 
     private function request(mixed $data, int $position, ?SidecarBodies $bodies): RecordedRequest
     {
-        if (!is_array($data) || !is_string($data['method'] ?? null) || !is_string($data['uri'] ?? null)) {
+        if (! is_array($data) || ! is_string($data['method'] ?? null) || ! is_string($data['uri'] ?? null)) {
             throw CassetteFormatException::malformed(sprintf(
                 'has an interaction #%d without a readable request',
                 $position,
@@ -270,7 +269,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
 
     private function response(mixed $data, int $position, ?SidecarBodies $bodies): RecordedResponse
     {
-        if (!is_array($data) || !is_int($data['status'] ?? null)) {
+        if (! is_array($data) || ! is_int($data['status'] ?? null)) {
             throw CassetteFormatException::malformed(sprintf(
                 'has an interaction #%d without a readable response',
                 $position,
@@ -292,7 +291,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
      */
     private function headers(mixed $data, int $position): array
     {
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw CassetteFormatException::malformed(sprintf('has unreadable headers in interaction #%d', $position));
         }
 
@@ -302,7 +301,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
             $values = is_array($values) ? array_values($values) : [$values];
 
             foreach ($values as $value) {
-                if (!is_string($value)) {
+                if (! is_string($value)) {
                     throw CassetteFormatException::malformed(sprintf(
                         'has a non-string value for header "%s" in interaction #%d',
                         (string) $name,
@@ -320,7 +319,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
 
     private function body(mixed $data, int $position): string
     {
-        if (!is_string($data)) {
+        if (! is_string($data)) {
             throw CassetteFormatException::malformed(sprintf('has an unreadable body in interaction #%d', $position));
         }
 
@@ -329,7 +328,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
 
     private function recordedAt(mixed $data, int $position): DateTimeImmutable
     {
-        if (!is_string($data)) {
+        if (! is_string($data)) {
             throw CassetteFormatException::malformed(sprintf('has no recordedAt in interaction #%d', $position));
         }
 
@@ -346,7 +345,7 @@ abstract class ArrayCassetteSerializer implements CassetteSerializerInterface
 
     private function bool(mixed $data, string $field, int $position): bool
     {
-        if (!is_bool($data)) {
+        if (! is_bool($data)) {
             throw CassetteFormatException::malformed(sprintf(
                 'has a non-boolean "%s" in interaction #%d',
                 $field,

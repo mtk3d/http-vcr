@@ -59,19 +59,18 @@ final class Psr17FactoryResolver
     private array $resolved = [];
 
     /**
-     * @param array<class-string, object|null>   $explicit   factories supplied by the caller
-     * @param array<class-string, list<string>>|null $candidates the closed detection list;
-     *                                                                overridable only so the
-     *                                                                "nothing installed" branch
-     *                                                                can be tested
+     * @param  array<class-string, object|null>  $explicit  factories supplied by the caller
+     * @param  array<class-string, list<string>>|null  $candidates  the closed detection list;
+     *                                                              overridable only so the
+     *                                                              "nothing installed" branch
+     *                                                              can be tested
      *
      * @internal the $candidates parameter
      */
     public function __construct(
         private readonly array $explicit = [],
         private readonly ?array $candidates = null,
-    ) {
-    }
+    ) {}
 
     public function responseFactory(): ResponseFactoryInterface
     {
@@ -103,8 +102,7 @@ final class Psr17FactoryResolver
      *
      * @template T of object
      *
-     * @param class-string<T> $interface
-     *
+     * @param  class-string<T>  $interface
      * @return T
      *
      * @throws MissingDependencyException
@@ -120,11 +118,11 @@ final class Psr17FactoryResolver
         $candidates = ($this->candidates ?? self::PROVIDERS)[$interface] ?? [];
 
         foreach ($candidates as $candidate) {
-            if (!class_exists($candidate)) {
+            if (! class_exists($candidate)) {
                 continue;
             }
 
-            $factory = new $candidate();
+            $factory = new $candidate;
 
             if ($factory instanceof $interface) {
                 return $this->resolved[$interface] = $factory;

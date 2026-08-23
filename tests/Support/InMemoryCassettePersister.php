@@ -61,7 +61,7 @@ final class InMemoryCassettePersister implements CassettePersisterInterface, Sup
     public function list(string $extension, string $prefix = ''): iterable
     {
         foreach (array_keys($this->entries) as $key) {
-            if (str_ends_with($key, '.' . $extension) && str_starts_with($key, $prefix)) {
+            if (str_ends_with($key, '.'.$extension) && str_starts_with($key, $prefix)) {
                 yield substr($key, 0, -strlen($extension) - 1);
             }
         }
@@ -69,7 +69,7 @@ final class InMemoryCassettePersister implements CassettePersisterInterface, Sup
 
     public function describe(string $key): string
     {
-        return 'memory:' . $key;
+        return 'memory:'.$key;
     }
 
     public function lock(string $key): void

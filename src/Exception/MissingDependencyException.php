@@ -16,14 +16,14 @@ use RuntimeException;
 final class MissingDependencyException extends RuntimeException implements VcrException
 {
     /**
-     * @param class-string $interface
-     * @param list<string> $candidates the implementations that were looked for
+     * @param  class-string  $interface
+     * @param  list<string>  $candidates  the implementations that were looked for
      */
     public static function noImplementationOf(string $interface, array $candidates): self
     {
         return new self(sprintf(
             'No implementation of %s found. Install one (composer require --dev nyholm/psr7) '
-            . "or pass your own to VcrClient.\nLooked for: %s.",
+            ."or pass your own to VcrClient.\nLooked for: %s.",
             $interface,
             implode(', ', $candidates),
         ));
@@ -33,18 +33,18 @@ final class MissingDependencyException extends RuntimeException implements VcrEx
     {
         return new self(
             'The YAML cassette serializer needs symfony/yaml (composer require --dev symfony/yaml). '
-            . 'The default JsonCassetteSerializer needs nothing installed.',
+            .'The default JsonCassetteSerializer needs nothing installed.',
         );
     }
 
     /**
-     * @param list<string> $candidates the clients that were looked for
+     * @param  list<string>  $candidates  the clients that were looked for
      */
     public static function noHttpClient(array $candidates): self
     {
         return new self(sprintf(
             'No HTTP client found to record through. Install one (composer require --dev guzzlehttp/guzzle) '
-            . "or configure innerClientFactory in http-vcr.php.\nLooked for: %s.",
+            ."or configure innerClientFactory in http-vcr.php.\nLooked for: %s.",
             implode(', ', $candidates),
         ));
     }

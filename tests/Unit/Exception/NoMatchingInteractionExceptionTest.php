@@ -76,7 +76,7 @@ final class NoMatchingInteractionExceptionTest extends TestCase
         self::assertInstanceOf(VcrException::class, $exception);
         self::assertSame(
             'No cassette at tests/Cassettes/shopify/get-product.json to replay '
-            . 'GET https://shop.example.com/products/123.json from.',
+            .'GET https://shop.example.com/products/123.json from.',
             $exception->getMessage(),
         );
     }

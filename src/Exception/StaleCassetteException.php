@@ -21,7 +21,7 @@ use RuntimeException;
 final class StaleCassetteException extends RuntimeException implements VcrException
 {
     /**
-     * @param array<int, Interaction> $stale keyed by position in the cassette, from 0
+     * @param  array<int, Interaction>  $stale  keyed by position in the cassette, from 0
      */
     public static function past(
         string $cassetteName,
@@ -45,9 +45,9 @@ final class StaleCassetteException extends RuntimeException implements VcrExcept
 
         return new self(sprintf(
             '%d interaction%s in %s %s past the staleAfter threshold, and VCR_ENFORCE_STALE_CHECK '
-            . "makes that an error:\n%s\n"
-            . 'Re-record with VCR_ERASE_TAPE=%s, or let this one run through with '
-            . 'VCR_IGNORE_STALE_CASSETTES=1.',
+            ."makes that an error:\n%s\n"
+            .'Re-record with VCR_ERASE_TAPE=%s, or let this one run through with '
+            .'VCR_IGNORE_STALE_CASSETTES=1.',
             count($lines),
             count($lines) === 1 ? '' : 's',
             $cassetteLocation,

@@ -31,12 +31,12 @@ trait InteractsWithCassettes
         if ($client === null) {
             throw new LogicException(
                 'No cassette is open for this test. Either the test has no #[UseCassette] attribute, or '
-                . "the extension is not registered — PHPUnit has no auto-discovery for extensions, so\n\n"
-                . "    <extensions>\n"
-                . "        <bootstrap class=\"HttpVcr\\Bridge\\PHPUnit\\Extension\"/>\n"
-                . "    </extensions>\n\n"
-                . 'has to be in phpunit.xml. Without it the attribute is decoration and the test makes '
-                . 'real requests.',
+                ."the extension is not registered — PHPUnit has no auto-discovery for extensions, so\n\n"
+                ."    <extensions>\n"
+                ."        <bootstrap class=\"HttpVcr\\Bridge\\PHPUnit\\Extension\"/>\n"
+                ."    </extensions>\n\n"
+                .'has to be in phpunit.xml. Without it the attribute is decoration and the test makes '
+                .'real requests.',
             );
         }
 
@@ -50,9 +50,8 @@ trait InteractsWithCassettes
      *
      * @template T
      *
-     * @param callable(VcrClient): T $body
-     * @param list<string>           $requiresEnv
-     *
+     * @param  callable(VcrClient): T  $body
+     * @param  list<string>  $requiresEnv
      * @return T
      */
     protected function useCassette(
@@ -66,7 +65,7 @@ trait InteractsWithCassettes
     ): mixed {
         $previous = CurrentCassetteSession::client();
 
-        $client = (new CassetteFactory())->open(
+        $client = (new CassetteFactory)->open(
             new UseCassette($name, $mode, $strictMode, $staleAfter, $requiresEnv, $locked),
             $this->cassetteDirectory(),
         );
@@ -102,6 +101,6 @@ trait InteractsWithCassettes
 
     private function cassetteDirectory(): ?string
     {
-        return (new CassetteFactory())->directoryFor(static::class);
+        return (new CassetteFactory)->directoryFor(static::class);
     }
 }

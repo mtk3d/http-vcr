@@ -12,8 +12,7 @@ final readonly class Mismatch
     public function __construct(
         public string $matcher,
         public ?string $detail = null,
-    ) {
-    }
+    ) {}
 
     public static function from(RequestMatcherInterface $matcher, ?string $detail = null): self
     {
@@ -30,6 +29,6 @@ final readonly class Mismatch
 
     public function describe(): string
     {
-        return $this->detail === null ? $this->matcher : $this->matcher . ': ' . $this->detail;
+        return $this->detail === null ? $this->matcher : $this->matcher.': '.$this->detail;
     }
 }

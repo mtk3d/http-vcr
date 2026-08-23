@@ -36,7 +36,7 @@ final class ConfigTest extends TestCase
     public function testCassettesDefaultToTestsCassettesUnderTheProjectRoot(): void
     {
         self::assertStringEndsWith('/tests/Cassettes', Config::create()->cassetteDirectory());
-        self::assertFileExists(dirname(Config::create()->cassetteDirectory(), 2) . '/composer.json');
+        self::assertFileExists(dirname(Config::create()->cassetteDirectory(), 2).'/composer.json');
     }
 
     public function testTheDefaultsAreJsonOnTheFilesystemMatchedOnMethodUriAndQueryString(): void
@@ -46,7 +46,7 @@ final class ConfigTest extends TestCase
         self::assertInstanceOf(JsonCassetteSerializer::class, $config->serializer());
         self::assertInstanceOf(FilesystemCassettePersister::class, $config->persister());
         self::assertEquals(
-            [new MethodMatcher(), new UriMatcher(), new QueryStringMatcher()],
+            [new MethodMatcher, new UriMatcher, new QueryStringMatcher],
             $config->defaultMatchers(),
         );
     }
@@ -54,18 +54,18 @@ final class ConfigTest extends TestCase
     public function testConfiguringReplacesTheDefaultsForEveryClientTheProcessBuilds(): void
     {
         $clock = FrozenClock::at('2026-08-21T10:00:00+00:00');
-        $persister = new InMemoryCassettePersister();
+        $persister = new InMemoryCassettePersister;
 
-        VcrClient::configure(persister: $persister, clock: $clock, defaultMatchers: [new MethodMatcher()]);
+        VcrClient::configure(persister: $persister, clock: $clock, defaultMatchers: [new MethodMatcher]);
 
         self::assertSame($persister, Config::global()->persister());
         self::assertSame($clock, Config::global()->clock());
-        self::assertEquals([new MethodMatcher()], Config::global()->defaultMatchers());
+        self::assertEquals([new MethodMatcher], Config::global()->defaultMatchers());
     }
 
     public function testCarriesAllFourPsr17FactoriesIncludingTheTwoOnlyTheSymfonyBridgeUses(): void
     {
-        $factory = new Psr17Factory();
+        $factory = new Psr17Factory;
 
         $config = Config::create(
             responseFactory: $factory,
@@ -108,7 +108,7 @@ final class ConfigTest extends TestCase
 
     public function testTestDirectoriesDefaultToTestsUnderTheProjectRoot(): void
     {
-        self::assertSame([dirname(Config::create()->cassetteDirectory(), 2) . '/tests'], Config::create()->testDirectories());
+        self::assertSame([dirname(Config::create()->cassetteDirectory(), 2).'/tests'], Config::create()->testDirectories());
         self::assertSame(['/modules/billing/tests'], Config::create(testDirectories: ['/modules/billing/tests'])->testDirectories());
     }
 
@@ -119,7 +119,7 @@ final class ConfigTest extends TestCase
 
     public function testAConfiguredFactoryDecidesWhatRecordingGoesThrough(): void
     {
-        $client = new FakeHttpClient();
+        $client = new FakeHttpClient;
 
         $config = Config::create(innerClientFactory: static fn (): ClientInterface => $client);
 
@@ -128,11 +128,11 @@ final class ConfigTest extends TestCase
 
     public function testConfiguringAfterTheFirstClientExistsThrowsRatherThanQuietlyChangingDefaults(): void
     {
-        new VcrClient(null, 'session', persister: new InMemoryCassettePersister());
+        new VcrClient(null, 'session', persister: new InMemoryCassettePersister);
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('before the first VcrClient is constructed');
 
-        VcrClient::configure(persister: new InMemoryCassettePersister());
+        VcrClient::configure(persister: new InMemoryCassettePersister);
     }
 }

@@ -30,7 +30,7 @@ final class RequiredEnvironmentTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment(
             'VCR_ALLOW_RECORDING',
@@ -55,7 +55,7 @@ final class RequiredEnvironmentTest extends TestCase
     {
         $this->declareShopify();
 
-        $inner = (new FakeHttpClient())->willRespond('{"title":"T-Shirt"}');
+        $inner = (new FakeHttpClient)->willRespond('{"title":"T-Shirt"}');
         $vcr = new VcrClient($inner, 'shopify/get-product', persister: $this->cassettes->persister());
 
         try {
@@ -64,7 +64,7 @@ final class RequiredEnvironmentTest extends TestCase
         } catch (MissingEnvironmentVariableException $exception) {
             self::assertSame(
                 'Cannot record cassette "shopify/get-product": missing env var SHOPIFY_API_KEY '
-                . '(required by provider "shopify").',
+                .'(required by provider "shopify").',
                 $exception->getMessage(),
             );
         }
@@ -78,7 +78,7 @@ final class RequiredEnvironmentTest extends TestCase
         $this->declareShopify();
         $_ENV['SHOPIFY_API_KEY'] = 'shpat_secret';
 
-        $inner = (new FakeHttpClient())->willRespond('{"title":"T-Shirt"}');
+        $inner = (new FakeHttpClient)->willRespond('{"title":"T-Shirt"}');
         $vcr = new VcrClient($inner, 'shopify/get-product', persister: $this->cassettes->persister());
 
         $vcr->sendRequest(new Request('GET', 'https://shop.myshopify.com/products/1.json'));
@@ -91,7 +91,7 @@ final class RequiredEnvironmentTest extends TestCase
         $this->declareShopify();
         $_ENV['SHOPIFY_API_KEY'] = 'shpat_secret';
 
-        $inner = (new FakeHttpClient())->willRespond('{"order":"new"}');
+        $inner = (new FakeHttpClient)->willRespond('{"order":"new"}');
         $vcr = new VcrClient($inner, 'sync/order-flow', persister: $this->cassettes->persister());
 
         // Zendesk has a key requirement of its own and nothing is set for it — but nothing
@@ -106,7 +106,7 @@ final class RequiredEnvironmentTest extends TestCase
         $this->declareShopify();
         $_ENV['SHOPIFY_API_KEY'] = 'shpat_secret';
 
-        $inner = (new FakeHttpClient())->willRespond('{"title":"T-Shirt"}');
+        $inner = (new FakeHttpClient)->willRespond('{"title":"T-Shirt"}');
         $request = new Request('GET', 'https://shop.myshopify.com/products/1.json');
 
         (new VcrClient($inner, 'shopify/get-product', persister: $this->cassettes->persister()))
@@ -123,7 +123,7 @@ final class RequiredEnvironmentTest extends TestCase
     public function testACassetteCanRequireAVariableOfItsOwnWithNoProviderInvolved(): void
     {
         $vcr = new VcrClient(
-            new FakeHttpClient(),
+            new FakeHttpClient,
             'billing/charge',
             requiresEnv: ['TENANT_ID'],
             persister: $this->cassettes->persister(),
@@ -142,7 +142,7 @@ final class RequiredEnvironmentTest extends TestCase
         $this->declareShopify();
 
         $vcr = new VcrClient(
-            new FakeHttpClient(),
+            new FakeHttpClient,
             'shopify/get-product',
             requiresEnv: ['TENANT_ID'],
             persister: $this->cassettes->persister(),
@@ -151,7 +151,7 @@ final class RequiredEnvironmentTest extends TestCase
         $this->expectException(MissingEnvironmentVariableException::class);
         $this->expectExceptionMessage(
             'missing env var SHOPIFY_API_KEY (required by provider "shopify"), '
-            . 'missing env var TENANT_ID (required by the cassette).',
+            .'missing env var TENANT_ID (required by the cassette).',
         );
 
         $vcr->sendRequest(new Request('GET', 'https://shop.myshopify.com/products/1.json'));

@@ -16,7 +16,7 @@ final class CassetteDirectory
 
     public function __construct()
     {
-        $this->path = sys_get_temp_dir() . '/http-vcr-' . bin2hex(random_bytes(6));
+        $this->path = sys_get_temp_dir().'/http-vcr-'.bin2hex(random_bytes(6));
     }
 
     public function persister(): FilesystemCassettePersister
@@ -26,9 +26,9 @@ final class CassetteDirectory
 
     public function write(string $name, string $content): void
     {
-        $path = $this->path . '/' . $name;
+        $path = $this->path.'/'.$name;
 
-        if (!is_dir(dirname($path))) {
+        if (! is_dir(dirname($path))) {
             mkdir(dirname($path), 0o777, true);
         }
 
@@ -37,7 +37,7 @@ final class CassetteDirectory
 
     public function read(string $name): string
     {
-        return (string) file_get_contents($this->path . '/' . $name);
+        return (string) file_get_contents($this->path.'/'.$name);
     }
 
     public function cassette(string $name): CassetteFile
@@ -47,7 +47,7 @@ final class CassetteDirectory
 
     public function has(string $name): bool
     {
-        return is_file($this->path . '/' . $name);
+        return is_file($this->path.'/'.$name);
     }
 
     public function remove(): void
@@ -57,7 +57,7 @@ final class CassetteDirectory
 
     private function removeDirectory(string $directory): void
     {
-        if (!is_dir($directory)) {
+        if (! is_dir($directory)) {
             return;
         }
 
@@ -66,7 +66,7 @@ final class CassetteDirectory
                 continue;
             }
 
-            $path = $directory . '/' . $entry;
+            $path = $directory.'/'.$entry;
             is_dir($path) ? $this->removeDirectory($path) : unlink($path);
         }
 

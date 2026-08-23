@@ -20,10 +20,10 @@ final class Excerpt
      */
     public static function of(string $value): string
     {
-        if (preg_match('/^.{0,' . self::LENGTH . '}/us', $value, $match) === 1) {
-            return $match[0] === $value ? $value : $match[0] . '…';
+        if (preg_match('/^.{0,'.self::LENGTH.'}/us', $value, $match) === 1) {
+            return $match[0] === $value ? $value : $match[0].'…';
         }
 
-        return strlen($value) > self::LENGTH ? substr($value, 0, self::LENGTH) . '…' : $value;
+        return strlen($value) > self::LENGTH ? substr($value, 0, self::LENGTH).'…' : $value;
     }
 }

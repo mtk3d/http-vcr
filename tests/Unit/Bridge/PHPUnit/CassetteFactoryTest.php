@@ -27,7 +27,7 @@ final class CassetteFactoryTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->factory = new CassetteFactory();
+        $this->factory = new CassetteFactory;
     }
 
     protected function tearDown(): void
@@ -85,12 +85,12 @@ final class CassetteFactoryTest extends TestCase
 
     public function testARunWithNothingToSayHasNoSummaryToPrint(): void
     {
-        self::assertNull((new RunWarnings())->summary());
+        self::assertNull((new RunWarnings)->summary());
     }
 
     public function testWhatTheCassettesReportedComesOutAsOneBlock(): void
     {
-        $warnings = new RunWarnings();
+        $warnings = new RunWarnings;
 
         $warnings->report("http-vcr: tests/Cassettes/payments.json\n  a credential-shaped value\n");
         $warnings->report("http-vcr: tests/Cassettes/checkout.json\n  cassette fully locked\n");
@@ -108,27 +108,17 @@ final class CassetteFactoryTest extends TestCase
 final class AttributedTest
 {
     #[UseCassette('bridge/own', RecordMode::PlaybackOnly)]
-    public function ownCassette(): void
-    {
-    }
+    public function ownCassette(): void {}
 
-    public function inheritsFromTheClass(): void
-    {
-    }
+    public function inheritsFromTheClass(): void {}
 }
 
 #[CassetteDirectory('/modules/billing/tests/Cassettes')]
-abstract class ModuleTestCase
-{
-}
+abstract class ModuleTestCase {}
 
-final class InheritsTheDirectory extends ModuleTestCase
-{
-}
+final class InheritsTheDirectory extends ModuleTestCase {}
 
 final class PlainTest
 {
-    public function notDeclaringAnything(): void
-    {
-    }
+    public function notDeclaringAnything(): void {}
 }

@@ -17,13 +17,12 @@ final readonly class Cassette
     public const CURRENT_SCHEMA_VERSION = 1;
 
     /**
-     * @param list<Interaction> $interactions
+     * @param  list<Interaction>  $interactions
      */
     public function __construct(
         public array $interactions = [],
         public int $schemaVersion = self::CURRENT_SCHEMA_VERSION,
-    ) {
-    }
+    ) {}
 
     public function withInteraction(Interaction $interaction): self
     {
@@ -31,7 +30,7 @@ final readonly class Cassette
     }
 
     /**
-     * @param list<Interaction> $interactions
+     * @param  list<Interaction>  $interactions
      */
     public function withInteractions(array $interactions): self
     {

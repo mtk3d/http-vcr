@@ -38,7 +38,7 @@ final class PHPUnitBridgeTest extends BridgeTestCase
 
     protected function setUp(): void
     {
-        if (!CurrentCassetteSession::isActive()) {
+        if (! CurrentCassetteSession::isActive()) {
             return;
         }
 

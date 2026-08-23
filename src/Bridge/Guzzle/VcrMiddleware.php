@@ -43,42 +43,41 @@ final class VcrMiddleware
      */
     public static function create(VcrClient $vcr): Closure
     {
-        return static fn (callable $handler): Closure =>
-            static function (RequestInterface $request, array $options) use ($vcr, $handler): PromiseInterface {
-                try {
-                    return Create::promiseFor(
-                        $vcr->withInner(self::transport($handler, $options))->sendRequest($request),
-                    );
-                } catch (Throwable $failure) {
-                    // A rejected promise rather than a throw: a middleware that throws
-                    // synchronously breaks requestAsync(), which promises to hand back a
-                    // promise. Guzzle turns the rejection back into this same exception for
-                    // the synchronous callers, so nothing else changes.
-                    return Create::rejectionFor($failure);
-                }
-            };
+        return static fn (callable $handler): Closure => static function (RequestInterface $request, array $options) use ($vcr, $handler): PromiseInterface {
+            try {
+                return Create::promiseFor(
+                    $vcr->withInner(self::transport($handler, $options))->sendRequest($request),
+                );
+            } catch (Throwable $failure) {
+                // A rejected promise rather than a throw: a middleware that throws
+                // synchronously breaks requestAsync(), which promises to hand back a
+                // promise. Guzzle turns the rejection back into this same exception for
+                // the synchronous callers, so nothing else changes.
+                return Create::rejectionFor($failure);
+            }
+        };
     }
 
     /**
      * The next handler in the stack, as the PSR-18 client VcrClient records through.
      *
-     * @param array<array-key, mixed> $options the options of this request, carried on to the
-     *                                      transport unchanged — the ones that only make
-     *                                      sense for a real connection (timeout, proxy,
-     *                                      sink, on_stats) simply have nothing to apply to
-     *                                      when the response comes off a cassette
+     * @param  array<array-key, mixed>  $options  the options of this request, carried on to the
+     *                                            transport unchanged — the ones that only make
+     *                                            sense for a real connection (timeout, proxy,
+     *                                            sink, on_stats) simply have nothing to apply to
+     *                                            when the response comes off a cassette
      */
     private static function transport(callable $handler, array $options): ClientInterface
     {
-        return new class ($handler(...), $options) implements ClientInterface {
+        return new class($handler(...), $options) implements ClientInterface
+        {
             /**
-             * @param array<array-key, mixed> $options
+             * @param  array<array-key, mixed>  $options
              */
             public function __construct(
                 private readonly Closure $handler,
                 private readonly array $options,
-            ) {
-            }
+            ) {}
 
             public function sendRequest(RequestInterface $request): ResponseInterface
             {
@@ -88,7 +87,7 @@ final class VcrMiddleware
                     $response = $response->wait();
                 }
 
-                if (!$response instanceof ResponseInterface) {
+                if (! $response instanceof ResponseInterface) {
                     throw new RuntimeException(sprintf(
                         'The handler below http-vcr in the stack produced %s instead of a response.',
                         get_debug_type($response),

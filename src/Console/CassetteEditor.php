@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HttpVcr\Console;
 
 use HttpVcr\Cassette\Cassette;
+use HttpVcr\Cassette\CassetteManager;
 use HttpVcr\Config;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Persistence\CassettePersisterInterface;
@@ -17,7 +18,7 @@ use HttpVcr\Serializer\CassetteSerializerInterface;
  * Reading and writing a cassette file from outside any session, for the commands that edit
  * one in place.
  *
- * Separate from {@see \HttpVcr\Cassette\CassetteManager} because it has none of a session's
+ * Separate from {@see CassetteManager} because it has none of a session's
  * concerns — no matching, no consumption, no recording permission. What it does share is
  * the file lock: a command rewriting a cassette while a test run appends to it would
  * silently drop whichever write landed second.
@@ -33,9 +34,9 @@ final class CassetteEditor
     private readonly int $inlineBodyLimit;
 
     /**
-     * @param string|null $directory a cassette directory of this class's own — what
-     *                               `#[CassetteDirectory]` declares (§3.12); null leaves it
-     *                               to the project configuration
+     * @param  string|null  $directory  a cassette directory of this class's own — what
+     *                                  `#[CassetteDirectory]` declares (§3.12); null leaves it
+     *                                  to the project configuration
      */
     public function __construct(Config $config, ?string $directory = null)
     {
@@ -55,7 +56,7 @@ final class CassetteEditor
     public function files(string $name, ?string $scope): array
     {
         if ($scope !== null) {
-            $scoped = $name . '.' . $scope;
+            $scoped = $name.'.'.$scope;
 
             return $this->persister->exists($this->key($scoped)) ? [$scoped] : [];
         }
@@ -65,7 +66,7 @@ final class CassetteEditor
         foreach ($this->persister->list($this->serializer->fileExtension(), $name) as $found) {
             // The prefix alone would also catch a neighbour whose name merely starts the
             // same way: `shopify/checkout-retry` is not a scope of `shopify/checkout`.
-            if ($found === $name || str_starts_with($found, $name . '.')) {
+            if ($found === $name || str_starts_with($found, $name.'.')) {
                 $files[] = $found;
             }
         }
@@ -127,17 +128,16 @@ final class CassetteEditor
      *
      * @template T
      *
-     * @param callable(): T $edit
-     *
+     * @param  callable(): T  $edit
      * @return T
      */
     public function locking(string $file, callable $edit): mixed
     {
-        if (!$this->persister instanceof SupportsSessionLocking) {
+        if (! $this->persister instanceof SupportsSessionLocking) {
             return $edit();
         }
 
-        $key = $file . '.' . self::LOCK_EXTENSION;
+        $key = $file.'.'.self::LOCK_EXTENSION;
         $this->persister->lock($key);
 
         try {
@@ -154,6 +154,6 @@ final class CassetteEditor
 
     private function key(string $file): string
     {
-        return $file . '.' . $this->serializer->fileExtension();
+        return $file.'.'.$this->serializer->fileExtension();
     }
 }

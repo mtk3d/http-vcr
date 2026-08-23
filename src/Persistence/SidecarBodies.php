@@ -29,16 +29,15 @@ final class SidecarBodies
     private array $seen = [];
 
     /**
-     * @param string $cassetteName the cassette file actually open, scope suffix included and
-     *                             format extension excluded — two scopes of one cassette must
-     *                             not share a sidecar namespace
+     * @param  string  $cassetteName  the cassette file actually open, scope suffix included and
+     *                                format extension excluded — two scopes of one cassette must
+     *                                not share a sidecar namespace
      */
     public function __construct(
         private readonly CassettePersisterInterface $persister,
         private readonly string $cassetteName,
         private readonly int $inlineBodyLimit,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{ref: string, sha256: string}|null null when the body belongs inline
@@ -88,11 +87,11 @@ final class SidecarBodies
      */
     public function collectGarbage(): void
     {
-        $prefix = $this->cassetteName . '.';
+        $prefix = $this->cassetteName.'.';
 
         foreach ($this->persister->list(self::EXTENSION, $prefix) as $name) {
-            if (!isset($this->seen[substr($name, strlen($prefix))])) {
-                $this->persister->delete($name . '.' . self::EXTENSION);
+            if (! isset($this->seen[substr($name, strlen($prefix))])) {
+                $this->persister->delete($name.'.'.self::EXTENSION);
             }
         }
     }

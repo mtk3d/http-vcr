@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 final class HeadersMatcherTest extends TestCase
 {
     /**
-     * @param array<string, list<string>> $headers
+     * @param  array<string, list<string>>  $headers
      */
     private static function request(array $headers): RecordedRequest
     {
@@ -42,7 +42,7 @@ final class HeadersMatcherTest extends TestCase
 
     public function testComparesEveryRecordedHeaderWhenNoneAreNamed(): void
     {
-        $matcher = new HeadersMatcher();
+        $matcher = new HeadersMatcher;
 
         self::assertTrue($matcher->matches(
             self::request(['Accept' => ['application/json']]),
@@ -61,7 +61,7 @@ final class HeadersMatcherTest extends TestCase
      */
     public function testIgnoresHeadersTheIncomingRequestAddedOnItsOwn(): void
     {
-        $matcher = new HeadersMatcher();
+        $matcher = new HeadersMatcher;
 
         self::assertTrue($matcher->matches(
             self::request(['Accept' => ['application/json']]),
@@ -105,7 +105,7 @@ final class HeadersMatcherTest extends TestCase
 
     public function testNamesTheHeaderThatIsMissing(): void
     {
-        $matcher = new HeadersMatcher();
+        $matcher = new HeadersMatcher;
         $recorded = self::request(['X-Shop-Domain' => ['acme.myshopify.com']]);
         $incoming = self::request([]);
 
@@ -115,7 +115,7 @@ final class HeadersMatcherTest extends TestCase
 
     public function testNamesTheHeaderThatDiffersAndBothValues(): void
     {
-        $matcher = new HeadersMatcher();
+        $matcher = new HeadersMatcher;
         $recorded = self::request(['Accept' => ['application/json']]);
         $incoming = self::request(['Accept' => ['text/plain']]);
 
@@ -127,7 +127,7 @@ final class HeadersMatcherTest extends TestCase
 
     public function testDescribesRepeatedValuesAsAList(): void
     {
-        $matcher = new HeadersMatcher();
+        $matcher = new HeadersMatcher;
 
         self::assertSame(
             'header "x-tag" expected ["a", "b"], got ["b", "a"]',
@@ -140,7 +140,7 @@ final class HeadersMatcherTest extends TestCase
 
     public function testExplainsNothingWhenTheHeadersAgree(): void
     {
-        self::assertNull((new HeadersMatcher())->explainMismatch(
+        self::assertNull((new HeadersMatcher)->explainMismatch(
             self::request(['Accept' => ['application/json']]),
             self::request(['Accept' => ['application/json']]),
         ));

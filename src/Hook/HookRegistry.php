@@ -26,7 +26,7 @@ final class HookRegistry
     private array $beforePlayback = [];
 
     /**
-     * @param callable(Interaction): ?Interaction $hook
+     * @param  callable(Interaction): ?Interaction  $hook
      */
     public function addBeforeRecord(callable $hook): void
     {
@@ -34,7 +34,7 @@ final class HookRegistry
     }
 
     /**
-     * @param callable(Interaction): Interaction $hook
+     * @param  callable(Interaction): Interaction  $hook
      */
     public function addBeforePlayback(callable $hook): void
     {
@@ -74,11 +74,11 @@ final class HookRegistry
         foreach ($this->beforePlayback as $hook) {
             $result = $hook($interaction);
 
-            if (!$result instanceof Interaction) {
+            if (! $result instanceof Interaction) {
                 throw new LogicException(
                     'A beforePlayback hook returned null. The interaction has already been matched, so '
-                    . 'there is no sensible response to hand back in its place — return the interaction, '
-                    . 'changed or unchanged. Only beforeRecord may refuse one.',
+                    .'there is no sensible response to hand back in its place — return the interaction, '
+                    .'changed or unchanged. Only beforeRecord may refuse one.',
                 );
             }
 

@@ -13,6 +13,4 @@ use Throwable;
  * An interface rather than a base class because the replayed transport failures have to be
  * PSR-18 exceptions at the same time.
  */
-interface VcrException extends Throwable
-{
-}
+interface VcrException extends Throwable {}

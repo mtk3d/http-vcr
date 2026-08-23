@@ -19,10 +19,10 @@ use HttpVcr\Bridge\PHPUnit\UseCassette;
 final readonly class CassetteDeclaration
 {
     /**
-     * @param class-string|string $class     the test class, fully qualified
-     * @param string              $directory where this class keeps its cassettes when it
-     *                                       said so with `#[CassetteDirectory]`; null
-     *                                       leaves it to the project configuration
+     * @param  class-string|string  $class  the test class, fully qualified
+     * @param  string  $directory  where this class keeps its cassettes when it
+     *                             said so with `#[CassetteDirectory]`; null
+     *                             leaves it to the project configuration
      */
     public function __construct(
         public string $class,
@@ -31,8 +31,7 @@ final readonly class CassetteDeclaration
         public ?string $directory,
         public string $file,
         public int $line,
-    ) {
-    }
+    ) {}
 
     /**
      * `App\Tests\ShopifyTest::testItReadsAProduct` — how PHPUnit itself names a test, so
@@ -40,6 +39,6 @@ final readonly class CassetteDeclaration
      */
     public function name(): string
     {
-        return $this->class . '::' . $this->method;
+        return $this->class.'::'.$this->method;
     }
 }

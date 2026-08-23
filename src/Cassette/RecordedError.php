@@ -11,15 +11,14 @@ namespace HttpVcr\Cassette;
 final readonly class RecordedError
 {
     /**
-     * @param string $exceptionClass the original exception's class name, kept as diagnostic
-     *                               metadata; replay never tries to rebuild that class
+     * @param  string  $exceptionClass  the original exception's class name, kept as diagnostic
+     *                                  metadata; replay never tries to rebuild that class
      */
     public function __construct(
         public ErrorCategory $category,
         public string $message,
         public string $exceptionClass,
-    ) {
-    }
+    ) {}
 
     public function withMessage(string $message): self
     {

@@ -14,15 +14,14 @@ namespace HttpVcr\Console;
 final readonly class ScannedTests
 {
     /**
-     * @param list<CassetteDeclaration> $declarations
-     * @param list<string>              $unanalyzed   one line per attribute argument the
-     *                                                scan could not resolve statically
+     * @param  list<CassetteDeclaration>  $declarations
+     * @param  list<string>  $unanalyzed  one line per attribute argument the
+     *                                    scan could not resolve statically
      */
     public function __construct(
         public array $declarations,
         public array $unanalyzed,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, list<CassetteDeclaration>> keyed by cassette name, in name order

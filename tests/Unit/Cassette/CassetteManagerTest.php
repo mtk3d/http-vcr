@@ -42,7 +42,7 @@ final class CassetteManagerTest extends TestCase
 
     public function testARecordingSessionHoldsTheLockUntilItIsClosed(): void
     {
-        $persister = new InMemoryCassettePersister();
+        $persister = new InMemoryCassettePersister;
 
         $manager = $this->manager($persister);
         $manager->record(
@@ -60,7 +60,7 @@ final class CassetteManagerTest extends TestCase
 
     public function testTheLockFileIsNotTheCassetteFile(): void
     {
-        $persister = new InMemoryCassettePersister();
+        $persister = new InMemoryCassettePersister;
 
         $manager = $this->manager($persister);
         $manager->record(new RecordedRequest('GET', 'https://example.com/a'), new RecordedResponse(200));
@@ -71,9 +71,9 @@ final class CassetteManagerTest extends TestCase
 
     public function testACassetteThatAppearedWhileTheLockWasBeingTakenIsReplayedNotRecordedTwice(): void
     {
-        $persister = new InMemoryCassettePersister();
+        $persister = new InMemoryCassettePersister;
         $persister->whileLocking(function (InMemoryCassettePersister $persister): void {
-            $persister->write('session.json', (new JsonCassetteSerializer())->serialize(
+            $persister->write('session.json', (new JsonCassetteSerializer)->serialize(
                 new Cassette([$this->interaction('https://example.com/a')]),
             ));
         });
@@ -89,7 +89,7 @@ final class CassetteManagerTest extends TestCase
 
     public function testRecordingTimestampsComeFromTheInjectedClock(): void
     {
-        $manager = $this->manager(new InMemoryCassettePersister());
+        $manager = $this->manager(new InMemoryCassettePersister);
 
         $interaction = $manager->record(
             new RecordedRequest('GET', 'https://example.com/a'),
@@ -104,8 +104,8 @@ final class CassetteManagerTest extends TestCase
     {
         $warnings = [];
         $manager = $this->manager(
-            new InMemoryCassettePersister(),
-            scanner: new SecretScanner(),
+            new InMemoryCassettePersister,
+            scanner: new SecretScanner,
             warn: static function (string $warning) use (&$warnings): void {
                 $warnings[] = $warning;
             },
@@ -125,8 +125,8 @@ final class CassetteManagerTest extends TestCase
     {
         $warnings = [];
         $manager = $this->manager(
-            new InMemoryCassettePersister(),
-            scanner: new SecretScanner(),
+            new InMemoryCassettePersister,
+            scanner: new SecretScanner,
             warn: static function (string $warning) use (&$warnings): void {
                 $warnings[] = $warning;
             },
@@ -159,7 +159,7 @@ final class CassetteManagerTest extends TestCase
 
         $manager = $this->manager(
             $persister,
-            scanner: new SecretScanner(),
+            scanner: new SecretScanner,
             warn: static function (string $warning) use (&$warnings): void {
                 $warnings[] = $warning;
             },
@@ -175,7 +175,7 @@ final class CassetteManagerTest extends TestCase
     {
         $warnings = [];
         $manager = $this->manager(
-            new InMemoryCassettePersister(),
+            new InMemoryCassettePersister,
             warn: static function (string $warning) use (&$warnings): void {
                 $warnings[] = $warning;
             },
@@ -248,7 +248,7 @@ final class CassetteManagerTest extends TestCase
     }
 
     /**
-     * @param array<string, string> $environment
+     * @param  array<string, string>  $environment
      */
     private function manager(
         InMemoryCassettePersister $persister,
@@ -261,8 +261,8 @@ final class CassetteManagerTest extends TestCase
             'session',
             null,
             $persister,
-            new JsonCassetteSerializer(),
-            CompositeMatcher::of([new MethodMatcher(), new UriMatcher(), new QueryStringMatcher()]),
+            new JsonCassetteSerializer,
+            CompositeMatcher::of([new MethodMatcher, new UriMatcher, new QueryStringMatcher]),
             FrozenClock::at('2026-08-21T10:00:00+00:00'),
             new Environment($environment),
             RecordMode::RecordIfAbsent,
@@ -276,12 +276,12 @@ final class CassetteManagerTest extends TestCase
     }
 
     /**
-     * @param list<Interaction> $interactions
+     * @param  list<Interaction>  $interactions
      */
     private function persisterHolding(array $interactions): InMemoryCassettePersister
     {
-        $persister = new InMemoryCassettePersister();
-        $persister->write('session.json', (new JsonCassetteSerializer())->serialize(new Cassette($interactions)));
+        $persister = new InMemoryCassettePersister;
+        $persister->write('session.json', (new JsonCassetteSerializer)->serialize(new Cassette($interactions)));
         $persister->writes = [];
 
         return $persister;

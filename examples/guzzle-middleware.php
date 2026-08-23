@@ -56,7 +56,7 @@ final class ShopifyCheckoutTest extends TestCase
         return new Client([
             'handler' => $stack,
             'base_uri' => 'https://shop.myshopify.com',
-            'headers' => ['Authorization' => 'Bearer ' . ($_ENV['SHOPIFY_API_KEY'] ?? '')],
+            'headers' => ['Authorization' => 'Bearer '.($_ENV['SHOPIFY_API_KEY'] ?? '')],
         ]);
     }
 }

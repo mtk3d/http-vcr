@@ -31,7 +31,7 @@ final class LargeBodyTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
     }
@@ -55,7 +55,7 @@ final class LargeBodyTest extends TestCase
         self::assertSame(substr($sha256, 0, 16), $cassette->bodyRef(0));
         self::assertSame($sha256, $cassette->bodySha256(0));
         self::assertSame('', $cassette->rawResponseBody(0), 'the body itself is not in the file');
-        self::assertSame($payload, $this->cassettes->read('api/download.' . substr($sha256, 0, 16) . '.bin'));
+        self::assertSame($payload, $this->cassettes->read('api/download.'.substr($sha256, 0, 16).'.bin'));
     }
 
     public function testItComesBackByteForByteOnReplay(): void
@@ -63,7 +63,7 @@ final class LargeBodyTest extends TestCase
         $payload = random_bytes(4096);
         $this->client($this->responding($payload))->sendRequest($this->request());
 
-        $replayed = $this->client(new FakeHttpClient())->sendRequest($this->request());
+        $replayed = $this->client(new FakeHttpClient)->sendRequest($this->request());
 
         self::assertSame($payload, (string) $replayed->getBody());
     }
@@ -75,13 +75,13 @@ final class LargeBodyTest extends TestCase
         $cassette = $this->cassettes->cassette('api/download.json');
         self::assertSame('', $cassette->bodyRef(0));
         self::assertSame('{"small":true}', base64_decode($cassette->rawResponseBody(0), true));
-        self::assertSame([], glob($this->cassettes->path . '/api/*.bin') ?: []);
+        self::assertSame([], glob($this->cassettes->path.'/api/*.bin') ?: []);
     }
 
     public function testTwoInteractionsWithTheSameBodyShareOneFile(): void
     {
         $payload = str_repeat('A', 200);
-        $inner = (new FakeHttpClient())
+        $inner = (new FakeHttpClient)
             ->willRespond(new Response(200, ['Content-Type' => 'application/octet-stream'], $payload))
             ->willRespond(new Response(200, ['Content-Type' => 'application/octet-stream'], $payload));
 
@@ -90,20 +90,20 @@ final class LargeBodyTest extends TestCase
         $vcr->sendRequest($this->request());
         $vcr->close();
 
-        self::assertCount(1, glob($this->cassettes->path . '/api/*.bin') ?: []);
+        self::assertCount(1, glob($this->cassettes->path.'/api/*.bin') ?: []);
     }
 
     public function testASidecarNothingReferencesAnyMoreIsRemovedWhenTheCassetteIsWritten(): void
     {
         $this->client($this->responding(str_repeat('A', 200)))->sendRequest($this->request());
-        self::assertCount(1, glob($this->cassettes->path . '/api/*.bin') ?: []);
+        self::assertCount(1, glob($this->cassettes->path.'/api/*.bin') ?: []);
 
         $_ENV['VCR_ERASE_TAPE'] = 'api/download';
         $vcr = $this->client($this->responding(str_repeat('B', 200)));
         $vcr->sendRequest($this->request());
         $vcr->close();
 
-        $files = glob($this->cassettes->path . '/api/*.bin') ?: [];
+        $files = glob($this->cassettes->path.'/api/*.bin') ?: [];
         self::assertCount(1, $files, 'the erased recording took its body file with it');
         self::assertSame(str_repeat('B', 200), (string) file_get_contents($files[0]));
     }
@@ -113,24 +113,24 @@ final class LargeBodyTest extends TestCase
         $payload = str_repeat('A', 200);
         $this->client($this->responding($payload))->sendRequest($this->request());
 
-        $sidecar = (glob($this->cassettes->path . '/api/*.bin') ?: [])[0];
+        $sidecar = (glob($this->cassettes->path.'/api/*.bin') ?: [])[0];
         file_put_contents($sidecar, str_repeat('B', 200));
 
         $this->expectException(CassetteIntegrityException::class);
         $this->expectExceptionMessage('no longer matches its recorded bodySha256');
 
-        $this->client(new FakeHttpClient())->sendRequest($this->request());
+        $this->client(new FakeHttpClient)->sendRequest($this->request());
     }
 
     public function testAMissingBodyFileSaysWhichFileIsGone(): void
     {
         $this->client($this->responding(str_repeat('A', 200)))->sendRequest($this->request());
-        unlink((glob($this->cassettes->path . '/api/*.bin') ?: [])[0]);
+        unlink((glob($this->cassettes->path.'/api/*.bin') ?: [])[0]);
 
         $this->expectException(CassetteIntegrityException::class);
         $this->expectExceptionMessage('which is not there');
 
-        $this->client(new FakeHttpClient())->sendRequest($this->request());
+        $this->client(new FakeHttpClient)->sendRequest($this->request());
     }
 
     public function testBodyFilesAreNotMistakenForCassettes(): void
@@ -145,7 +145,7 @@ final class LargeBodyTest extends TestCase
 
     private function responding(string $payload): FakeHttpClient
     {
-        return (new FakeHttpClient())->willRespond(
+        return (new FakeHttpClient)->willRespond(
             new Response(200, ['Content-Type' => 'application/octet-stream'], $payload),
         );
     }

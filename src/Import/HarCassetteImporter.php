@@ -14,6 +14,7 @@ use HttpVcr\Cassette\RecordedResponse;
 use HttpVcr\Config;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Persistence\SidecarBodies;
+use HttpVcr\Serializer\CassetteSerializerInterface;
 use InvalidArgumentException;
 use JsonException;
 use Throwable;
@@ -21,7 +22,7 @@ use Throwable;
 /**
  * A HAR file turned into a cassette (§3.2).
  *
- * Import and export, deliberately not a {@see \HttpVcr\Serializer\CassetteSerializerInterface}:
+ * Import and export, deliberately not a {@see CassetteSerializerInterface}:
  * HAR is somebody else's archive format and has nowhere to put `schemaVersion`, a recorded
  * transport failure, `bodyRef` or `repeatablePlayback`, so storing cassettes in it would
  * mean either leaving the specification or dropping what those fields do.
@@ -43,15 +44,12 @@ use Throwable;
  */
 final class HarCassetteImporter
 {
-    public function __construct(private readonly ?Config $config = null)
-    {
-    }
+    public function __construct(private readonly ?Config $config = null) {}
 
     /**
-     * @param string $file     the HAR file to read
-     * @param string $cassette the name to store it under, a path inside the cassette
-     *                         directory without an extension
-     *
+     * @param  string  $file  the HAR file to read
+     * @param  string  $cassette  the name to store it under, a path inside the cassette
+     *                            directory without an extension
      * @return Cassette what was written, so a caller can look at it without reading it back
      */
     public function import(string $file, string $cassette): Cassette
@@ -68,7 +66,7 @@ final class HarCassetteImporter
         $serializer = $config->serializer();
 
         $persister->write(
-            $cassette . '.' . $serializer->fileExtension(),
+            $cassette.'.'.$serializer->fileExtension(),
             $serializer->serialize($imported, new SidecarBodies($persister, $cassette, $config->inlineBodyLimit())),
         );
 
@@ -83,17 +81,17 @@ final class HarCassetteImporter
         try {
             $data = json_decode($har, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            throw CassetteFormatException::malformed('is not valid JSON (' . $exception->getMessage() . ')');
+            throw CassetteFormatException::malformed('is not valid JSON ('.$exception->getMessage().')');
         }
 
-        if (!is_array($data) || !is_array($data['log'] ?? null) || !is_array($data['log']['entries'] ?? null)) {
+        if (! is_array($data) || ! is_array($data['log'] ?? null) || ! is_array($data['log']['entries'] ?? null)) {
             throw CassetteFormatException::malformed('is not a HAR file: there is no log.entries in it');
         }
 
         $interactions = [];
 
         foreach ($data['log']['entries'] as $position => $entry) {
-            if (!is_array($entry)) {
+            if (! is_array($entry)) {
                 throw CassetteFormatException::malformed(sprintf('has a malformed entry #%d', (int) $position + 1));
             }
 
@@ -104,7 +102,7 @@ final class HarCassetteImporter
     }
 
     /**
-     * @param array<mixed> $entry
+     * @param  array<mixed>  $entry
      */
     private function interaction(array $entry, int $position): Interaction
     {
@@ -113,7 +111,7 @@ final class HarCassetteImporter
         $recordedAt = $this->recordedAt($entry['startedDateTime'] ?? null, $position);
         $status = $response['status'] ?? null;
 
-        if (!is_int($status)) {
+        if (! is_int($status)) {
             throw CassetteFormatException::malformed(sprintf('has an entry #%d without a response status', $position));
         }
 
@@ -140,7 +138,7 @@ final class HarCassetteImporter
 
     private function request(mixed $data, int $position): RecordedRequest
     {
-        if (!is_array($data) || !is_string($data['method'] ?? null) || !is_string($data['url'] ?? null)) {
+        if (! is_array($data) || ! is_string($data['method'] ?? null) || ! is_string($data['url'] ?? null)) {
             throw CassetteFormatException::malformed(sprintf('has an entry #%d without a readable request', $position));
         }
 
@@ -159,15 +157,14 @@ final class HarCassetteImporter
      * by `content.encoding` — so the two formats agree about what happened to the bytes and
      * only spell it differently.
      *
-     * @param array<mixed> $content
-     *
+     * @param  array<mixed>  $content
      * @return array{string, string|null}
      */
     private function content(array $content): array
     {
         $text = $content['text'] ?? '';
 
-        if (!is_string($text) || $text === '') {
+        if (! is_string($text) || $text === '') {
             return ['', null];
         }
 
@@ -192,14 +189,14 @@ final class HarCassetteImporter
      */
     private function headers(mixed $data): array
     {
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             return [];
         }
 
         $headers = [];
 
         foreach ($data as $header) {
-            if (!is_array($header) || !is_string($header['name'] ?? null) || !is_string($header['value'] ?? null)) {
+            if (! is_array($header) || ! is_string($header['name'] ?? null) || ! is_string($header['value'] ?? null)) {
                 continue;
             }
 
@@ -211,7 +208,7 @@ final class HarCassetteImporter
 
     private function recordedAt(mixed $value, int $position): DateTimeImmutable
     {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             throw CassetteFormatException::malformed(sprintf(
                 'has an entry #%d without a startedDateTime',
                 $position,

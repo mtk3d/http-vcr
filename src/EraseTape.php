@@ -19,12 +19,10 @@ use InvalidArgumentException;
 final readonly class EraseTape
 {
     /**
-     * @param list<array{cassette: string|null, provider: string|null}> $selectors
-     * @param array<string, Provider>                                   $providers
+     * @param  list<array{cassette: string|null, provider: string|null}>  $selectors
+     * @param  array<string, Provider>  $providers
      */
-    private function __construct(private array $selectors, private array $providers = [])
-    {
-    }
+    private function __construct(private array $selectors, private array $providers = []) {}
 
     public static function none(): self
     {
@@ -37,7 +35,7 @@ final readonly class EraseTape
      *                                  radius, so `all` has to be said out loud
      */
     /**
-     * @param array<string, Provider> $providers the APIs this project has named
+     * @param  array<string, Provider>  $providers  the APIs this project has named
      */
     public static function parse(?string $value, array $providers = []): self
     {
@@ -57,7 +55,7 @@ final readonly class EraseTape
             if (in_array(strtolower($selector), ['0', '1', 'true', 'false'], true)) {
                 throw new InvalidArgumentException(sprintf(
                     'VCR_ERASE_TAPE takes cassette selectors, not "%s". Name the cassette to re-record '
-                    . '("shopify/get-product"), the API ("@shopify"), or every cassette the run opens ("all").',
+                    .'("shopify/get-product"), the API ("@shopify"), or every cassette the run opens ("all").',
                     $selector,
                 ));
             }
@@ -142,7 +140,7 @@ final readonly class EraseTape
     {
         $host = parse_url($interaction->request->uri, PHP_URL_HOST);
 
-        if (!is_string($host)) {
+        if (! is_string($host)) {
             return false;
         }
 

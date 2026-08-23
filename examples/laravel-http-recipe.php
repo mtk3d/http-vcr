@@ -42,7 +42,7 @@ abstract class RecordsHttpFacadeCalls extends TestCase
 
         // Inside setUp(), not before it: the application — and with it the Http factory
         // this configures — is built by parent::setUp() and thrown away after the test.
-        if (!CurrentCassetteSession::isActive()) {
+        if (! CurrentCassetteSession::isActive()) {
             return;
         }
 

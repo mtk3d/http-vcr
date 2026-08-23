@@ -92,11 +92,11 @@ Refactoring `Bridge/PHPUnit/` must preserve it.
 composer install                    # no vendor/ or lock file exists yet
 vendor/bin/phpunit
 vendor/bin/phpstan analyse          # level max, from the first commit
-vendor/bin/php-cs-fixer fix --dry-run
+vendor/bin/pint --test              # Laravel Pint, laravel preset
 ```
 
 These three run in CI from the first commit, not from M5. The config files they need
-(`phpunit.xml.dist`, `phpstan.neon.dist`, `.php-cs-fixer.dist.php`) are part of M1
+(`phpunit.xml.dist`, `phpstan.neon.dist`, `pint.json`) are part of M1
 scaffolding — see `PLAN.md` §5 for the intended layout.
 
 After touching `docs/`, rebuild the book (`mdbook build docs`) — `SUMMARY.md`

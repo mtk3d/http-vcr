@@ -33,8 +33,8 @@ final class TestsCommandTest extends TestCase
     {
         Config::reset();
 
-        $this->cassettes = new CassetteDirectory();
-        $this->project = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
+        $this->project = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
@@ -147,7 +147,7 @@ final class TestsCommandTest extends TestCase
     }
 
     /**
-     * @param array<string, Provider> $providers
+     * @param  array<string, Provider>  $providers
      */
     private function configure(array $providers): void
     {
@@ -160,7 +160,7 @@ final class TestsCommandTest extends TestCase
 
     private function declare(string $class, string $cassette): void
     {
-        $this->project->write($class . '.php', <<<PHP
+        $this->project->write($class.'.php', <<<PHP
             <?php
             namespace App\\Tests;
 
@@ -177,11 +177,11 @@ final class TestsCommandTest extends TestCase
     }
 
     /**
-     * @param list<string> $urls
+     * @param  list<string>  $urls
      */
     private function record(string $cassette, array $urls): void
     {
-        $inner = new FakeHttpClient();
+        $inner = new FakeHttpClient;
 
         foreach ($urls as $url) {
             $inner->willRespond('{}');
@@ -197,11 +197,11 @@ final class TestsCommandTest extends TestCase
     }
 
     /**
-     * @param array<string, bool|string> $input
+     * @param  array<string, bool|string>  $input
      */
     private function execute(array $input): CommandTester
     {
-        $tester = new CommandTester((new Application())->find('tests'));
+        $tester = new CommandTester((new Application)->find('tests'));
         $tester->execute($input);
 
         return $tester;

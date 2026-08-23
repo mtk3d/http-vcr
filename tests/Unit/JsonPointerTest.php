@@ -31,7 +31,7 @@ final class JsonPointerTest extends TestCase
     }
 
     /**
-     * @param list<string> $tokens
+     * @param  list<string>  $tokens
      */
     #[DataProvider('pointers')]
     public function testParsesReferenceTokens(string $pointer, array $tokens): void

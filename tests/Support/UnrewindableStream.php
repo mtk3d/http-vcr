@@ -15,9 +15,7 @@ final class UnrewindableStream implements StreamInterface
 {
     private bool $read = false;
 
-    public function __construct(private string $content)
-    {
-    }
+    public function __construct(private string $content) {}
 
     public function isSeekable(): bool
     {
@@ -60,9 +58,7 @@ final class UnrewindableStream implements StreamInterface
         return $this->read;
     }
 
-    public function close(): void
-    {
-    }
+    public function close(): void {}
 
     public function detach()
     {

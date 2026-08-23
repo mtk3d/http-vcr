@@ -17,13 +17,13 @@ final class ClockTest extends TestCase
 {
     public function testBothClocksArePsr20Clocks(): void
     {
-        self::assertInstanceOf(ClockInterface::class, new SystemClock());
+        self::assertInstanceOf(ClockInterface::class, new SystemClock);
         self::assertInstanceOf(ClockInterface::class, FrozenClock::at('2026-08-21T10:00:00+00:00'));
     }
 
     public function testSystemClockReportsTheCurrentTimeInUtc(): void
     {
-        $now = (new SystemClock())->now();
+        $now = (new SystemClock)->now();
 
         self::assertSame('UTC', $now->getTimezone()->getName());
         self::assertEqualsWithDelta(time(), $now->getTimestamp(), 5);

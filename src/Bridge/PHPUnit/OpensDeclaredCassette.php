@@ -19,15 +19,13 @@ use PHPUnit\Event\Test\PreparationStartedSubscriber;
  */
 final class OpensDeclaredCassette implements PreparationStartedSubscriber
 {
-    public function __construct(private readonly CassetteFactory $cassettes)
-    {
-    }
+    public function __construct(private readonly CassetteFactory $cassettes) {}
 
     public function notify(PreparationStarted $event): void
     {
         $test = $event->test();
 
-        if (!$test instanceof TestMethod) {
+        if (! $test instanceof TestMethod) {
             return;
         }
 

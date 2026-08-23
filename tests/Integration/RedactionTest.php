@@ -36,7 +36,7 @@ final class RedactionTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cassettes = new CassetteDirectory();
+        $this->cassettes = new CassetteDirectory;
 
         $this->takeOverEnvironment('VCR_ALLOW_RECORDING', 'VCR_ERASE_TAPE', 'CI');
         $_ENV['VCR_ALLOW_RECORDING'] = '1';
@@ -52,7 +52,7 @@ final class RedactionTest extends TestCase
 
     public function testASecretNeverReachesTheCassetteFile(): void
     {
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'));
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'));
         $vcr->redact('<API_KEY>', static fn (): string => 'sk_live_4eC39H');
 
         $vcr->sendRequest(
@@ -70,7 +70,7 @@ final class RedactionTest extends TestCase
      */
     public function testATwoWayRuleGivesTheCodeUnderTestTheRealValueBackFromTheResponse(): void
     {
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"refresh_token":"sk_live_4eC39H"}'));
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"refresh_token":"sk_live_4eC39H"}'));
         $vcr->redactJsonField('/refresh_token', static fn (): string => 'sk_live_4eC39H');
         $vcr->sendRequest(new Request('POST', 'https://api.example.com/token'));
         $vcr->close();
@@ -80,7 +80,7 @@ final class RedactionTest extends TestCase
             $this->cassettes->cassette('payments.json')->responseBody(0),
         );
 
-        $replayed = $this->client(new FakeHttpClient(), RecordMode::PlaybackOnly);
+        $replayed = $this->client(new FakeHttpClient, RecordMode::PlaybackOnly);
         $replayed->redactJsonField('/refresh_token', static fn (): string => 'sk_live_4eC39H');
         $response = $replayed->sendRequest(new Request('POST', 'https://api.example.com/token'));
 
@@ -93,14 +93,14 @@ final class RedactionTest extends TestCase
      */
     public function testATwoWayRedactedHeaderStillMatchesOnReplay(): void
     {
-        $matchers = [new MethodMatcher(), new UriMatcher(), new HeadersMatcher(['X-Api-Key'])];
+        $matchers = [new MethodMatcher, new UriMatcher, new HeadersMatcher(['X-Api-Key'])];
 
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'), matchers: $matchers);
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'), matchers: $matchers);
         $vcr->redactHeader('X-Api-Key', static fn (): string => 'sk_live_4eC39H');
         $vcr->sendRequest($this->authorized());
         $vcr->close();
 
-        $replayed = $this->client(new FakeHttpClient(), RecordMode::PlaybackOnly, $matchers);
+        $replayed = $this->client(new FakeHttpClient, RecordMode::PlaybackOnly, $matchers);
         $replayed->redactHeader('X-Api-Key', static fn (): string => 'sk_live_4eC39H');
         $response = $replayed->sendRequest($this->authorized());
 
@@ -113,14 +113,14 @@ final class RedactionTest extends TestCase
      */
     public function testAWriteOnlyRedactedHeaderStillMatchesOnReplay(): void
     {
-        $matchers = [new MethodMatcher(), new UriMatcher(), new HeadersMatcher(['X-Api-Key'])];
+        $matchers = [new MethodMatcher, new UriMatcher, new HeadersMatcher(['X-Api-Key'])];
 
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'), matchers: $matchers);
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'), matchers: $matchers);
         $vcr->redactHeader('X-Api-Key');
         $vcr->sendRequest($this->authorized());
         $vcr->close();
 
-        $replayed = $this->client(new FakeHttpClient(), RecordMode::PlaybackOnly, $matchers);
+        $replayed = $this->client(new FakeHttpClient, RecordMode::PlaybackOnly, $matchers);
         $replayed->redactHeader('X-Api-Key');
 
         // A different token than the one recorded — a write-only redacted field stops
@@ -134,7 +134,7 @@ final class RedactionTest extends TestCase
 
     public function testARedactedQueryParameterStillMatchesOnReplay(): void
     {
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'));
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'));
         $vcr->redactQueryParam('api_key');
         $vcr->sendRequest(new Request('GET', 'https://api.example.com/orders?api_key=sk_live_4eC39H&page=2'));
         $vcr->close();
@@ -144,10 +144,10 @@ final class RedactionTest extends TestCase
             $this->cassettes->cassette('payments.json')->requestUri(0),
         );
 
-        $replayed = $this->client(new FakeHttpClient(), RecordMode::PlaybackOnly, [
-            new MethodMatcher(),
-            new UriMatcher(),
-            new QueryStringMatcher(),
+        $replayed = $this->client(new FakeHttpClient, RecordMode::PlaybackOnly, [
+            new MethodMatcher,
+            new UriMatcher,
+            new QueryStringMatcher,
         ]);
         $replayed->redactQueryParam('api_key');
         $response = $replayed->sendRequest(
@@ -159,7 +159,7 @@ final class RedactionTest extends TestCase
 
     public function testARedactedFormFieldNeverReachesTheCassette(): void
     {
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"access_token":"t"}'));
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"access_token":"t"}'));
         $vcr->redactFormField('client_secret');
 
         $vcr->sendRequest(new Request(
@@ -177,7 +177,7 @@ final class RedactionTest extends TestCase
 
     public function testTheRecordingRunItselfStillSeesTheRealResponse(): void
     {
-        $vcr = $this->client((new FakeHttpClient())->willRespond(
+        $vcr = $this->client((new FakeHttpClient)->willRespond(
             new Response(200, ['X-Token' => 'sk_live_4eC39H'], '{"refresh_token":"sk_live_4eC39H"}'),
         ));
         $vcr->redactHeader('X-Token');
@@ -191,7 +191,7 @@ final class RedactionTest extends TestCase
 
     public function testTheAuthorizationHeaderIsRedactedWithNoConfigurationAtAll(): void
     {
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'));
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'));
 
         $vcr->sendRequest(
             (new Request('GET', 'https://api.example.com/orders'))->withHeader('Authorization', 'Bearer sk_live_4eC39H'),
@@ -208,13 +208,13 @@ final class RedactionTest extends TestCase
      */
     public function testAnAutomaticallyRedactedHeaderNoLongerTellsTwoRequestsApart(): void
     {
-        $matchers = [new MethodMatcher(), new UriMatcher(), new HeadersMatcher(['Authorization'])];
+        $matchers = [new MethodMatcher, new UriMatcher, new HeadersMatcher(['Authorization'])];
 
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'), matchers: $matchers);
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'), matchers: $matchers);
         $vcr->sendRequest($this->bearing('sk_live_4eC39H'));
         $vcr->close();
 
-        $response = $this->client(new FakeHttpClient(), RecordMode::PlaybackOnly, $matchers)
+        $response = $this->client(new FakeHttpClient, RecordMode::PlaybackOnly, $matchers)
             ->sendRequest($this->bearing('sk_live_SOMETHING_ELSE'));
 
         self::assertSame('{"ok":true}', (string) $response->getBody());
@@ -226,16 +226,16 @@ final class RedactionTest extends TestCase
         // right about it and has nothing to add — the opt-out exists for exactly this.
         VcrClient::configure(scanRecordingsForSecrets: false);
 
-        $matchers = [new MethodMatcher(), new UriMatcher(), new HeadersMatcher(['Authorization'])];
+        $matchers = [new MethodMatcher, new UriMatcher, new HeadersMatcher(['Authorization'])];
 
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'), matchers: $matchers);
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'), matchers: $matchers);
         $vcr->includeSensitiveHeaders(['Authorization']);
         $vcr->sendRequest($this->bearing('sk_live_4eC39H'));
         $vcr->close();
 
         self::assertStringContainsString('sk_live_4eC39H', $this->cassettes->read('payments.json'));
 
-        $replayed = $this->client(new FakeHttpClient(), RecordMode::PlaybackOnly, $matchers);
+        $replayed = $this->client(new FakeHttpClient, RecordMode::PlaybackOnly, $matchers);
         $replayed->includeSensitiveHeaders(['Authorization']);
 
         $this->expectException(NoMatchingInteractionException::class);
@@ -251,7 +251,7 @@ final class RedactionTest extends TestCase
     {
         VcrClient::configure(redact: ['<COMPANY_PROXY_TOKEN>' => static fn (): string => 'sk_live_4eC39H']);
 
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'));
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'));
         $vcr->sendRequest(
             (new Request('GET', 'https://api.example.com/orders'))->withHeader('X-Proxy', 'sk_live_4eC39H'),
         );
@@ -263,7 +263,7 @@ final class RedactionTest extends TestCase
 
     public function testRedactionRegisteredAfterTheFirstRequestIsRefused(): void
     {
-        $vcr = $this->client((new FakeHttpClient())->willRespond('{"ok":true}'));
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'));
         $vcr->sendRequest(new Request('GET', 'https://api.example.com/orders'));
 
         $this->expectException(LogicException::class);
@@ -274,7 +274,7 @@ final class RedactionTest extends TestCase
 
     private function bearing(string $token): Request
     {
-        return (new Request('GET', 'https://api.example.com/orders'))->withHeader('Authorization', 'Bearer ' . $token);
+        return (new Request('GET', 'https://api.example.com/orders'))->withHeader('Authorization', 'Bearer '.$token);
     }
 
     private function authorized(): Request
@@ -291,7 +291,7 @@ final class RedactionTest extends TestCase
         $warnings = [];
 
         $vcr = new VcrClient(
-            (new FakeHttpClient())->willRespond('{"ok":true}'),
+            (new FakeHttpClient)->willRespond('{"ok":true}'),
             'payments',
             persister: $this->cassettes->persister(),
             warn: static function (string $warning) use (&$warnings): void {
@@ -310,7 +310,7 @@ final class RedactionTest extends TestCase
     }
 
     /**
-     * @param list<RequestMatcherInterface> $matchers
+     * @param  list<RequestMatcherInterface>  $matchers
      */
     private function client(
         FakeHttpClient $inner,

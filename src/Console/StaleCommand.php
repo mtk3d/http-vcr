@@ -71,7 +71,7 @@ final class StaleCommand extends Command
                     continue;
                 }
 
-                ++$cassettes;
+                $cassettes++;
                 $interactions += count($stale);
 
                 $output->writeln(sprintf(
@@ -102,7 +102,7 @@ final class StaleCommand extends Command
             $output->writeln('<comment>Declarations the scan could not read in full:</comment>');
 
             foreach ($scanned->unanalyzed as $note) {
-                $output->writeln('  ' . $note);
+                $output->writeln('  '.$note);
             }
         }
 
@@ -131,7 +131,7 @@ final class StaleCommand extends Command
             }
 
             $cassette = $declaration->declared->name;
-            $key = ($declaration->directory ?? '') . "\0" . $cassette;
+            $key = ($declaration->directory ?? '')."\0".$cassette;
 
             $targets[$key] ??= ['directory' => $declaration->directory, 'name' => $cassette, 'declared' => []];
 
@@ -170,7 +170,7 @@ final class StaleCommand extends Command
     }
 
     /**
-     * @param list<array{directory: string|null, name: string, interval: DateInterval}> $thresholds
+     * @param  list<array{directory: string|null, name: string, interval: DateInterval}>  $thresholds
      */
     private function summary(array $thresholds, int $interactions, int $cassettes): string
     {

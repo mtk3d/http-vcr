@@ -16,7 +16,7 @@ use HttpVcr\Cassette\RecordedRequest;
  * A trailing slash is significant — `/users/` and `/users` are different resources in
  * plenty of APIs — except on the root path, where an empty path and `/` are the same.
  */
-final class UriMatcher implements RequestMatcherInterface, ExplainsMismatch
+final class UriMatcher implements ExplainsMismatch, RequestMatcherInterface
 {
     private const DEFAULT_PORTS = ['http' => 80, 'https' => 443];
 

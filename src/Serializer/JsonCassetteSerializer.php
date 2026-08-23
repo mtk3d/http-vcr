@@ -30,10 +30,10 @@ final class JsonCassetteSerializer extends ArrayCassetteSerializer
                 JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
             );
         } catch (JsonException $exception) {
-            throw CassetteFormatException::malformed('could not be encoded as JSON: ' . $exception->getMessage());
+            throw CassetteFormatException::malformed('could not be encoded as JSON: '.$exception->getMessage());
         }
 
-        return $json . "\n";
+        return $json."\n";
     }
 
     protected function decode(string $content): array
@@ -41,10 +41,10 @@ final class JsonCassetteSerializer extends ArrayCassetteSerializer
         try {
             $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            throw CassetteFormatException::malformed('is not valid JSON (' . $exception->getMessage() . ')');
+            throw CassetteFormatException::malformed('is not valid JSON ('.$exception->getMessage().')');
         }
 
-        if (!is_array($data) || array_is_list($data)) {
+        if (! is_array($data) || array_is_list($data)) {
             throw CassetteFormatException::malformed('is not a JSON object');
         }
 

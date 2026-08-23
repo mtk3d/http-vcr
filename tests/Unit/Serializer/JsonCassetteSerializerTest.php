@@ -21,7 +21,7 @@ final class JsonCassetteSerializerTest extends TestCase
 {
     public function testTheFileExtensionIsWhatTheKeyIsBuiltFrom(): void
     {
-        self::assertSame('json', (new JsonCassetteSerializer())->fileExtension());
+        self::assertSame('json', (new JsonCassetteSerializer)->fileExtension());
     }
 
     public function testWritesTheDocumentedShape(): void
@@ -66,13 +66,13 @@ final class JsonCassetteSerializerTest extends TestCase
                 }
 
                 JSON,
-            (new JsonCassetteSerializer())->serialize($cassette),
+            (new JsonCassetteSerializer)->serialize($cassette),
         );
     }
 
     public function testFieldsCarryingTheirDefaultAreLeftOutAndReadBackAsThatDefault(): void
     {
-        $serializer = new JsonCassetteSerializer();
+        $serializer = new JsonCassetteSerializer;
         $json = $serializer->serialize(new Cassette([$this->interaction()]));
 
         self::assertStringNotContainsString('locked', $json);
@@ -101,7 +101,7 @@ final class JsonCassetteSerializerTest extends TestCase
             $this->interaction(),
         ]);
 
-        $serializer = new JsonCassetteSerializer();
+        $serializer = new JsonCassetteSerializer;
         $restored = $serializer->deserialize($serializer->serialize($cassette));
 
         self::assertEquals($cassette, $restored);
@@ -109,7 +109,7 @@ final class JsonCassetteSerializerTest extends TestCase
 
     public function testSlashesAndUnicodeAreLeftReadableInTheFile(): void
     {
-        $json = (new JsonCassetteSerializer())->serialize(new Cassette([
+        $json = (new JsonCassetteSerializer)->serialize(new Cassette([
             Interaction::recorded(
                 new RecordedRequest('GET', 'https://example.com/a/b'),
                 new RecordedResponse(200, [], '{"name":"Łódź"}'),
@@ -126,7 +126,7 @@ final class JsonCassetteSerializerTest extends TestCase
         $this->expectException(CassetteFormatException::class);
         $this->expectExceptionMessage('schema version 2, where this installation of http-vcr writes and reads 1');
 
-        (new JsonCassetteSerializer())->deserialize('{"schemaVersion": 2, "interactions": []}');
+        (new JsonCassetteSerializer)->deserialize('{"schemaVersion": 2, "interactions": []}');
     }
 
     /**
@@ -165,7 +165,7 @@ final class JsonCassetteSerializerTest extends TestCase
         $this->expectException(CassetteFormatException::class);
         $this->expectExceptionMessage($expected);
 
-        (new JsonCassetteSerializer())->deserialize($json);
+        (new JsonCassetteSerializer)->deserialize($json);
     }
 
     public function testTheProblemCanBeAttributedToAFileByWhoeverReadIt(): void

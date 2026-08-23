@@ -21,7 +21,7 @@ use stdClass;
  * are what {@see self::ignoreJsonField()} and {@see self::matchJsonField()} are for.
  * Redaction can't help there: it substitutes a value known in advance, and these aren't.
  */
-final class BodyJsonMatcher implements RequestMatcherInterface, ExplainsMismatch
+final class BodyJsonMatcher implements ExplainsMismatch, RequestMatcherInterface
 {
     /** @var list<string> */
     private array $ignored = [];
@@ -54,7 +54,7 @@ final class BodyJsonMatcher implements RequestMatcherInterface, ExplainsMismatch
         if (@preg_match($pattern, '') === false) {
             throw new InvalidArgumentException(sprintf(
                 'matchJsonField("%s", "%s"): the pattern is not a usable regular expression. '
-                . 'It needs delimiters, as preg_match takes them — "/^[0-9a-f-]{36}$/".',
+                .'It needs delimiters, as preg_match takes them — "/^[0-9a-f-]{36}$/".',
                 $pointer,
                 $pattern,
             ));
@@ -77,9 +77,9 @@ final class BodyJsonMatcher implements RequestMatcherInterface, ExplainsMismatch
         $actual = $this->decode($incoming->body);
 
         if ($expected === null || $actual === null) {
-            $detail = (new BodyMatcher())->explainMismatch($recorded, $incoming);
+            $detail = (new BodyMatcher)->explainMismatch($recorded, $incoming);
 
-            return $detail === null ? null : 'raw body: ' . $detail;
+            return $detail === null ? null : 'raw body: '.$detail;
         }
 
         [$expectedDocument, $actualDocument] = [$expected[0], $actual[0]];
@@ -146,13 +146,13 @@ final class BodyJsonMatcher implements RequestMatcherInterface, ExplainsMismatch
             return null;
         }
 
-        return $this->at($path) . sprintf('expected %s, got %s', $this->describe($expected), $this->describe($actual));
+        return $this->at($path).sprintf('expected %s, got %s', $this->describe($expected), $this->describe($actual));
     }
 
     private function compareObjects(stdClass $expected, stdClass $actual, string $path): ?string
     {
         foreach (get_object_vars($expected) as $key => $value) {
-            if (!property_exists($actual, $key)) {
+            if (! property_exists($actual, $key)) {
                 return sprintf('field "%s" missing', $this->join($path, $key));
             }
 
@@ -164,7 +164,7 @@ final class BodyJsonMatcher implements RequestMatcherInterface, ExplainsMismatch
         }
 
         foreach (array_keys(get_object_vars($actual)) as $key) {
-            if (!property_exists($expected, (string) $key)) {
+            if (! property_exists($expected, (string) $key)) {
                 return sprintf('unexpected field "%s"', $this->join($path, (string) $key));
             }
         }
@@ -173,13 +173,13 @@ final class BodyJsonMatcher implements RequestMatcherInterface, ExplainsMismatch
     }
 
     /**
-     * @param array<int|string, mixed> $expected
-     * @param array<int|string, mixed> $actual
+     * @param  array<int|string, mixed>  $expected
+     * @param  array<int|string, mixed>  $actual
      */
     private function compareArrays(array $expected, array $actual, string $path): ?string
     {
         if (count($expected) !== count($actual)) {
-            return $this->at($path) . sprintf(
+            return $this->at($path).sprintf(
                 'expected %d element%s, got %d',
                 count($expected),
                 count($expected) === 1 ? '' : 's',
@@ -215,7 +215,7 @@ final class BodyJsonMatcher implements RequestMatcherInterface, ExplainsMismatch
 
     private function join(string $path, string $key): string
     {
-        return $path === '' ? $key : $path . '/' . $key;
+        return $path === '' ? $key : $path.'/'.$key;
     }
 
     private function at(string $path): string

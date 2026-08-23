@@ -17,7 +17,7 @@ final class FilesystemCassettePersisterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->directory = sys_get_temp_dir() . '/http-vcr-persister-' . bin2hex(random_bytes(6));
+        $this->directory = sys_get_temp_dir().'/http-vcr-persister-'.bin2hex(random_bytes(6));
     }
 
     protected function tearDown(): void
@@ -45,7 +45,7 @@ final class FilesystemCassettePersisterTest extends TestCase
     {
         $this->persister()->write('a/b/c.json', 'x');
 
-        self::assertFileExists($this->directory . '/a/b/c.json');
+        self::assertFileExists($this->directory.'/a/b/c.json');
     }
 
     public function testDeleteRemovesTheFileAndIsSilentWhenThereIsNothingToRemove(): void
@@ -99,7 +99,7 @@ final class FilesystemCassettePersisterTest extends TestCase
     public function testDescribeNamesTheFileAnErrorMessageWouldPointAt(): void
     {
         self::assertSame(
-            $this->directory . '/shopify/get-product.json',
+            $this->directory.'/shopify/get-product.json',
             $this->persister()->describe('shopify/get-product.json'),
         );
     }
@@ -129,7 +129,7 @@ final class FilesystemCassettePersisterTest extends TestCase
 
         $persister->write('api 2024:01/get product.json', 'x');
 
-        self::assertFileExists($this->directory . '/api_2024_01/get_product.json');
+        self::assertFileExists($this->directory.'/api_2024_01/get_product.json');
     }
 
     public function testAHeldLockExcludesAnyoneElseOpeningTheSameFile(): void
@@ -137,7 +137,7 @@ final class FilesystemCassettePersisterTest extends TestCase
         $persister = $this->persister();
         $persister->lock('shopify/get-product.cassette-lock');
 
-        $handle = fopen($this->directory . '/.http-vcr/shopify/get-product.cassette-lock', 'c');
+        $handle = fopen($this->directory.'/.http-vcr/shopify/get-product.cassette-lock', 'c');
         self::assertIsResource($handle);
         self::assertFalse(flock($handle, LOCK_EX | LOCK_NB));
 
@@ -156,10 +156,10 @@ final class FilesystemCassettePersisterTest extends TestCase
         $persister->lock('shopify/get-product.cassette-lock');
         $persister->unlock('shopify/get-product.cassette-lock');
 
-        self::assertFileExists($this->directory . '/.http-vcr/shopify/get-product.cassette-lock');
+        self::assertFileExists($this->directory.'/.http-vcr/shopify/get-product.cassette-lock');
         self::assertSame(
             ['get-product.json'],
-            array_values(array_diff(scandir($this->directory . '/shopify') ?: [], ['.', '..'])),
+            array_values(array_diff(scandir($this->directory.'/shopify') ?: [], ['.', '..'])),
         );
     }
 
@@ -170,7 +170,7 @@ final class FilesystemCassettePersisterTest extends TestCase
         $persister->lock('shopify/get-product.cassette-lock');
         $persister->unlock('shopify/get-product.cassette-lock');
 
-        self::assertSame("*\n", file_get_contents($this->directory . '/.http-vcr/.gitignore'));
+        self::assertSame("*\n", file_get_contents($this->directory.'/.http-vcr/.gitignore'));
     }
 
     public function testNothingOfTheLibrarysOwnShowsUpAmongTheCassettes(): void
@@ -190,7 +190,7 @@ final class FilesystemCassettePersisterTest extends TestCase
 
         $persister->read('shopify/get-product.json');
 
-        self::assertFileDoesNotExist($this->directory . '/.http-vcr');
+        self::assertFileDoesNotExist($this->directory.'/.http-vcr');
     }
 
     public function testUnlockingWhatWasNeverLockedIsNotAnError(): void
@@ -207,7 +207,7 @@ final class FilesystemCassettePersisterTest extends TestCase
 
     private function removeDirectory(string $directory): void
     {
-        if (!is_dir($directory)) {
+        if (! is_dir($directory)) {
             return;
         }
 
@@ -216,7 +216,7 @@ final class FilesystemCassettePersisterTest extends TestCase
                 continue;
             }
 
-            $path = $directory . '/' . $entry;
+            $path = $directory.'/'.$entry;
             is_dir($path) ? $this->removeDirectory($path) : unlink($path);
         }
 

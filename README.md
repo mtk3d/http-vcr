@@ -439,7 +439,7 @@ serializer), `phpunit/phpunit` (the attribute and trait).
 composer install
 vendor/bin/phpunit
 vendor/bin/phpstan analyse            # level max
-vendor/bin/php-cs-fixer fix --dry-run
+vendor/bin/pint --test                # Laravel Pint, laravel preset
 ```
 
 All three run in CI across PHP 8.2–8.5. Conventions for working on this repository are in
