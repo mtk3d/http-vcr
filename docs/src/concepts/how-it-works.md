@@ -55,6 +55,6 @@ On either path, an interaction passes through the [hook chain](hooks.md) — `be
 
 ## No global state
 
-Nothing here patches `curl_exec`, swaps a stream wrapper, or touches anything outside the `VcrClient` instance that was constructed. Two tests running in the same process with two different `VcrClient` instances — different cassettes, different inner clients — never interfere with each other. There's no shared, process-wide state to reset between tests.
+Nothing here touches anything outside the `VcrClient` instance that was constructed. Two tests running in the same process with two different `VcrClient` instances — different cassettes, different inner clients — never interfere with each other. There's no shared, process-wide state to reset between tests.
 
 Project-wide configuration is the one thing that *is* process-wide, and it's frozen before the first `VcrClient` exists precisely so this claim stays true rather than depending on test execution order — see [Configuration Reference](../reference/configuration.md#vcrclientconfigure).

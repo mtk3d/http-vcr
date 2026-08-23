@@ -1,6 +1,6 @@
 {
     "name": "mtk3d/http-vcr",
-    "description": "Record and replay HTTP interactions for fast, deterministic tests — built on PSR-7/PSR-17/PSR-18, not curl monkey-patching.",
+    "description": "Record and replay HTTP interactions for fast, deterministic tests — a decorator over any PSR-18 client, built on PSR-7/PSR-17/PSR-18.",
     "type": "library",
     "license": "MIT",
     "keywords": ["testing", "http", "vcr", "psr-18", "psr-7", "cassette", "mock"],

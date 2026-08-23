@@ -11,9 +11,9 @@ The test suite for "the code that talks to Shopify/Stripe/Zendesk" becomes fast,
 deterministic, and runnable in CI with no network access and no API credentials.
 
 http-vcr is a decorator over [PSR-18](https://www.php-fig.org/psr/psr-18/)
-(`Psr\Http\Client\ClientInterface`) — not a curl patch, not a stream wrapper, no global
-state. Anything that already speaks PSR-18 (Guzzle 7+, Symfony's `Psr18Client`, php-http,
-Buzz) works unchanged, and two `VcrClient` instances in one process never interfere.
+(`Psr\Http\Client\ClientInterface`). Anything that already speaks PSR-18 (Guzzle 7+,
+Symfony's `Psr18Client`, php-http, Buzz) works unchanged, and two `VcrClient` instances in
+one process never interfere — nothing outside the instance you construct is touched.
 
 ```php
 $vcr = new VcrClient($realClient, cassette: 'shopify/get-product');

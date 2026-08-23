@@ -18,4 +18,4 @@ $vcr = new VcrClient(new Http\Client\Curl\Client(), cassette: 'shopify/get-produ
 ## Deliberately out of scope
 
 - **Amp (`amphp/http-client`), ReactPHP (`react/http`)** — a different paradigm entirely: event-loop based, their own promise implementations, not PSR-18's synchronous `sendRequest()`. Doesn't fit the decorator architecture. A possible separate project, not part of this one.
-- **Raw `curl_exec` / stream contexts** — this is precisely the problem http-vcr exists to avoid (see [Introduction](../introduction.md)). If a codebase calls `curl_exec` directly, there's no PSR-18 boundary to decorate — the fix is to introduce one (a PSR-18 client), not to add another monkey-patching layer on top of curl.
+- **Raw `curl_exec` / stream contexts** — http-vcr works by decorating a PSR-18 client, and code calling `curl_exec` (or `file_get_contents` with a stream context) has no such boundary to decorate. Routing those calls through a PSR-18 client first puts them in the zero-setup case above.

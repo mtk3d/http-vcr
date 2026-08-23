@@ -2,7 +2,7 @@
 
 **http-vcr** records real HTTP interactions the first time your tests run, and replays them on every run after that — so the test suite for "the code that talks to Shopify/Stripe/Zendesk" is fast, deterministic, and doesn't need network access or API credentials in CI.
 
-It works by decorating a [PSR-18](https://www.php-fig.org/psr/psr-18/) HTTP client (`Psr\Http\Client\ClientInterface`). Anything that already speaks PSR-18 — Guzzle 7+, Symfony's `Psr18Client`, php-http's clients — works with zero configuration. No monkey-patching curl, no swapping stream wrappers, no global state that breaks the moment your HTTP client library changes its internals.
+It works by decorating a [PSR-18](https://www.php-fig.org/psr/psr-18/) HTTP client (`Psr\Http\Client\ClientInterface`). Anything that already speaks PSR-18 — Guzzle 7+, Symfony's `Psr18Client`, php-http's clients — works with zero configuration. Recording and replay happen inside the `VcrClient` instance you construct, so there is no process-wide state to install or reset between tests.
 
 ```php
 $vcr = new VcrClient($realClient, cassette: 'shopify/get-product');
