@@ -2,10 +2,11 @@
 
 **Record real HTTP interactions once, replay them on every test run after that.**
 
-[![CI](https://github.com/mtk3d/http-vcr/actions/workflows/ci.yml/badge.svg)](https://github.com/mtk3d/http-vcr/actions/workflows/ci.yml)
+[![Packagist](https://img.shields.io/packagist/v/mtk3d/http-vcr?label=packagist)](https://packagist.org/packages/mtk3d/http-vcr)
+[![Tests](https://img.shields.io/github/actions/workflow/status/mtk3d/http-vcr/ci.yml?branch=master&label=tests)](https://github.com/mtk3d/http-vcr/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/github/actions/workflow/status/mtk3d/http-vcr/docs.yml?branch=master&label=docs)](https://mtk3d.github.io/http-vcr/)
 [![PHP 8.2+](https://img.shields.io/badge/php-8.2%20%E2%80%93%208.5-777bb4.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
-[![Documentation](https://img.shields.io/badge/docs-mtk3d.github.io%2Fhttp--vcr-blue.svg)](https://mtk3d.github.io/http-vcr/)
 
 The test suite for "the code that talks to Shopify/Stripe/Zendesk" becomes fast,
 deterministic, and runnable in CI with no network access and no API credentials.
@@ -54,10 +55,10 @@ cassette fails loudly instead of quietly reaching for a real API without credent
 composer require --dev mtk3d/http-vcr
 ```
 
-> No release is tagged yet. Until then, point Composer at the repository:
+> No release is tagged yet. The package is on Packagist, so until one is, ask for the
+> development branch:
 >
 > ```bash
-> composer config repositories.http-vcr vcs https://github.com/mtk3d/http-vcr
 > composer require --dev mtk3d/http-vcr:dev-master
 > ```
 
