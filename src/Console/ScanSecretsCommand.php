@@ -79,10 +79,11 @@ final class ScanSecretsCommand extends Command
                 foreach ($cassette->interactions as $position => $interaction) {
                     foreach ([...$scanner->scan($interaction), ...$this->literals($interaction, $secrets)] as $finding) {
                         $lines[] = sprintf(
-                            '  #%d %s — "%s"',
+                            '  #%d %s — "%s" (%d chars)',
                             $position + 1,
                             $finding->location,
                             $finding->excerpt(),
+                            $finding->length(),
                         );
                     }
                 }

@@ -19,7 +19,7 @@ Every session that records something runs the newly recorded interactions throug
 ```
 http-vcr: recorded 1 interaction → tests/Cassettes/shopify/get-product.json
   response.body carries a credential-shaped value, stored unredacted:
-    "sk_live_4eC39H…"
+    "sk_live_…" (32 chars)
 ```
 
 It reports what it found and where it sits. What to do about it is a judgement it can't make for you: `sk_live_…` in a payment test is a real leak, the same string in a fixture describing an error response is not. Redact and record again, or leave it as it is.

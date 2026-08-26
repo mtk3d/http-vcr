@@ -79,9 +79,10 @@ final class SecretScanner
 
         foreach ($findings as $finding) {
             $warning .= sprintf(
-                "  %s carries a credential-shaped value, stored unredacted:\n    \"%s\"\n",
+                "  %s carries a credential-shaped value, stored unredacted:\n    \"%s\" (%d chars)\n",
                 $finding->location,
                 $finding->excerpt(),
+                $finding->length(),
             );
         }
 

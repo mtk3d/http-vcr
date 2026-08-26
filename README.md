@@ -305,7 +305,7 @@ credential heuristic and warns:
 ```
 http-vcr: recorded 1 interaction → tests/Cassettes/shopify/get-product.json
   response.body carries a credential-shaped value, stored unredacted:
-    "sk_live_4eC39H…"
+    "sk_live_…" (32 chars)
 ```
 
 It never fails a test and never blocks the write — the point is to put the finding in front

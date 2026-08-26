@@ -70,7 +70,7 @@ final class ScanSecretsCommandTest extends TestCase
 
         $display = $this->execute()->getDisplay();
 
-        self::assertStringContainsString('sk_live_51H8sT2e', $display);
+        self::assertStringContainsString('sk_live_…', $display);
         self::assertStringNotContainsString('sk_live_51H8sT2eZvKYlo2CabcdefghijklmnopQR', $display);
     }
 
@@ -125,7 +125,7 @@ final class ScanSecretsCommandTest extends TestCase
         $display = $this->execute()->getDisplay();
 
         self::assertStringContainsString('billing/charge.json', $display);
-        self::assertStringContainsString('Bearer 8f3c2a9b1', $display);
+        self::assertStringContainsString('Bearer …', $display);
     }
 
     public function testACassetteThatCannotBeReadFailsTheCommand(): void

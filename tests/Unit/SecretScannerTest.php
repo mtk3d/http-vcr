@@ -199,7 +199,7 @@ final class SecretScannerTest extends TestCase
         self::assertSame(
             "http-vcr: recorded 1 interaction → tests/Cassettes/payments.json\n"
             ."  response.body carries a credential-shaped value, stored unredacted:\n"
-            ."    \"tk_live_9f8e7d6c…\"\n",
+            ."    \"tk_live…\" (30 chars)\n",
             SecretScanner::warning('tests/Cassettes/payments.json', 1, $findings),
         );
     }
