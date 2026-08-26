@@ -70,6 +70,20 @@ Detection is a default, not a rule. It exists so the common case needs no setup 
 
 In a Laravel app, the [Laravel bridge package](../integrations/laravel.md) adds a second condition to the same default: recording is allowed only when the environment is `local`/`testing` **and** no CI signal was detected. It narrows the default, never widens it — an environment check replacing CI detection would allow recording on CI, where tests run with `APP_ENV=testing`. An explicit variable still wins.
 
+## Your own variables
+
+The variables above are read by http-vcr itself. The other direction — the credentials a recording session needs, named by [`requiresEnv`](../integrations/phpunit.md) or read by a [`redact()`](../safety/redaction.md) closure — is your project's, and http-vcr looks for them in `$_ENV`, then `$_SERVER`, then `getenv()`.
+
+That order is what makes a framework's `.env` work without exporting anything: Laravel and Symfony both load one through Dotenv, which populates `$_ENV` and `$_SERVER` before the first test runs. Nothing has to be repeated in a `phpunit.xml` `<env>` block or in the shell.
+
+`requiresEnv` reads that chain at the moment a request is about to be recorded rather than when the session opens, so a credential a test puts in place in its own `setUp()` counts.
+
+In your own code — a `redact()` closure, an assertion — `$_ENV` is the one entry in that chain that can be empty for a reason unrelated to your `.env` file: PHP only populates it when `variables_order` in `php.ini` contains `E`, and the CLI default on many distributions is `GPCS`, which doesn't. If a variable you know is set reads as missing, that's the cause. `getenv()` is unaffected, and a closure can use either:
+
+```php
+$vcr->redact('<API_KEY>', fn () => getenv('SHOPIFY_API_KEY'));
+```
+
 ## Recipes
 
 Recording is allowed by default on a developer machine, so the local recipes below don't set `VCR_ALLOW_RECORDING=1` — it's only worth spelling out when something in the shell sets `CI`, or to make the intent explicit in a script someone else will read.

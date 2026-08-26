@@ -70,10 +70,25 @@ $vcr->redactHeader('X-Api-Key', fn () => $_ENV['API_KEY']);    // two-way
 $vcr->redactHeader('X-Api-Key');                               // one-way: write only
 ```
 
+A value provider is called when the value is needed rather than when the rule is declared, so it can read a credential a framework's `.env` puts in place later in the boot. If `$_ENV` reads as empty in your suite, see [where http-vcr looks for your variables](../reference/environment.md#your-own-variables).
+
 A one-way rule replaces the value with a placeholder on the way to disk and has nothing to restore it from on the way back. Two consequences, both of which look like bugs if you don't expect them:
 
 1. **The field stops distinguishing interactions.** Comparing a placeholder against a real value would never match, so http-vcr redacts the *incoming* request the same way before matching, leaving the same placeholder on both sides (see [Matching Requests](../concepts/matching.md#redacted-values-are-normalized-on-both-sides)). Two recordings that differ only in a one-way redacted field become indistinguishable.
 2. **Application code receives the placeholder** at replay time. That's fine for a field the test only asserts on (`customer.email`), and not fine for a token the application reads out of the response and sends in its next request (`refresh_token`). For anything in that second category, pass a value provider.
+
+### What restoring matches on
+
+A two-way rule puts the real value back where it finds **its own placeholder** — not wherever the field it names appears. The two field-targeted cases differ:
+
+- `redactHeader`, `redactJsonField`, `redactQueryParam`, `redactFormField` restore a field whose recorded value is *exactly* the placeholder. A cassette holding a real email under `/customer/email` — recorded before the rule existed, or under a placeholder that has since been renamed — replays that email unchanged.
+- `redact()` works on the text, so it swaps the placeholder back wherever it occurs, including in the middle of a body or an [error message](../advanced/transport-errors.md).
+
+The practical consequence is that adding a rule doesn't reach back into cassettes recorded without it. Re-record the cassette so the placeholder is actually in the file:
+
+```bash
+VCR_ERASE_TAPE=shopify/get-product vendor/bin/phpunit --filter GetProduct
+```
 
 ## Opting out of the default header redaction
 
