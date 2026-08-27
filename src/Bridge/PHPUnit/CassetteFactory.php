@@ -59,14 +59,38 @@ final class CassetteFactory
     }
 
     /**
-     * The directory this class's cassettes live in, looked for up the inheritance chain
-     * because PHP does not carry attributes to a subclass on its own.
+     * The directory this class's cassettes live in: what it said with
+     * `#[CassetteDirectory]` — looked for up the inheritance chain, because PHP does not
+     * carry attributes to a subclass on its own — and failing that, what the project's
+     * `cassetteDirectories` map makes of the file it lives in ({@see CassetteDirectoryMap}).
+     *
+     * That order is the general rule of the library: a class that names its own directory
+     * has said something specific about itself, and a pattern is a statement about
+     * everything that hasn't.
      *
      * @param  class-string  $class
      */
     public function directoryFor(string $class): ?string
     {
-        return $this->upTheChain($class, CassetteDirectory::class)?->path;
+        $declared = $this->upTheChain($class, CassetteDirectory::class)?->path;
+
+        if ($declared !== null) {
+            return $declared;
+        }
+
+        $map = Config::global()->cassetteDirectories();
+
+        if ($map->isEmpty()) {
+            return null;
+        }
+
+        try {
+            $file = (new ReflectionClass($class))->getFileName();
+        } catch (ReflectionException) {
+            return null;
+        }
+
+        return $file === false ? null : $map->directoryFor($file);
     }
 
     /**

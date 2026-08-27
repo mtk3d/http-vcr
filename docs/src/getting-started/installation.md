@@ -51,6 +51,6 @@ In a Laravel app the same commands are also available through `artisan vcr:*` �
 
 ## Where cassettes go
 
-By default, `tests/Cassettes/` relative to the project root (the directory containing `composer.json`), with the cassette name as a path inside it — `shopify/get-product` becomes `tests/Cassettes/shopify/get-product.yaml`, or `.json` where `symfony/yaml` isn't installed. Change the directory with `cassetteDirectory` in [`http-vcr.php`](../integrations/phpunit.md#project-configuration), and the format with [`serializer`](../advanced/storage-and-formats.md#serializers).
+By default, `tests/Cassettes/` relative to the project root (the directory containing `composer.json`), with the cassette name as a path inside it — `shopify/get-product` becomes `tests/Cassettes/shopify/get-product.yaml`, or `.json` where `symfony/yaml` isn't installed. Change the directory with `cassetteDirectory` in [`http-vcr.php`](../integrations/phpunit.md#project-configuration), and the format with [`serializer`](../advanced/storage-and-formats.md#serializers). To keep a module's recordings beside the module instead, see [Cassettes somewhere other than the project root](../integrations/phpunit.md#cassettes-somewhere-other-than-the-project-root).
 
 Cassettes are meant to be committed. The lock files http-vcr uses while recording are not, and take no setup either way: they go in a `.http-vcr/` directory inside the cassette directory, which ignores itself.

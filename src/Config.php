@@ -58,6 +58,7 @@ final class Config
     private static bool $frozen = false;
 
     /**
+     * @param  array<string, string>  $cassetteDirectories
      * @param  list<RequestMatcherInterface>  $defaultMatchers
      * @param  array<string, callable(): mixed>  $redact
      * @param  array<string, Provider>  $providers
@@ -65,6 +66,7 @@ final class Config
      */
     private function __construct(
         private readonly ?string $cassetteDirectory,
+        private readonly array $cassetteDirectories,
         private readonly ?CassettePersisterInterface $persister,
         private readonly ?CassetteSerializerInterface $serializer,
         private readonly array $defaultMatchers,
@@ -88,6 +90,9 @@ final class Config
     }
 
     /**
+     * @param  array<string, string>  $cassetteDirectories  path pattern to cassette directory,
+     *                                                      for a project that keeps a module's
+     *                                                      recordings beside the module (§3.12)
      * @param  list<RequestMatcherInterface>  $defaultMatchers  empty means Method + Uri + QueryString
      * @param  array<string, callable(): mixed>  $redact  placeholder to value provider, for a
      *                                                    secret every cassette in the project
@@ -100,6 +105,7 @@ final class Config
      */
     public static function create(
         ?string $cassetteDirectory = null,
+        array $cassetteDirectories = [],
         ?CassettePersisterInterface $persister = null,
         ?CassetteSerializerInterface $serializer = null,
         array $defaultMatchers = [],
@@ -121,6 +127,7 @@ final class Config
     ): self {
         return new self(
             $cassetteDirectory,
+            $cassetteDirectories,
             $persister,
             $serializer,
             $defaultMatchers,
@@ -239,6 +246,7 @@ final class Config
     {
         return new self(
             $this->cassetteDirectory ?? $base->cassetteDirectory,
+            $this->cassetteDirectories === [] ? $base->cassetteDirectories : $this->cassetteDirectories,
             $this->persister ?? $base->persister,
             $this->serializer ?? $base->serializer,
             $this->defaultMatchers !== [] ? $this->defaultMatchers : $base->defaultMatchers,
@@ -471,6 +479,15 @@ final class Config
     public function cassetteDirectory(): string
     {
         return $this->cassetteDirectory ?? self::projectRoot().'/tests/Cassettes';
+    }
+
+    /**
+     * Where a test file's cassettes go when its own path decides that, above this
+     * configuration's single directory and below a `#[CassetteDirectory]` on the class.
+     */
+    public function cassetteDirectories(): CassetteDirectoryMap
+    {
+        return new CassetteDirectoryMap($this->cassetteDirectories, self::projectRoot());
     }
 
     /**

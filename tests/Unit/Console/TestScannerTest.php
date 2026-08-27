@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr\Tests\Unit\Console;
 
+use HttpVcr\CassetteDirectoryMap;
 use HttpVcr\Console\CassetteDeclaration;
 use HttpVcr\Console\ScannedTests;
 use HttpVcr\Console\TestScanner;
@@ -148,6 +149,34 @@ final class TestScannerTest extends TestCase
 
         self::assertSame([], $scanned->unanalyzed);
         self::assertSame(7, $scanned->declarations[0]->declared->staleAfter?->d);
+    }
+
+    /**
+     * The command has to see the same directory the run will write into, or `stale` and
+     * `scan-secrets` sweep a directory the cassettes are not in.
+     */
+    public function testAPatternMapDecidesTheDirectoryForAClassThatNamesNone(): void
+    {
+        $this->file('Modules/Shopify/GetProductTest.php', <<<'PHP'
+            <?php
+
+            namespace App\Tests\Modules\Shopify;
+
+            use HttpVcr\Bridge\PHPUnit\UseCassette;
+
+            final class GetProductTest extends \PHPUnit\Framework\TestCase
+            {
+                #[UseCassette('shopify/get-product')]
+                public function testItReadsAProduct(): void {}
+            }
+            PHP);
+
+        $scanned = $this->scan(['Modules/*/' => '{match}/Cassettes']);
+
+        self::assertSame(
+            [$this->directory->path.'/Modules/Shopify/Cassettes'],
+            $scanned->directories(),
+        );
     }
 
     public function testACassetteDirectoryIsInheritedAndItsDirConstantResolvesWhereItIsWritten(): void
@@ -343,8 +372,14 @@ final class TestScannerTest extends TestCase
         $this->directory->write($name, $content);
     }
 
-    private function scan(): ScannedTests
+    /**
+     * @param  array<string, string>  $cassetteDirectories
+     */
+    private function scan(array $cassetteDirectories = []): ScannedTests
     {
-        return (new TestScanner([$this->directory->path]))->scan();
+        return (new TestScanner(
+            [$this->directory->path],
+            new CassetteDirectoryMap($cassetteDirectories, $this->directory->path),
+        ))->scan();
     }
 }

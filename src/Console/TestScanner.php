@@ -8,6 +8,7 @@ use DateInterval;
 use Exception;
 use HttpVcr\Bridge\PHPUnit\CassetteDirectory;
 use HttpVcr\Bridge\PHPUnit\UseCassette;
+use HttpVcr\CassetteDirectoryMap;
 use HttpVcr\Config;
 use HttpVcr\RecordMode;
 use HttpVcr\Stale;
@@ -66,12 +67,16 @@ final class TestScanner
     /** @var list<string> */
     private array $unanalyzed = [];
 
+    private ?CassetteDirectoryMap $map = null;
+
     /**
      * @param  list<string>  $directories  where the project keeps its tests — normally
      *                                     {@see Config::testDirectories()}
      */
-    public function __construct(private readonly array $directories)
-    {
+    public function __construct(
+        private readonly array $directories,
+        private readonly ?CassetteDirectoryMap $cassetteDirectories = null,
+    ) {
         $this->parser = (new ParserFactory)->createForHostVersion();
     }
 
@@ -95,7 +100,8 @@ final class TestScanner
             }
 
             $inherited = $this->inherited($class, $classes, static fn (ScannedClass $found): ?UseCassette => $found->cassette);
-            $directory = $this->inherited($class, $classes, static fn (ScannedClass $found): ?string => $found->directory);
+            $directory = $this->inherited($class, $classes, static fn (ScannedClass $found): ?string => $found->directory)
+                ?? $this->cassetteDirectoryMap()->directoryFor($class->file);
 
             foreach ($this->methodsOf($class, $classes) as $method => $own) {
                 $declared = $own ?? $inherited;
@@ -521,6 +527,15 @@ final class TestScanner
         }
 
         return $strings;
+    }
+
+    /**
+     * The project's path-to-directory map, read once per scan. Taken from the global
+     * configuration unless one was handed in, the way every other command-side default is.
+     */
+    private function cassetteDirectoryMap(): CassetteDirectoryMap
+    {
+        return $this->map ??= $this->cassetteDirectories ?? Config::global()->cassetteDirectories();
     }
 
     /**

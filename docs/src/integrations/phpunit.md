@@ -180,9 +180,41 @@ final class ChargeTest extends BillingTestCase
 
 Cassette names are unaffected: `stripe/charge` is still just a path inside whichever directory applies. Nothing is routed by name.
 
+### One rule instead of twenty attributes
+
+The attribute answers the question one class at a time, which is right for one module and repetitive for twenty — and the twenty-first, added later, is the one that quietly writes into the project-wide directory instead. A project whose modules all follow the same layout can say that once, in [`http-vcr.php`](../reference/configuration.md):
+
+```php
+return Config::create(
+    cassetteDirectories: ['tests/Modules/*/' => '{match}/Cassettes'],
+);
+```
+
+Every test under `tests/Modules/Shopify/` now records into `tests/Modules/Shopify/Cassettes/`, however deep in the module it sits, and a module added tomorrow is covered by being put where the others are.
+
+A pattern is matched against the test file's path relative to the project root, from the start and up to a directory boundary — `tests/Modules/*` covers `tests/Modules/Shopify` and never `tests/ModulesLegacy`. `*` stays inside one path segment, `**` crosses them (`packages/**/tests/`). In the directory:
+
+| Placeholder | Is |
+|---|---|
+| `{match}` | the part of the path the pattern matched — `tests/Modules/Shopify` |
+| `{1}`, `{2}`, … | what each `*` matched on its own — `Shopify` |
+
+So `'tests/Modules/*/' => 'tests/Cassettes/{1}'` collects them centrally instead, one directory per module. A relative directory resolves against the project root; an absolute one is left where it points.
+
+The first pattern that matches wins, so a special case goes above the general rule:
+
+```php
+cassetteDirectories: [
+    'tests/Modules/Legacy/' => 'tests/Cassettes/legacy',
+    'tests/Modules/*/'      => '{match}/Cassettes',
+],
+```
+
+And a class that names its own directory keeps it: `#[CassetteDirectory]` is a statement about that class, a pattern is a statement about everything that hasn't made one. Both are read by the CLI as well as by the run, so `stale`, `scan-secrets` and `migrate` visit the same directories the tests write to.
+
 Two limits worth knowing:
 
-- **It only covers the PHPUnit path.** A hand-built `VcrClient` elsewhere takes a `persister` argument instead.
+- **Both only cover the PHPUnit path.** A hand-built `VcrClient` elsewhere takes a `persister` argument instead — there is no test file for a pattern to be matched against.
 - **The CLI resolves it by parsing, not executing.** `stale`, `tests` and `scan-secrets` read the attribute from the test files' syntax tree, following `extends` across every `.php` file under `testDirectories`. A base class outside those directories is never parsed, so a `#[UseCassette]` or `#[CassetteDirectory]` written on one is invisible to the CLI while still working at run time — keep shared declarations on a base class that lives under `testDirectories`. An argument the parser can't evaluate (`staleAfter: self::INTERVAL`) is reported as not fully analyzed rather than guessed at. It is also why the named intervals are enum cases: `Stale::Week` is a constant expression, which both PHP attributes and this scan can resolve, and a factory call is neither.
 
 ## Environment variables

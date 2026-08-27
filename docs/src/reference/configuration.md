@@ -30,6 +30,7 @@ return Config::create(
 | Option | Default | What it does |
 |---|---|---|
 | `cassetteDirectory` | `tests/Cassettes/` under the project root | Where cassettes live. A cassette name is a path inside it. |
+| `cassetteDirectories` | `[]` | Path pattern to cassette directory, for a project that keeps a module's recordings beside the module: `['tests/Modules/*/' => '{match}/Cassettes']`. Read below `#[CassetteDirectory]` and above `cassetteDirectory`. See [One rule instead of twenty attributes](../integrations/phpunit.md#one-rule-instead-of-twenty-attributes). |
 | `testDirectories` | `tests/` under the project root | Where [`tests`](cli.md#tests), [`stale`](cli.md#stale) and [`scan-secrets`](cli.md#scan-secrets) look for test files to parse — every `.php` file under them, since a base test case is rarely named `*Test.php`. Only the CLI uses this. Same root rule as `cassetteDirectory` — nothing looks for `phpunit.xml`. |
 | `providers` | `[]` | Named external APIs — host patterns plus the environment variables recording them requires. Optional: `VCR_ERASE_TAPE=@name` also works against bare hostnames without any configuration. See [Providers](../integrations/phpunit.md#providers). |
 | `scanRecordingsForSecrets` | `true` | After a session records anything, check the new interactions for credential-shaped values and warn. Never fails a test. See [Redacting Sensitive Data](../safety/redaction.md#the-automatic-check-after-recording). |

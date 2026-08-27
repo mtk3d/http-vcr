@@ -147,11 +147,13 @@ final class VcrClient implements ClientInterface
      * @param  list<RequestMatcherInterface>  $defaultMatchers
      * @param  array<string, callable(): mixed>  $redact  project-wide redaction rules
      * @param  array<string, Provider>  $providers  named APIs, recognised by host
+     * @param  array<string, string>  $cassetteDirectories  path pattern to cassette directory (§3.12)
      * @param  list<string>  $testDirectories  where the CLI scans for tests
      * @param  (callable(): ClientInterface)|null  $innerClientFactory  the client #[UseCassette] records through
      */
     public static function configure(
         ?string $cassetteDirectory = null,
+        array $cassetteDirectories = [],
         ?CassettePersisterInterface $persister = null,
         ?CassetteSerializerInterface $serializer = null,
         array $defaultMatchers = [],
@@ -172,6 +174,7 @@ final class VcrClient implements ClientInterface
     ): void {
         Config::replaceGlobal(Config::create(
             $cassetteDirectory,
+            $cassetteDirectories,
             $persister,
             $serializer,
             $defaultMatchers,

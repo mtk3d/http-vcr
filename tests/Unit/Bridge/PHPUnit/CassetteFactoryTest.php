@@ -75,6 +75,30 @@ final class CassetteFactoryTest extends TestCase
         self::assertNull($this->factory->directoryFor(PlainTest::class));
     }
 
+    /**
+     * The pattern map is read where the class has said nothing: this file sits under
+     * `tests/Unit/Bridge/PHPUnit`, so the rule below puts its cassettes beside it.
+     */
+    public function testAClassThatNamesNoDirectoryGetsTheOneItsPathImplies(): void
+    {
+        Config::reset();
+        VcrClient::configure(cassetteDirectories: ['tests/Unit/Bridge/*/' => '{match}/Cassettes']);
+
+        self::assertSame(__DIR__.'/Cassettes', $this->factory->directoryFor(PlainTest::class));
+    }
+
+    public function testAClassThatNamesItsOwnDirectoryKeepsIt(): void
+    {
+        Config::reset();
+        VcrClient::configure(cassetteDirectories: ['tests/Unit/Bridge/*/' => '{match}/Cassettes']);
+
+        self::assertSame(
+            '/modules/billing/tests/Cassettes',
+            $this->factory->directoryFor(InheritsTheDirectory::class),
+            'an attribute is a statement about this class; a pattern is one about everything else',
+        );
+    }
+
     public function testTheClientIsBuiltWithoutResolvingATransportThatMayNeverBeUsed(): void
     {
         Config::replaceGlobal(Config::create(innerClientFactory: static function (): never {
