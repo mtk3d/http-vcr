@@ -10,6 +10,7 @@ use HttpVcr\Clock\FrozenClock;
 use HttpVcr\Config;
 use HttpVcr\Exception\StaleCassetteException;
 use HttpVcr\RecordMode;
+use HttpVcr\Stale;
 use HttpVcr\Tests\Support\CassetteDirectory;
 use HttpVcr\Tests\Support\ControlsEnvironment;
 use HttpVcr\Tests\Support\FakeHttpClient;
@@ -75,6 +76,30 @@ final class StaleCassetteTest extends TestCase
         $this->expectExceptionMessage('VCR_ERASE_TAPE=shopify/get-product');
 
         $this->client(self::LONG_AFTER)->sendRequest(new Request('GET', 'https://api.example.com/products/1'));
+    }
+
+    /**
+     * The named interval takes the same path as one written out: `Stale::Week` is the same
+     * seven days the test above declares as `new DateInterval('P7D')`.
+     */
+    public function testANamedIntervalIsEnforcedLikeAnyOther(): void
+    {
+        $this->recordAt(self::RECORDED_AT);
+        $_ENV['VCR_ENFORCE_STALE_CHECK'] = '1';
+
+        $vcr = new VcrClient(
+            new FakeHttpClient,
+            'shopify/get-product',
+            RecordMode::RecordIfAbsent,
+            staleAfter: Stale::Week,
+            clock: FrozenClock::at(self::LONG_AFTER),
+            persister: $this->cassettes->persister(),
+        );
+
+        $this->expectException(StaleCassetteException::class);
+        $this->expectExceptionMessage('stale since 2026-08-08T12:00:00+00:00');
+
+        $vcr->sendRequest(new Request('GET', 'https://api.example.com/products/1'));
     }
 
     public function testIgnoringStaleCassettesOutranksEnforcement(): void

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr\Tests\Unit\Bridge\PHPUnit;
 
+use DateInterval;
 use HttpVcr\Ansi;
 use HttpVcr\Bridge\PHPUnit\CassetteDirectory;
 use HttpVcr\Bridge\PHPUnit\CassetteFactory;
@@ -12,6 +13,7 @@ use HttpVcr\Bridge\PHPUnit\RunWarnings;
 use HttpVcr\Bridge\PHPUnit\UseCassette;
 use HttpVcr\Config;
 use HttpVcr\RecordMode;
+use HttpVcr\Stale;
 use HttpVcr\VcrClient;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -82,6 +84,13 @@ final class CassetteFactoryTest extends TestCase
         $client = $this->factory->open(new UseCassette('bridge/greeting', RecordMode::PlaybackOnly));
 
         self::assertInstanceOf(VcrClient::class, $client);
+    }
+
+    public function testANamedIntervalOnTheAttributeIsStoredAsTheIntervalItNames(): void
+    {
+        self::assertSame(7, (new UseCassette('shopify/get-product', staleAfter: Stale::Week))->staleAfter?->d);
+        self::assertSame(30, (new UseCassette('x', staleAfter: new DateInterval('P30D')))->staleAfter?->d);
+        self::assertNull((new UseCassette('x'))->staleAfter);
     }
 
     public function testARunWithNothingToSayHasNoSummaryToPrint(): void

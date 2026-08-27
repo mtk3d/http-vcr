@@ -7,6 +7,7 @@ namespace HttpVcr\Bridge\PHPUnit;
 use Attribute;
 use DateInterval;
 use HttpVcr\RecordMode;
+use HttpVcr\Stale;
 use HttpVcr\StrictMode;
 use HttpVcr\VcrClient;
 
@@ -30,13 +31,16 @@ use HttpVcr\VcrClient;
 #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
 final readonly class UseCassette
 {
+    public ?DateInterval $staleAfter;
+
     /**
      * @param  string  $name  a path inside the cassette directory, without an
      *                        extension: `shopify/get-product`
      * @param  StrictMode|null  $strictMode  null leaves it to the project configuration, which
      *                                       asserts nothing about replay by default (§3.6)
-     * @param  DateInterval|null  $staleAfter  how long this recording stays fresh; null tracks
-     *                                         nothing (§3.7)
+     * @param  DateInterval|Stale|null  $staleAfter  how long this recording stays fresh — a
+     *                                               named interval or one of your own; null
+     *                                               tracks nothing (§3.7)
      * @param  list<string>  $requiresEnv  variables this cassette needs before it may record,
      *                                     on top of whatever its provider declared (§3.12)
      * @param  bool  $locked  locks the whole file for the length of the run, above
@@ -47,8 +51,12 @@ final readonly class UseCassette
         public string $name,
         public RecordMode $mode = RecordMode::RecordIfAbsent,
         public ?StrictMode $strictMode = null,
-        public ?DateInterval $staleAfter = null,
+        DateInterval|Stale|null $staleAfter = null,
         public array $requiresEnv = [],
         public bool $locked = false,
-    ) {}
+    ) {
+        // Resolved here rather than carried as a union: everything reading this attribute
+        // — the factory, the AST scan behind `http-vcr stale` — wants the interval.
+        $this->staleAfter = Stale::asInterval($staleAfter);
+    }
 }

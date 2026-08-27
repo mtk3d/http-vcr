@@ -6,6 +6,7 @@ namespace HttpVcr\Bridge\PHPUnit;
 
 use DateInterval;
 use HttpVcr\RecordMode;
+use HttpVcr\Stale;
 use HttpVcr\StrictMode;
 use HttpVcr\VcrClient;
 use LogicException;
@@ -59,7 +60,7 @@ trait InteractsWithCassettes
         callable $body,
         RecordMode $mode = RecordMode::RecordIfAbsent,
         ?StrictMode $strictMode = null,
-        ?DateInterval $staleAfter = null,
+        DateInterval|Stale|null $staleAfter = null,
         array $requiresEnv = [],
         bool $locked = false,
     ): mixed {

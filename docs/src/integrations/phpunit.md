@@ -25,7 +25,7 @@ use HttpVcr\Bridge\PHPUnit\UseCassette;
     requiresEnv: ['ZENDESK_ACCOUNT_A_SUBDOMAIN'], // optional — on top of the provider's own, see Providers
     locked: true,                        // optional — see Locked Interactions
     strictMode: StrictMode::AllPlayed,   // optional, defaults to StrictMode::None — see Strict & Sequential Mode
-    staleAfter: new DateInterval('P7D'), // optional, defaults to null — see Auto Re-record
+    staleAfter: Stale::Week,             // optional, defaults to null — see Auto Re-record
 )]
 public function testGetTicket(): void { /* ... */ }
 ```
@@ -183,7 +183,7 @@ Cassette names are unaffected: `stripe/charge` is still just a path inside which
 Two limits worth knowing:
 
 - **It only covers the PHPUnit path.** A hand-built `VcrClient` elsewhere takes a `persister` argument instead.
-- **The CLI resolves it by parsing, not executing.** `stale`, `tests` and `scan-secrets` read the attribute from the test files' syntax tree, following `extends` across every `.php` file under `testDirectories`. A base class outside those directories is never parsed, so a `#[UseCassette]` or `#[CassetteDirectory]` written on one is invisible to the CLI while still working at run time — keep shared declarations on a base class that lives under `testDirectories`. An argument the parser can't evaluate (`staleAfter: self::INTERVAL`) is reported as not fully analyzed rather than guessed at.
+- **The CLI resolves it by parsing, not executing.** `stale`, `tests` and `scan-secrets` read the attribute from the test files' syntax tree, following `extends` across every `.php` file under `testDirectories`. A base class outside those directories is never parsed, so a `#[UseCassette]` or `#[CassetteDirectory]` written on one is invisible to the CLI while still working at run time — keep shared declarations on a base class that lives under `testDirectories`. An argument the parser can't evaluate (`staleAfter: self::INTERVAL`) is reported as not fully analyzed rather than guessed at. It is also why the named intervals are enum cases: `Stale::Week` is a constant expression, which both PHP attributes and this scan can resolve, and a factory call is neither.
 
 ## Environment variables
 

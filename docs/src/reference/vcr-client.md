@@ -9,7 +9,7 @@ public function __construct(
     RecordMode $mode = RecordMode::RecordIfAbsent,
     array $matchers = [],
     ?StrictMode $strictMode = null,
-    ?DateInterval $staleAfter = null,
+    DateInterval|Stale|null $staleAfter = null,
     array $requiresEnv = [],
     bool $recordTransportErrors = false,
     bool $decodeCompressedResponse = true,
@@ -35,7 +35,7 @@ public function withInner(ClientInterface $inner): self;
 | `mode` | `RecordIfAbsent` | [Record mode](../concepts/record-modes.md). |
 | `matchers` | `[]` → `[Method, Uri, QueryString]` | [Matchers](../concepts/matching.md), combined with AND. Empty means the project default from config. |
 | `strictMode` | `None` | [`AllPlayed` / `InOrder`](../advanced/strict-mode.md) assertions at cassette close. |
-| `staleAfter` | `null` | [Staleness threshold](../advanced/stale-after.md). `null` means freshness isn't tracked. |
+| `staleAfter` | `null` | [Staleness threshold](../advanced/stale-after.md), as a [named interval](../advanced/stale-after.md#naming-the-interval) (`Stale::Week`) or a `DateInterval` of your own. `null` means freshness isn't tracked. |
 | `requiresEnv` | `[]` | Environment variables that must be set — checked on the recording branch, not at construction. See [PHPUnit](../integrations/phpunit.md#pre-validating-environment-variables). |
 | `recordTransportErrors` | `false` | Whether to persist [transport failures](../advanced/transport-errors.md) instead of letting them pass through unrecorded. |
 | `decodeCompressedResponse` | `true` | Decompress `Content-Encoding: gzip`/`br`/`deflate` before storing, and strip the header. Turn off only when compression itself is what's under test. |

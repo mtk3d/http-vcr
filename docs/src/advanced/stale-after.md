@@ -3,8 +3,29 @@
 APIs change. A cassette recorded six months ago might no longer reflect what the real endpoint returns today — and there's no way to know that from a passing test, since the test is, by design, no longer talking to the real API. `staleAfter` flags that without turning it into a build gate no one asked for.
 
 ```php
-new VcrClient($inner, cassette: 'shopify/get-product', staleAfter: new DateInterval('P7D'));
+new VcrClient($inner, cassette: 'shopify/get-product', staleAfter: Stale::Week);
 ```
+
+## Naming the interval
+
+`Stale` covers the intervals a recording is realistically given, and reads as what it means at the point of declaration:
+
+| Case | Interval |
+|---|---|
+| `Stale::Day` | `P1D` |
+| `Stale::Week` | `P7D` |
+| `Stale::Month` | `P1M` |
+| `Stale::Quarter` | `P3M` |
+| `Stale::Year` | `P1Y` |
+
+Anywhere `staleAfter` is taken — the `VcrClient` constructor, `#[UseCassette]`, `Config::create()` — a `DateInterval` of your own works just as well, and is the way to say anything this list doesn't cover:
+
+```php
+#[UseCassette('shopify/get-product', staleAfter: Stale::Month)]
+#[UseCassette('shopify/inventory', staleAfter: new DateInterval('PT6H'))]
+```
+
+Two of the five are worth having names for on their own: `P1M` and `PT1M` are a month and a minute, and the one that silences the check is the easy one to type by accident.
 
 ## What "stale" means
 

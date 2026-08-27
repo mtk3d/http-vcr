@@ -122,6 +122,34 @@ final class TestScannerTest extends TestCase
         self::assertTrue($declared->locked);
     }
 
+    /**
+     * The reason `Stale` is an enum: this scan reads the attribute without loading the
+     * class, and a case is a constant expression it can resolve where a factory call
+     * would leave the threshold unknown.
+     */
+    public function testANamedIntervalIsResolvedWithoutRunningTheTest(): void
+    {
+        $this->file('StaleTest.php', <<<'PHP'
+            <?php
+
+            namespace App\Tests;
+
+            use HttpVcr\Bridge\PHPUnit\UseCassette;
+            use HttpVcr\Stale;
+
+            final class NamedStaleTest extends \PHPUnit\Framework\TestCase
+            {
+                #[UseCassette('billing/charge', staleAfter: Stale::Week)]
+                public function testItCharges(): void {}
+            }
+            PHP);
+
+        $scanned = $this->scan();
+
+        self::assertSame([], $scanned->unanalyzed);
+        self::assertSame(7, $scanned->declarations[0]->declared->staleAfter?->d);
+    }
+
     public function testACassetteDirectoryIsInheritedAndItsDirConstantResolvesWhereItIsWritten(): void
     {
         $this->file('Module/ModuleTestCase.php', <<<'PHP'

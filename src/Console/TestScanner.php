@@ -10,6 +10,7 @@ use HttpVcr\Bridge\PHPUnit\CassetteDirectory;
 use HttpVcr\Bridge\PHPUnit\UseCassette;
 use HttpVcr\Config;
 use HttpVcr\RecordMode;
+use HttpVcr\Stale;
 use HttpVcr\StrictMode;
 use PhpParser\ConstExprEvaluationException;
 use PhpParser\ConstExprEvaluator;
@@ -300,7 +301,7 @@ final class TestScanner
             $name,
             $mode instanceof RecordMode ? $mode : RecordMode::RecordIfAbsent,
             $strictMode instanceof StrictMode ? $strictMode : null,
-            $staleAfter instanceof DateInterval ? $staleAfter : null,
+            $staleAfter instanceof DateInterval || $staleAfter instanceof Stale ? $staleAfter : null,
             $this->strings($requiresEnv),
             $locked === true,
         );
