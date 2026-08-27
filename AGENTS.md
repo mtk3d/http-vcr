@@ -24,6 +24,12 @@ examples in `examples/`, and the book built and published from CI.
 Every phase of the plan is built. New work is either a §8 idea being promoted (write the
 decision in §7 first) or a correction to something already here.
 
+Built after M5, out of manual testing (§7 decisions 66–72): coloured warnings through
+`Ansi`, a refused `VCR_ERASE_TAPE` selector that could never match, the `Stale` enum beside
+`DateInterval`, `QueryStringMatcher::ignoreQueryParam()`/`matchOnlyQueryParams()`, the
+report about interactions nothing replayed, and `cassetteDirectories` — a path pattern to
+cassette directory map read below `#[CassetteDirectory]` and above `cassetteDirectory`.
+
 The repository's own `http-vcr.php` pins two things. The cassette format is JSON:
 `symfony/yaml` is a dev dependency here, so the default would resolve to YAML, while the
 committed fixtures are JSON and many tests read the file that landed on disk. And
