@@ -46,9 +46,9 @@ Bodies over the inline threshold are written next to the cassette, named after a
 {cassette}.{sha256(body)[0:16]}.bin
 ```
 
-Content-hash naming — rather than positional, e.g. `{cassette}.0.bin` — means reordering interactions in the JSON file by hand never breaks a `bodyRef`, and identical bodies across interactions are automatically deduplicated to a single sidecar file.
+Content-hash naming — rather than positional, e.g. `{cassette}.0.bin` — means reordering interactions in the cassette by hand never breaks a `bodyRef`, and identical bodies across interactions are automatically deduplicated to a single sidecar file.
 
-`{cassette}` here is the name of the cassette file actually in use, **scope suffix included** and format extension excluded: a sidecar of `get-product.2024-01.json` is `get-product.2024-01.{hash}.bin`. Without the scope, two [scopes](../advanced/scoping.md) of one base cassette would share a sidecar namespace, and deleting one scope could take files the other still needs.
+`{cassette}` here is the name of the cassette file actually in use, **scope suffix included** and format extension excluded: a sidecar of `get-product.2024-01.yaml` is `get-product.2024-01.{hash}.bin`. Without the scope, two [scopes](../advanced/scoping.md) of one base cassette would share a sidecar namespace, and deleting one scope could take files the other still needs.
 
 Sidecars are written through the same persister as the cassette itself, so the same name sanitization and locking rules apply. `CassettePersisterInterface::list()` only returns entries matching the serializer's own extension, so sidecars and lock files never show up there — otherwise commands like `stale` would try to deserialize raw bytes as a cassette.
 
@@ -63,7 +63,7 @@ tests/Cassettes/
 ├── .http-vcr/
 │   ├── .gitignore                              (holds `*`)
 │   └── shopify/get-product.cassette-lock
-└── shopify/get-product.json
+└── shopify/get-product.yaml
 ```
 
 That directory carries its own `.gitignore`, so lock files stay out of version control with nothing to configure and nothing added to the project's own ignore rules. They stay on disk once a session ends, which is why they live somewhere out of the way rather than beside the recordings: deleting one would reopen the race the separate file exists to avoid, since a process waiting on the lock would acquire it on an inode no longer at that path while the next process created a fresh one.

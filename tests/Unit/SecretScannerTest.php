@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HttpVcr\Tests\Unit;
 
 use DateTimeImmutable;
+use HttpVcr\Ansi;
 use HttpVcr\Cassette\ErrorCategory;
 use HttpVcr\Cassette\Interaction;
 use HttpVcr\Cassette\RecordedError;
@@ -201,6 +202,32 @@ final class SecretScannerTest extends TestCase
             ."  response.body carries a credential-shaped value, stored unredacted:\n"
             ."    \"tk_live…\" (30 chars)\n",
             SecretScanner::warning('tests/Cassettes/payments.json', 1, $findings),
+        );
+    }
+
+    /**
+     * The colored form of the same warning: what is worth finding in a wall of test output
+     * is the value itself, so that is the span that gets the color.
+     */
+    public function testWhereColorIsAvailableTheFindingIsTheThingThatCarriesIt(): void
+    {
+        Ansi::assume(true);
+
+        try {
+            $warning = SecretScanner::warning(
+                'tests/Cassettes/payments.json',
+                1,
+                [new SecretFinding('response.body', 'tk_live_9f8e7d6c5b4a3210FEDCBA')],
+            );
+        } finally {
+            Ansi::assume(null);
+        }
+
+        self::assertSame(
+            "\033[33mhttp-vcr:\033[0m recorded 1 interaction → tests/Cassettes/payments.json\n"
+            ."  \033[1mresponse.body\033[0m carries a credential-shaped value, stored unredacted:\n"
+            ."    \033[31m\"tk_live…\"\033[0m (30 chars)\n",
+            $warning,
         );
     }
 

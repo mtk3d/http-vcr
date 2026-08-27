@@ -17,12 +17,12 @@ Anything else — a key in a query string, a secret in a form body, an email in 
 Every session that records something runs the newly recorded interactions through a credential heuristic (`Bearer ` tokens, AWS-style keys, long token-shaped strings, auth headers that don't look like placeholders) and warns about what it finds:
 
 ```
-http-vcr: recorded 1 interaction → tests/Cassettes/shopify/get-product.json
+http-vcr: recorded 1 interaction → tests/Cassettes/shopify/get-product.yaml
   response.body carries a credential-shaped value, stored unredacted:
     "sk_live_…" (32 chars)
 ```
 
-It reports what it found and where it sits. What to do about it is a judgement it can't make for you: `sk_live_…` in a payment test is a real leak, the same string in a fixture describing an error response is not. Redact and record again, or leave it as it is.
+On a terminal the cassette, the location and the value are colored, so the finding can be picked out of a long run without reading it line by line — [`NO_COLOR` and `FORCE_COLOR`](../reference/environment.md#color) decide that. It reports what it found and where it sits. What to do about it is a judgement it can't make for you: `sk_live_…` in a payment test is a real leak, the same string in a fixture describing an error response is not. Redact and record again, or leave it as it is.
 
 It never fails a test and never blocks the write — the cassette is on disk either way, and the point is to put the finding in front of you while the context is still fresh, before the file is committed. Only interactions recorded *in that session* are checked, so a finding you've looked at and accepted doesn't come back every run.
 

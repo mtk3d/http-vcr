@@ -6,6 +6,7 @@ namespace HttpVcr\Cassette;
 
 use Closure;
 use DateInterval;
+use HttpVcr\Ansi;
 use HttpVcr\Environment;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Exception\RecordingNotAllowedException;
@@ -432,8 +433,10 @@ final class CassetteManager
         $this->reportedLock = true;
 
         $this->report(sprintf(
-            "http-vcr: %s\n  cassette fully locked, VCR_ERASE_TAPE had no effect.\n",
+            "%s %s\n  cassette fully locked, %s had no effect.\n",
+            Ansi::yellow('http-vcr:'),
             $this->location(),
+            Ansi::bold('VCR_ERASE_TAPE'),
         ));
     }
 

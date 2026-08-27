@@ -71,7 +71,8 @@ final class SecretScanner
     public static function warning(string $cassette, int $recorded, array $findings): string
     {
         $warning = sprintf(
-            "http-vcr: recorded %d interaction%s → %s\n",
+            "%s recorded %d interaction%s → %s\n",
+            Ansi::yellow('http-vcr:'),
             $recorded,
             $recorded === 1 ? '' : 's',
             $cassette,
@@ -79,9 +80,9 @@ final class SecretScanner
 
         foreach ($findings as $finding) {
             $warning .= sprintf(
-                "  %s carries a credential-shaped value, stored unredacted:\n    \"%s\" (%d chars)\n",
-                $finding->location,
-                $finding->excerpt(),
+                "  %s carries a credential-shaped value, stored unredacted:\n    %s (%d chars)\n",
+                Ansi::bold($finding->location),
+                Ansi::red('"'.$finding->excerpt().'"'),
                 $finding->length(),
             );
         }

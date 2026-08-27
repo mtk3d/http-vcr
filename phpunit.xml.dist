@@ -16,6 +16,11 @@
             <directory>tests/Integration</directory>
         </testsuite>
     </testsuites>
+    <php>
+        <!-- The suite asserts warning text verbatim, so whether a run has a terminal
+             attached must not change what the warnings look like. -->
+        <env name="NO_COLOR" value="1"/>
+    </php>
     <extensions>
         <!-- The library's own suite runs on its own PHPUnit bridge — the only way to find
              out whether #[UseCassette] and the trait actually work together. -->

@@ -41,7 +41,7 @@ A cassette records one test's traffic, which is why the cassette half of a selec
 
 ## `VCR_ERASE_TAPE` and scoped cassettes
 
-The cassette half matches on the **base** name, not on the file name with its [scope](../advanced/scoping.md) suffix. `VCR_ERASE_TAPE=shopify/get-product` therefore catches the session whether the file actually opened is `shopify/get-product.2024-01.json` or `shopify/get-product.2024-04.json` — you name the cassette the test declares, not the file that happens to be on disk for the current API version.
+The cassette half matches on the **base** name, not on the file name with its [scope](../advanced/scoping.md) suffix. `VCR_ERASE_TAPE=shopify/get-product` therefore catches the session whether the file actually opened is `shopify/get-product.2024-01.yaml` or `shopify/get-product.2024-04.yaml` — you name the cassette the test declares, not the file that happens to be on disk for the current API version.
 
 ## CI detection
 
@@ -69,6 +69,17 @@ Detection is a default, not a rule. It exists so the common case needs no setup 
 - **False negative** (a runner that sets none of them) → recording is allowed, same as locally. Setting `VCR_ALLOW_RECORDING=0` in the pipeline is one line, and is worth doing regardless of detection.
 
 In a Laravel app, the [Laravel bridge package](../integrations/laravel.md) adds a second condition to the same default: recording is allowed only when the environment is `local`/`testing` **and** no CI signal was detected. It narrows the default, never widens it — an environment check replacing CI detection would allow recording on CI, where tests run with `APP_ENV=testing`. An explicit variable still wins.
+
+## Color
+
+The warnings a run prints to standard error color three spans: which cassette is speaking, where in the interaction the finding is, and the value itself. Two conventional variables — not http-vcr's own, and not part of the precedence above — decide whether they do:
+
+| Variable | Effect |
+|---|---|
+| `NO_COLOR` | Set to anything non-empty: never color. Beats everything below |
+| `FORCE_COLOR` | Set to anything but `0`: color even with no terminal attached — for a CI log that renders escape sequences, which most hosted runners do |
+
+With neither set, color happens only when standard error is a terminal, and never under `TERM=dumb`. A runner that has already settled the question is believed rather than second-guessed: `phpunit --colors=never` turns it off for the end-of-run block, and `vendor/bin/http-vcr --no-ansi` for anything a command prints.
 
 ## Your own variables
 

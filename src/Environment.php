@@ -44,14 +44,29 @@ final class Environment
         ];
 
         foreach ($names as $name) {
-            $value = $_ENV[$name] ?? $_SERVER[$name] ?? getenv($name);
+            $value = self::read($name);
 
-            if (is_string($value) && $value !== '') {
+            if ($value !== null) {
                 $variables[$name] = $value;
             }
         }
 
         return new self($variables, $providers);
+    }
+
+    /**
+     * One variable as the process actually has it, or null when it is unset or empty.
+     *
+     * `$_ENV` first, then `$_SERVER`, then `getenv()`: a framework's Dotenv populates the
+     * first two, while a variable exported by the shell may reach only the third — which
+     * of them is filled depends on the `variables_order` ini setting, so reading one alone
+     * misses variables that are genuinely set.
+     */
+    public static function read(string $name): ?string
+    {
+        $value = $_ENV[$name] ?? $_SERVER[$name] ?? getenv($name);
+
+        return is_string($value) && $value !== '' ? $value : null;
     }
 
     /**

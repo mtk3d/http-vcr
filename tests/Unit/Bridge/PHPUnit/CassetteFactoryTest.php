@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr\Tests\Unit\Bridge\PHPUnit;
 
+use HttpVcr\Ansi;
 use HttpVcr\Bridge\PHPUnit\CassetteDirectory;
 use HttpVcr\Bridge\PHPUnit\CassetteFactory;
 use HttpVcr\Bridge\PHPUnit\DeferredClient;
@@ -101,6 +102,26 @@ final class CassetteFactoryTest extends TestCase
         self::assertStringContainsString('2 warnings from this run', $summary);
         self::assertStringContainsString('payments.json', $summary);
         self::assertStringContainsString('checkout.json', $summary);
+    }
+
+    /**
+     * Only the block's own heading is colored — the warnings inside it arrived already
+     * styled by whatever built them, and re-wrapping them here would nest escape codes.
+     */
+    public function testTheHeadingIsColoredWhereColorIsAvailable(): void
+    {
+        Ansi::assume(true);
+
+        try {
+            $warnings = new RunWarnings;
+            $warnings->report("a warning\n");
+
+            $summary = (string) $warnings->summary();
+        } finally {
+            Ansi::assume(null);
+        }
+
+        self::assertSame("\n\033[33mhttp-vcr — 1 warning from this run:\033[0m\n\na warning\n", $summary);
     }
 }
 

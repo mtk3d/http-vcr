@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr\Console;
 
+use HttpVcr\Ansi;
 use HttpVcr\Config;
 use Symfony\Component\Console\Application as ConsoleApplication;
 use Symfony\Component\Console\Input\InputDefinition;
@@ -42,6 +43,10 @@ final class Application extends ConsoleApplication
      * Reading --config here rather than inside a command: the configuration has to be in
      * place before anything asks Config::global() where the cassettes are, and every
      * command asks.
+     *
+     * The console has already worked out whether its output is decorated — a terminal,
+     * `--ansi`, `--no-ansi` — so the core is told the answer rather than detecting it a
+     * second time and possibly disagreeing about a warning printed from inside a command.
      */
     public function doRun(InputInterface $input, OutputInterface $output): int
     {
@@ -50,6 +55,8 @@ final class Application extends ConsoleApplication
         if (is_string($path) && $path !== '') {
             Config::useFile($path);
         }
+
+        Ansi::assume($output->isDecorated());
 
         return parent::doRun($input, $output);
     }

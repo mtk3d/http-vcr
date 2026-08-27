@@ -33,7 +33,7 @@ Interactions hold **plain values**, never live PSR-7 objects: method and URI as 
 
 A cassette is the recording of **one test's** HTTP traffic — not one API's. Nothing in the format ties a file to a single service: an interaction holds a request and what came back, and which external API it belongs to is worked out from the request's host whenever something needs to know, never stored. A test that pulls an order out of Shopify and opens a Zendesk ticket from it records both halves into one file and replays both from it.
 
-That's what decides how to name one. A cassette name is a path inside the cassette directory (`shopify/get-product` → `tests/Cassettes/shopify/get-product.json`) and http-vcr reads nothing into it — the leading segment is free to be a service, a module, or absent. So name it after **what the test does**: `shopify/get-product` when the test really is one call to one API, `sync/order-flow` when it walks through several.
+That's what decides how to name one. A cassette name is a path inside the cassette directory (`shopify/get-product` → `tests/Cassettes/shopify/get-product.yaml`) and http-vcr reads nothing into it — the leading segment is free to be a service, a module, or absent. So name it after **what the test does**: `shopify/get-product` when the test really is one call to one API, `sync/order-flow` when it walks through several.
 
 Two things follow, and both bite when one file is shared between tests:
 

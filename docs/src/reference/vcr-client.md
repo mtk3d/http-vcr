@@ -31,7 +31,7 @@ public function withInner(ClientInterface $inner): self;
 | Parameter | Default | What it does |
 |---|---|---|
 | `inner` | — | The real PSR-18 client to record through. `null` is only valid when [`withInner()`](../integrations/guzzle.md#where-the-real-request-goes) will supply one; using an inner-less instance on the recording path throws `LogicException`. |
-| `cassette` | — | Cassette name, without extension or [scope](../advanced/scoping.md) suffix. A path relative to `cassetteDirectory`: `shopify/get-product` → `tests/Cassettes/shopify/get-product.json`. |
+| `cassette` | — | Cassette name, without extension or [scope](../advanced/scoping.md) suffix. A path relative to `cassetteDirectory`: `shopify/get-product` → `tests/Cassettes/shopify/get-product.yaml`. |
 | `mode` | `RecordIfAbsent` | [Record mode](../concepts/record-modes.md). |
 | `matchers` | `[]` → `[Method, Uri, QueryString]` | [Matchers](../concepts/matching.md), combined with AND. Empty means the project default from config. |
 | `strictMode` | `None` | [`AllPlayed` / `InOrder`](../advanced/strict-mode.md) assertions at cassette close. |

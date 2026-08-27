@@ -74,7 +74,7 @@ Whenever an unmatched request isn't allowed to fall through to a real recording 
 ```
 No matching interaction for GET https://shop.myshopify.com/admin/api/2024-01/products/123.json
 
-Cassette tests/Cassettes/shopify/get-product.json, 2 unconsumed interactions:
+Cassette tests/Cassettes/shopify/get-product.yaml, 2 unconsumed interactions:
   #1  BodyJsonMatcher: field "status" expected "active", got "pending"
   #2  UriMatcher: expected path "/admin/api/2024-01/products/124.json"
 ```

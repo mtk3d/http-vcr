@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr\Bridge\PHPUnit;
 
+use HttpVcr\Ansi;
 use PHPUnit\Runner\Extension\Extension as PHPUnitExtension;
 use PHPUnit\Runner\Extension\Facade;
 use PHPUnit\Runner\Extension\ParameterCollection;
@@ -31,6 +32,13 @@ final class Extension implements PHPUnitExtension
 {
     public function bootstrap(Configuration $configuration, Facade $facade, ParameterCollection $parameters): void
     {
+        // A run told not to use color means the whole run, including the block printed at
+        // the end of it. The other way round is not the same statement — PHPUnit colors
+        // its own output on a terminal it detected itself — so that case is left to Ansi.
+        if (! $configuration->colors()) {
+            Ansi::assume(false);
+        }
+
         $warnings = RunWarnings::collect();
 
         $facade->registerSubscribers(

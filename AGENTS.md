@@ -29,6 +29,11 @@ dev dependency here, so the default would resolve to YAML, while the committed f
 JSON and many tests read the file that landed on disk. It is this repository's
 configuration, not an example — a consuming project usually declares nothing.
 
+`phpunit.xml.dist` also sets `NO_COLOR=1`: warnings printed to standard error are colored
+(§7 decision 66), and without that pin a suite asserting their text verbatim would pass in
+a pipeline and fail in a terminal. A test that wants the colored form asks for it with
+`Ansi::assume(true)` and puts detection back with `Ansi::assume(null)`.
+
 The library's own `phpunit.xml.dist` registers `HttpVcr\Bridge\PHPUnit\Extension`, and
 `tests/Integration/PHPUnitBridgeTest.php` runs through it against committed cassettes in
 `tests/Integration/Cassettes/` — that is the M4 bridge testing itself, not a fixture to

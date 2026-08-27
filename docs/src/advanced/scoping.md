@@ -26,7 +26,7 @@ A resolver applies per request, not per cassette: a URI the pattern doesn't matc
 
 ## What happens on a version bump
 
-A cassette named `ProductsTest__getProduct` at `scope = 2024-01` is stored as `ProductsTest__getProduct.2024-01.json`. Once the application starts calling `2024-04`, `VcrClient` computes the new scope and doesn't find a file for it. What happens then depends on *why* it couldn't just record one — the exception names the actual cause, following the same rule as [everywhere else](../reference/exceptions.md#which-one-you-get-when-nothing-came-back):
+A cassette named `ProductsTest__getProduct` at `scope = 2024-01` is stored as `ProductsTest__getProduct.2024-01.yaml`. Once the application starts calling `2024-04`, `VcrClient` computes the new scope and doesn't find a file for it. What happens then depends on *why* it couldn't just record one — the exception names the actual cause, following the same rule as [everywhere else](../reference/exceptions.md#which-one-you-get-when-nothing-came-back):
 
 **`PlaybackOnly`** — the declared mode rules recording out, so `CassetteNotFoundException`. No environment variable would change that, and the message doesn't pretend otherwise:
 

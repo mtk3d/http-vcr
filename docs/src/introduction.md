@@ -8,7 +8,7 @@ It works by decorating a [PSR-18](https://www.php-fig.org/psr/psr-18/) HTTP clie
 $vcr = new VcrClient($realClient, cassette: 'shopify/get-product');
 
 $response = $vcr->sendRequest($request);
-// first run: real request happens, response is recorded to tests/Cassettes/shopify/get-product.json
+// first run: real request happens, response is recorded to tests/Cassettes/shopify/get-product.yaml
 // every run after: no network call, the recorded response is replayed
 ```
 

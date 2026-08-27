@@ -148,7 +148,7 @@ return HttpVcr\Config::create(
 
 This is the single place both the `#[UseCassette]` attribute and the CLI (`stale`, `providers`, `scan-secrets`) look to find cassettes and test files in the project. Every argument is optional; the full list, including the `innerClientFactory` the attribute uses to build a real client when it needs to record, is in the [Configuration Reference](../reference/configuration.md).
 
-Without the file, `cassetteDirectory` defaults to `tests/Cassettes/` relative to the project root (the directory holding `composer.json`), and the cassette name is a path inside it: `shopify/get-product` → `tests/Cassettes/shopify/get-product.json`. That default is the same whether the client comes from `#[UseCassette]`, from `new VcrClient(...)` in a script, or from the CLI. To put one part of the suite's cassettes somewhere else, see [Cassettes somewhere other than the project root](#cassettes-somewhere-other-than-the-project-root).
+Without the file, `cassetteDirectory` defaults to `tests/Cassettes/` relative to the project root (the directory holding `composer.json`), and the cassette name is a path inside it: `shopify/get-product` → `tests/Cassettes/shopify/get-product.yaml`. That default is the same whether the client comes from `#[UseCassette]`, from `new VcrClient(...)` in a script, or from the CLI. To put one part of the suite's cassettes somewhere else, see [Cassettes somewhere other than the project root](#cassettes-somewhere-other-than-the-project-root).
 
 `http-vcr.php` is discovered automatically: the search starts in the current working directory and walks upward, stopping at the first `http-vcr.php` it finds — or, if none turns up, at the directory containing `composer.json` (never past it, so a shared CI runner or a monorepo can't accidentally pick up an unrelated file further up the tree). No file found simply means the defaults apply; it's optional. For a non-standard layout, bypass discovery entirely with an explicit `VcrClient::configure(...)` call in the PHPUnit bootstrap, or `vendor/bin/http-vcr --config=<path>` for the CLI.
 
@@ -171,7 +171,7 @@ abstract class BillingTestCase extends TestCase
 ```php
 final class ChargeTest extends BillingTestCase
 {
-    #[UseCassette('stripe/charge')]   // → modules/Billing/tests/Cassettes/stripe/charge.json
+    #[UseCassette('stripe/charge')]   // → modules/Billing/tests/Cassettes/stripe/charge.yaml
     public function testCharge(): void { /* ... */ }
 }
 ```

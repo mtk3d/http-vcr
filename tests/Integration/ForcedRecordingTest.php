@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr\Tests\Integration;
 
+use HttpVcr\Ansi;
 use HttpVcr\Cassette\CassetteManager;
 use HttpVcr\Config;
 use HttpVcr\EraseTape;
@@ -204,6 +205,35 @@ final class ForcedRecordingTest extends TestCase
 
         self::assertCount(1, $this->warnings);
         self::assertStringContainsString('cassette fully locked, VCR_ERASE_TAPE had no effect.', $this->warnings[0]);
+    }
+
+    /**
+     * The same warning on a terminal. Two spans carry the color: what is speaking, and the
+     * variable whose effect the reader came here to check.
+     */
+    public function testOnATerminalTheWarningColorsWhatIsSpeakingAndWhatItIsAbout(): void
+    {
+        $this->seed('shopify/checkout', [
+            $this->interaction('https://shop.example.com/orders', '{"id":"original"}', locked: true),
+        ]);
+        $_ENV['VCR_ERASE_TAPE'] = 'all';
+        Ansi::assume(true);
+
+        try {
+            $vcr = new VcrClient(
+                new FakeHttpClient,
+                'shopify/checkout',
+                persister: $this->persister(),
+                warn: $this->collect(...),
+            );
+            $vcr->sendRequest(new Request('GET', 'https://shop.example.com/orders'));
+            $vcr->close();
+        } finally {
+            Ansi::assume(null);
+        }
+
+        self::assertStringContainsString("\033[33mhttp-vcr:\033[0m", $this->warnings[0]);
+        self::assertStringContainsString("cassette fully locked, \033[1mVCR_ERASE_TAPE\033[0m had no effect.", $this->warnings[0]);
     }
 
     public function testACassetteWithAnythingLeftToEraseSaysNothing(): void

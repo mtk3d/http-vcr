@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace HttpVcr\Bridge\PHPUnit;
 
+use HttpVcr\Ansi;
+
 /**
  * What the cassettes reported over a whole test run, held until the run is over.
  *
@@ -63,9 +65,12 @@ final class RunWarnings
         }
 
         return sprintf(
-            "\nhttp-vcr — %d warning%s from this run:\n\n%s",
-            count($this->warnings),
-            count($this->warnings) === 1 ? '' : 's',
+            "\n%s\n\n%s",
+            Ansi::yellow(sprintf(
+                'http-vcr — %d warning%s from this run:',
+                count($this->warnings),
+                count($this->warnings) === 1 ? '' : 's',
+            )),
             implode("\n", $this->warnings),
         );
     }

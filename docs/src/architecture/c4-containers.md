@@ -17,7 +17,7 @@ graph TB
     end
 
     subgraph disk["Working tree"]
-        cass[("<b>Cassette Files</b><br/><span>JSON · YAML</span><br/><br/>tests/Cassettes/**.json<br/>Committed to the repository")]
+        cass[("<b>Cassette Files</b><br/><span>JSON · YAML</span><br/><br/>tests/Cassettes/**<br/>Committed to the repository")]
         side[("<b>Sidecar Bodies</b><br/><span>Binary files</span><br/><br/>Bodies past 1 MiB, stored<br/>beside the cassette")]
         conf["<b>http-vcr.php</b><br/><span>PHP config file</span><br/><br/>Project-wide defaults,<br/>providers, redaction rules"]
     end

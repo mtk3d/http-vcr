@@ -10,7 +10,7 @@ It's the same idea as the physical write-protect tab on a VHS tape or cassette: 
 vendor/bin/http-vcr lock shopify/checkout --interaction=2
 ```
 
-This sets `"locked": true` on interaction #2 in `shopify/checkout.json`. The same thing can be done by hand, directly in the JSON file — the CLI command exists for convenience, not because it's the only way in.
+This sets `locked: true` on interaction #2 in `shopify/checkout`. The same thing can be done by hand, directly in the cassette file — the CLI command exists for convenience, not because it's the only way in.
 
 Once locked, that interaction **never** generates a real HTTP request again, no matter what:
 
