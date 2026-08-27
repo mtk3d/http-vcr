@@ -14,14 +14,20 @@ advanced modes (`RecordMode::ExtendCassette`, `StrictMode::AllPlayed`/`InOrder`,
 (`Bridge/Guzzle/VcrMiddleware` on `VcrClient::withInner()`, `Bridge/Symfony/VcrHttpClient`,
 the PHPUnit bridge — `#[UseCassette]`, `#[CassetteDirectory]`, `InteractsWithCassettes`,
 `Extension`, `CurrentCassetteSession` — named providers resolved by host, `requiresEnv`
-checked per request, and `http-vcr.php` with `--config`), and M5's tooling: the six CLI
-commands (`stale`, `tests`, `providers`, `scan-secrets`, `lock`, `unlock`) on the
-`TestScanner` AST scan of `#[UseCassette]`, `YamlCassetteSerializer` beside the JSON one on
+checked per request, and `http-vcr.php` with `--config`), and M5's tooling: the seven CLI
+commands (`stale`, `tests`, `providers`, `scan-secrets`, `lock`, `unlock`, `migrate`) on the
+`TestScanner` AST scan of `#[UseCassette]`, `YamlCassetteSerializer` — the default wherever
+`symfony/yaml` is installed (§7 decisions 2, 65) — beside the JSON one on
 a shared `ArrayCassetteSerializer`, `Import/HarCassetteImporter`/`HarCassetteExporter`, the
 examples in `examples/`, and the book built and published from CI.
 
 Every phase of the plan is built. New work is either a §8 idea being promoted (write the
 decision in §7 first) or a correction to something already here.
+
+The repository's own `http-vcr.php` pins the cassette format to JSON: `symfony/yaml` is a
+dev dependency here, so the default would resolve to YAML, while the committed fixtures are
+JSON and many tests read the file that landed on disk. It is this repository's
+configuration, not an example — a consuming project usually declares nothing.
 
 The library's own `phpunit.xml.dist` registers `HttpVcr\Bridge\PHPUnit\Extension`, and
 `tests/Integration/PHPUnitBridgeTest.php` runs through it against committed cassettes in

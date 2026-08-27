@@ -16,6 +16,7 @@ use HttpVcr\Config;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Import\HarCassetteExporter;
 use HttpVcr\Import\HarCassetteImporter;
+use HttpVcr\Serializer\JsonCassetteSerializer;
 use HttpVcr\Tests\Support\CassetteDirectory;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -184,7 +185,7 @@ final class HarCassetteTest extends TestCase
     public function testAHarFileBecomesACassetteWhereTheProjectKeepsThem(): void
     {
         $cassettes = new CassetteDirectory;
-        $config = Config::create(persister: $cassettes->persister());
+        $config = Config::create(persister: $cassettes->persister(), serializer: new JsonCassetteSerializer);
 
         $file = $cassettes->path.'/captured.har';
         $cassettes->write('captured.har', $this->har([

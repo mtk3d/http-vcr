@@ -50,7 +50,7 @@ Sidecars are written as raw bytes, so `bodyEncoding` and `bodyRef` never appear 
 
 ## Other formats
 
-JSON is the default, not the only option: `YamlCassetteSerializer` stores the same model in YAML, and HAR is supported as an import/export format for exchanging captures with browser DevTools, Postman, or Charles Proxy — but deliberately not as a storage format. See [Storage & Formats](../advanced/storage-and-formats.md).
+JSON is one of two canonical formats — `YamlCassetteSerializer` stores the same model in YAML, and is the default wherever `symfony/yaml` is installed; and HAR is supported as an import/export format for exchanging captures with browser DevTools, Postman, or Charles Proxy — but deliberately not as a storage format. See [Storage & Formats](../advanced/storage-and-formats.md).
 
 ## It's meant to be hand-edited
 

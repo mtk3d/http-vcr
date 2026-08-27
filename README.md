@@ -21,7 +21,7 @@ $vcr = new VcrClient($realClient, cassette: 'shopify/get-product');
 
 $response = $vcr->sendRequest($request);
 // first run:  the real request happens, and is recorded to
-//             tests/Cassettes/shopify/get-product.json
+//             tests/Cassettes/shopify/get-product.yaml
 // every run after: no network call — the recorded response is replayed
 ```
 
@@ -107,7 +107,7 @@ spot the real client occupied — no interface changes, no test-only branch in t
 test.
 
 **First run** — with a real key available, the call goes over the wire and is written to
-`tests/Cassettes/shopify/get-product.json`:
+`tests/Cassettes/shopify/get-product.yaml`:
 
 ```bash
 SHOPIFY_API_KEY=sk_live_xxx vendor/bin/phpunit --filter testGetProduct
@@ -156,35 +156,36 @@ $vcr = new VcrClient(
 
 ## What lands on disk
 
-A cassette is a plain JSON file, meant to be read in review and edited by hand when needed:
+A cassette is a plain text file, meant to be read in review and edited by hand when
+needed:
 
-```json
-{
-    "schemaVersion": 1,
-    "interactions": [
-        {
-            "request": {
-                "method": "GET",
-                "uri": "https://api.example.com/greeting",
-                "headers": {},
-                "body": ""
-            },
-            "response": {
-                "status": 200,
-                "headers": { "Content-Type": ["application/json"] },
-                "body": "{\"hello\":\"world\"}"
-            },
-            "outcome": "success",
-            "recordedAt": "2026-08-21T10:00:00+00:00"
-        }
-    ]
-}
+```yaml
+schemaVersion: 1
+interactions:
+  -
+    request:
+      method: GET
+      uri: 'https://api.example.com/greeting'
+      headers: {  }
+      body: ''
+    response:
+      status: 200
+      headers:
+        Content-Type:
+          - application/json
+      body: '{"hello":"world"}'
+    outcome: success
+    recordedAt: '2026-08-21T10:00:00+00:00'
 ```
+
+YAML wherever `symfony/yaml` is installed — which in a Laravel or Symfony project it
+already is — and the same model in JSON everywhere else. Name a `serializer` to pin either
+one, and `vendor/bin/http-vcr migrate --to=json` to rewrite cassettes already on disk.
 
 Cassettes live in `tests/Cassettes/` by default, with the cassette name as a path inside
 it. Bodies that are binary or oversized go to sidecar files; compressed responses are
-decoded before storage. YAML is available as an opt-in serializer, and HAR import/export
-moves traffic to and from a browser's Network tab, Postman or a proxy.
+decoded before storage. HAR import/export moves traffic to and from a browser's Network
+tab, Postman or a proxy.
 
 ## Record modes
 
@@ -303,7 +304,7 @@ On top of that, every session that records anything runs the new interactions th
 credential heuristic and warns:
 
 ```
-http-vcr: recorded 1 interaction → tests/Cassettes/shopify/get-product.json
+http-vcr: recorded 1 interaction → tests/Cassettes/shopify/get-product.yaml
   response.body carries a credential-shaped value, stored unredacted:
     "sk_live_…" (32 chars)
 ```
@@ -327,7 +328,7 @@ scan-secrets`.
   again, above `VCR_ERASE_TAPE` and `VCR_ALLOW_RECORDING` both. For a request that charges a
   card or creates an order.
 - **Scoping by URL** — `RegexUrlScopeResolver('#/api/(?<scope>\d{4}-\d{2})/#')` stores an
-  API version in its own file (`get-product.2024-01.json`), so a version bump gives a clear
+  API version in its own file (`get-product.2024-01.yaml`), so a version bump gives a clear
   "nothing recorded for this version" rather than a silent match against outdated data.
 - **Transport errors** — opt in with `recordTransportErrors: true` to record a timeout or
   connection failure as a deterministic interaction, for testing retry logic. Replay throws
@@ -431,8 +432,8 @@ since http-vcr is installed as a dev dependency, neither reaches an application'
 production autoloader.
 
 Optional, install only if needed: `guzzlehttp/guzzle` (the middleware bridge),
-`symfony/http-client` (the native `HttpClientInterface` bridge), `symfony/yaml` (the YAML
-serializer), `phpunit/phpunit` (the attribute and trait).
+`symfony/http-client` (the native `HttpClientInterface` bridge), `symfony/yaml` (makes YAML
+the cassette format instead of JSON), `phpunit/phpunit` (the attribute and trait).
 
 ## Development
 

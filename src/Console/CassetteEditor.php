@@ -37,11 +37,14 @@ final class CassetteEditor
      * @param  string|null  $directory  a cassette directory of this class's own — what
      *                                  `#[CassetteDirectory]` declares (§3.12); null leaves it
      *                                  to the project configuration
+     * @param  CassetteSerializerInterface|null  $serializer  a format other than the configured
+     *                                                        one, for `migrate`, which has to
+     *                                                        read one and write the other
      */
-    public function __construct(Config $config, ?string $directory = null)
+    public function __construct(Config $config, ?string $directory = null, ?CassetteSerializerInterface $serializer = null)
     {
         $this->persister = $directory === null ? $config->persister() : new FilesystemCassettePersister($directory);
-        $this->serializer = $config->serializer();
+        $this->serializer = $serializer ?? $config->serializer();
         $this->inlineBodyLimit = $config->inlineBodyLimit();
     }
 
@@ -98,6 +101,21 @@ final class CassetteEditor
     public function describe(string $file): string
     {
         return $this->persister->describe($this->key($file));
+    }
+
+    public function exists(string $file): bool
+    {
+        return $this->persister->exists($this->key($file));
+    }
+
+    /**
+     * The cassette file itself. Sidecar bodies are left where they are: they are named
+     * after the cassette without its format extension, so they belong just as much to
+     * whatever wrote the file that replaces this one.
+     */
+    public function delete(string $file): void
+    {
+        $this->persister->delete($this->key($file));
     }
 
     /**

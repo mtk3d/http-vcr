@@ -1,6 +1,6 @@
 # ADR-0002: JSON cassettes by default, YAML opt-in
 
-**Status:** Accepted · **Reference:** `PLAN.md` §7 decisions 2, 63
+**Status:** Superseded by [ADR-0017](0017-yaml-when-symfony-yaml-is-installed.md) · **Reference:** `PLAN.md` §7 decisions 2, 63
 
 ## Context
 

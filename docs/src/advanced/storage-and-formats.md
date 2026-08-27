@@ -1,6 +1,6 @@
 # Storage & Formats
 
-Two separate questions, answered by two separate interfaces: **where** a cassette lives (the persister) and **what shape** it has on disk (the serializer). Neither is something most projects need to touch — the defaults are the filesystem and JSON — but both are swappable, and the split is what keeps a compressed or database-backed store from needing any change in the record/replay core.
+Two separate questions, answered by two separate interfaces: **where** a cassette lives (the persister) and **what shape** it has on disk (the serializer). Neither is something most projects need to touch — the defaults are the filesystem and, where `symfony/yaml` is installed, YAML — but both are swappable, and the split is what keeps a compressed or database-backed store from needing any change in the record/replay core.
 
 ```php
 new VcrClient(
@@ -19,11 +19,19 @@ Two serializers are **canonical**, meaning they carry http-vcr's full domain mod
 
 | Serializer | Extension | Notes |
 |---|---|---|
-| `JsonCassetteSerializer` | `.json` | Default. Readable diffs in a pull request, no dependencies. |
-| `YamlCassetteSerializer` | `.yaml` | Opt-in, requires `symfony/yaml`. The convention teams coming from Ruby VCR, vcrpy, or go-vcr will recognize. |
+| `YamlCassetteSerializer` | `.yaml` | The default where `symfony/yaml` is installed. A response body with newlines in it is a literal block rather than one escaped line, so an HTML or XML response stays readable in a diff. Also the convention teams coming from Ruby VCR, vcrpy, or go-vcr will recognize. |
+| `JsonCassetteSerializer` | `.json` | The default everywhere else. No dependencies, and no significant whitespace to think about. |
+
+Which of the two applies is decided by what the project has installed, not by what http-vcr insists on: the record/replay path depends on nothing but the PSR packages, so `symfony/yaml` is a suggestion rather than a requirement — and where a project already has it, the format that is nicer to read is the one it gets. Name a serializer to settle it either way:
 
 ```php
-new VcrClient($inner, cassette: 'shopify/get-product', serializer: new YamlCassetteSerializer());
+new VcrClient($inner, cassette: 'shopify/get-product', serializer: new JsonCassetteSerializer());
+```
+
+A cassette is only ever looked for under the extension its serializer owns. Changing format therefore leaves the existing files on disk and unread, which in `RecordIfAbsent` means re-recording everything against the real API. [`vendor/bin/http-vcr migrate`](../reference/cli.md#migrate) rewrites them instead:
+
+```bash
+vendor/bin/http-vcr migrate --to=yaml
 ```
 
 The interface is small:

@@ -18,6 +18,7 @@ use HttpVcr\Scope\CassetteScopeResolverInterface;
 use HttpVcr\Scope\NullScopeResolver;
 use HttpVcr\Serializer\CassetteSerializerInterface;
 use HttpVcr\Serializer\JsonCassetteSerializer;
+use HttpVcr\Serializer\YamlCassetteSerializer;
 use InvalidArgumentException;
 use LogicException;
 use Psr\Clock\ClockInterface;
@@ -26,6 +27,7 @@ use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Project-wide defaults for every VcrClient the process constructs.
@@ -274,9 +276,28 @@ final class Config
         self::$frozen = false;
     }
 
+    /**
+     * YAML wherever `symfony/yaml` is installed, JSON otherwise (§7 decision 2).
+     *
+     * YAML is the format worth reading: a body with newlines in it is a literal block
+     * rather than one escaped line, so an HTML or XML response stays legible in a diff.
+     * It cannot be the unconditional default, because the record/replay path may depend on
+     * nothing but the PSR packages (§1) — hence a format that follows what the project has
+     * rather than a dependency the library insists on.
+     *
+     * A project that would rather not have the format follow its vendor directory names
+     * one in `http-vcr.php`, which always wins. Switching an existing project either way
+     * is what `vendor/bin/http-vcr migrate` is for: cassettes are only ever looked for
+     * under the extension their serializer owns, so files left in the old format are
+     * invisible rather than migrated.
+     */
     public function serializer(): CassetteSerializerInterface
     {
-        return $this->serializer ?? new JsonCassetteSerializer;
+        if ($this->serializer !== null) {
+            return $this->serializer;
+        }
+
+        return class_exists(Yaml::class) ? new YamlCassetteSerializer : new JsonCassetteSerializer;
     }
 
     public function persister(): CassettePersisterInterface

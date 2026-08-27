@@ -24,6 +24,26 @@ final readonly class ScannedTests
     ) {}
 
     /**
+     * The cassette directories the scanned classes declared with `#[CassetteDirectory]`,
+     * each once — what a command sweeping the whole project has to visit on top of the
+     * configured one.
+     *
+     * @return list<string>
+     */
+    public function directories(): array
+    {
+        $directories = [];
+
+        foreach ($this->declarations as $declaration) {
+            if ($declaration->directory !== null && ! in_array($declaration->directory, $directories, true)) {
+                $directories[] = $declaration->directory;
+            }
+        }
+
+        return $directories;
+    }
+
+    /**
      * @return array<string, list<CassetteDeclaration>> keyed by cassette name, in name order
      */
     public function byCassette(): array

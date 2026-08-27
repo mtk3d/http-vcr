@@ -73,3 +73,4 @@
     - [0014 · Decompression changes the recording run's response too](architecture/decisions/0014-decompression-applies-to-the-recording-run.md)
     - [0015 · Only the two PSR-18 exception interfaces are recorded](architecture/decisions/0015-only-psr-18-exceptions-are-recorded.md)
     - [0016 · The Laravel bridge lives in its own repository](architecture/decisions/0016-laravel-bridge-in-its-own-repository.md)
+    - [0017 · YAML cassettes wherever symfony/yaml is installed](architecture/decisions/0017-yaml-when-symfony-yaml-is-installed.md)

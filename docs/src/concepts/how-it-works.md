@@ -15,7 +15,7 @@ HttpVcr\VcrClient
     │                                            (redaction is built on this — see Hooks)
     ├── PSR-17 factories                       — rebuild a live response object from the stored snapshot
     └── Persistence\CassettePersisterInterface — where cassettes live (filesystem by default)
-            └── Serializer\CassetteSerializerInterface — the on-disk format (JSON by default)
+            └── Serializer\CassetteSerializerInterface — the on-disk format (YAML or JSON)
     │
     ▼ (only when actually recording)
 Real Psr\Http\Client\ClientInterface (Guzzle, Symfony, ...)

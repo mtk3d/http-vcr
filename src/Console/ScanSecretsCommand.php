@@ -125,15 +125,7 @@ final class ScanSecretsCommand extends Command
      */
     private function directories(Config $config): array
     {
-        $directories = [null];
-
-        foreach ((new TestScanner($config->testDirectories()))->scan()->declarations as $declaration) {
-            if ($declaration->directory !== null && ! in_array($declaration->directory, $directories, true)) {
-                $directories[] = $declaration->directory;
-            }
-        }
-
-        return $directories;
+        return [null, ...(new TestScanner($config->testDirectories()))->scan()->directories()];
     }
 
     /**

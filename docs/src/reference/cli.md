@@ -4,7 +4,7 @@
 vendor/bin/http-vcr <command> [options]
 ```
 
-In a Laravel app with the separate [`mtk3d/laravel-http-vcr` package](../integrations/laravel.md), the same six commands are also available as Artisan commands, prefixed with `vcr:` (`stale` → `vcr:stale`, `tests` → `vcr:tests`, and so on) — Artisan commands share one flat namespace across the whole framework and every installed package, so they need a prefix to stay collision-free and easy to find in `artisan list`; a standalone single-purpose binary like `vendor/bin/http-vcr` doesn't have that problem, so its commands stay bare.
+In a Laravel app with the separate [`mtk3d/laravel-http-vcr` package](../integrations/laravel.md), the same seven commands are also available as Artisan commands, prefixed with `vcr:` (`stale` → `vcr:stale`, `tests` → `vcr:tests`, and so on) — Artisan commands share one flat namespace across the whole framework and every installed package, so they need a prefix to stay collision-free and easy to find in `artisan list`; a standalone single-purpose binary like `vendor/bin/http-vcr` doesn't have that problem, so its commands stay bare.
 
 ## `stale`
 
@@ -78,6 +78,22 @@ The test is what the value *looks like*, not which `redact()` rules exist: this 
 
 [Sidecar files](cassette-format.md#sidecar-files) are scanned as well. They hold the largest payloads in the project and go through redaction like any inline body, so leaving them out would be the exact gap this command exists to close. Sidecars whose content isn't text (an image, an archive) are skipped, to avoid false positives from arbitrary byte sequences.
 
+## `migrate`
+
+```bash
+vendor/bin/http-vcr migrate --to=yaml
+```
+
+Rewrites every cassette in the project in the other [format](../advanced/storage-and-formats.md#serializers) — `--to=yaml` or `--to=json` — and removes the file it replaced. The two formats hold the same schema, so nothing about a cassette changes except how it is written. [Sidecar files](cassette-format.md#sidecar-files) are named after the cassette without its format extension and are left where they are.
+
+This is what makes a format switch a step rather than an accident: a cassette is only ever looked for under the extension its serializer owns, so files in the old format are invisible to the next run, not migrated by it.
+
+```bash
+vendor/bin/http-vcr migrate --to=yaml --dry-run
+```
+
+The sweep covers the configured cassette directory plus any a test class keeps beside itself with `#[CassetteDirectory]`. A cassette that already exists under the target name is left alone and reported, as is one that cannot be parsed; either one exits non-zero, since both leave the project holding two formats at once.
+
 ## `lock` / `unlock`
 
 ```bash
@@ -89,7 +105,7 @@ Sets or clears `"locked": true` on a specific interaction. Without `--interactio
 
 ## Exit codes
 
-A finding is not a failure. `stale` reports interactions past their threshold and still exits 0 — crossing a threshold is a fact about the clock, and the same commit run an hour later would answer differently — and `scan-secrets` exits 0 unless asked for `--fail-on-findings`. What does exit non-zero, in every command that reads cassettes, is a cassette that cannot be parsed: that is a defect in the file rather than a verdict about its contents. `tests` also exits non-zero when `--provider` names something that is neither a configured provider nor a host in any cassette, and lists both sets.
+A finding is not a failure. `stale` reports interactions past their threshold and still exits 0 — crossing a threshold is a fact about the clock, and the same commit run an hour later would answer differently — and `scan-secrets` exits 0 unless asked for `--fail-on-findings`. What does exit non-zero, in every command that reads cassettes, is a cassette that cannot be parsed: that is a defect in the file rather than a verdict about its contents. `tests` also exits non-zero when `--provider` names something that is neither a configured provider nor a host in any cassette, and lists both sets. `migrate` exits non-zero when it left any cassette behind — a name already taken in the target format, or a file it could not read.
 
 ## Running from inside a consuming project
 

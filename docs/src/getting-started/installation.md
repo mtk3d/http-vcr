@@ -21,7 +21,7 @@ Install these only if needed:
 |---|---|
 | `guzzlehttp/guzzle` | The `VcrMiddleware` bridge for a Guzzle `HandlerStack` — plain `GuzzleHttp\Client` works without it |
 | `symfony/http-client` | The `VcrHttpClient` bridge for Symfony's native `HttpClientInterface` — `Psr18Client` works without it |
-| `symfony/yaml` | The [YAML cassette serializer](../advanced/storage-and-formats.md#serializers), for teams that would rather not use the default JSON one |
+| `symfony/yaml` | Makes [YAML the cassette format](../advanced/storage-and-formats.md#serializers) instead of JSON. Already present in most Laravel and Symfony projects, in which case it is what you get |
 | `phpunit/phpunit` | The [`#[UseCassette]` attribute and `InteractsWithCassettes` trait](../integrations/phpunit.md). The attribute is built on the Extension API, so the bridge supports **PHPUnit 10 through 13** — http-vcr's own test suite runs on 11.5–13, but that's a separate matter from what the bridge supports in your project |
 | `mtk3d/laravel-http-vcr` | Zero-setup use in a Laravel app — auto-registered service provider, `Http` facade interception, `artisan vcr:*` commands. A [separate package](../integrations/laravel.md) that depends on this one; needs **Laravel 11 or newer** |
 
@@ -51,6 +51,6 @@ In a Laravel app the same commands are also available through `artisan vcr:*` �
 
 ## Where cassettes go
 
-By default, `tests/Cassettes/` relative to the project root (the directory containing `composer.json`), with the cassette name as a path inside it — `shopify/get-product` becomes `tests/Cassettes/shopify/get-product.json`. Change it with `cassetteDirectory` in [`http-vcr.php`](../integrations/phpunit.md#project-configuration).
+By default, `tests/Cassettes/` relative to the project root (the directory containing `composer.json`), with the cassette name as a path inside it — `shopify/get-product` becomes `tests/Cassettes/shopify/get-product.yaml`, or `.json` where `symfony/yaml` isn't installed. Change the directory with `cassetteDirectory` in [`http-vcr.php`](../integrations/phpunit.md#project-configuration), and the format with [`serializer`](../advanced/storage-and-formats.md#serializers).
 
 Cassettes are meant to be committed. The lock files http-vcr uses while recording are not, and take no setup either way: they go in a `.http-vcr/` directory inside the cassette directory, which ignores itself.

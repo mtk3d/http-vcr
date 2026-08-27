@@ -32,6 +32,7 @@ final class Application extends ConsoleApplication
             new ProvidersCommand,
             new TestsCommand,
             new ScanSecretsCommand,
+            new MigrateCommand,
             new LockCommand(lock: true),
             new LockCommand(lock: false),
         ]);

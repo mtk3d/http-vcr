@@ -12,6 +12,7 @@ use HttpVcr\Matching\UriMatcher;
 use HttpVcr\Persistence\FilesystemCassettePersister;
 use HttpVcr\Provider;
 use HttpVcr\Serializer\JsonCassetteSerializer;
+use HttpVcr\Serializer\YamlCassetteSerializer;
 use HttpVcr\Tests\Support\FakeHttpClient;
 use HttpVcr\Tests\Support\InMemoryCassettePersister;
 use HttpVcr\VcrClient;
@@ -24,6 +25,7 @@ use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
+use Symfony\Component\Yaml\Yaml;
 
 #[CoversClass(Config::class)]
 final class ConfigTest extends TestCase
@@ -39,15 +41,30 @@ final class ConfigTest extends TestCase
         self::assertFileExists(dirname(Config::create()->cassetteDirectory(), 2).'/composer.json');
     }
 
-    public function testTheDefaultsAreJsonOnTheFilesystemMatchedOnMethodUriAndQueryString(): void
+    public function testTheDefaultsAreTheFilesystemMatchedOnMethodUriAndQueryString(): void
     {
         $config = Config::create();
 
-        self::assertInstanceOf(JsonCassetteSerializer::class, $config->serializer());
         self::assertInstanceOf(FilesystemCassettePersister::class, $config->persister());
         self::assertEquals(
             [new MethodMatcher, new UriMatcher, new QueryStringMatcher],
             $config->defaultMatchers(),
+        );
+    }
+
+    public function testTheDefaultFormatIsYamlWhereSymfonyYamlIsInstalledAndJsonWhereItIsNot(): void
+    {
+        self::assertInstanceOf(
+            class_exists(Yaml::class) ? YamlCassetteSerializer::class : JsonCassetteSerializer::class,
+            Config::create()->serializer(),
+        );
+    }
+
+    public function testAConfiguredFormatIsUsedWhateverIsInstalled(): void
+    {
+        self::assertInstanceOf(
+            JsonCassetteSerializer::class,
+            Config::create(serializer: new JsonCassetteSerializer)->serializer(),
         );
     }
 

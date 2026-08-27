@@ -63,7 +63,7 @@ final class ShopifyClientTest extends TestCase
 
 ## First run: record
 
-On a developer machine, recording is allowed by default. With a real API key available, the call goes over the network and is written to `tests/Cassettes/shopify/get-product.json`:
+On a developer machine, recording is allowed by default. With a real API key available, the call goes over the network and is written to `tests/Cassettes/shopify/get-product.yaml` — or `.json`, in a project without `symfony/yaml`:
 
 ```bash
 SHOPIFY_API_KEY=sk_live_xxx vendor/bin/phpunit --filter testGetProduct

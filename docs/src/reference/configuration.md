@@ -34,7 +34,7 @@ return Config::create(
 | `providers` | `[]` | Named external APIs — host patterns plus the environment variables recording them requires. Optional: `VCR_ERASE_TAPE=@name` also works against bare hostnames without any configuration. See [Providers](../integrations/phpunit.md#providers). |
 | `scanRecordingsForSecrets` | `true` | After a session records anything, check the new interactions for credential-shaped values and warn. Never fails a test. See [Redacting Sensitive Data](../safety/redaction.md#the-automatic-check-after-recording). |
 | `persister` | `FilesystemCassettePersister` | [Where cassettes are stored](../advanced/storage-and-formats.md#persisters). |
-| `serializer` | `JsonCassetteSerializer` | [The on-disk format](../advanced/storage-and-formats.md#serializers). |
+| `serializer` | `YamlCassetteSerializer` where `symfony/yaml` is installed, `JsonCassetteSerializer` otherwise | [The on-disk format](../advanced/storage-and-formats.md#serializers). Naming one here pins it whatever the project has installed; changing it means running [`migrate`](cli.md#migrate). |
 | `defaultMatchers` | `[MethodMatcher, UriMatcher, QueryStringMatcher]` | Used by any `VcrClient` constructed without an explicit `matchers` list. See [why the query string is in there](../concepts/matching.md#the-default-set). |
 | `redact` | `[]` | Project-wide [redaction rules](../safety/redaction.md#project-wide-redaction), as `placeholder => value provider`. |
 | `innerClientFactory` | detected | Builds the real PSR-18 client `#[UseCassette]` uses when it has to record. See below. |
