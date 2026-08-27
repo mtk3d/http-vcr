@@ -1,6 +1,20 @@
 # Strict & Sequential Mode
 
-By default, http-vcr doesn't care whether every recorded interaction actually got replayed, or in what order. `StrictMode` turns that into an assertion.
+By default, http-vcr reports interactions nothing replayed and asserts nothing about them. `StrictMode` turns that report into an assertion.
+
+## What happens without any of it
+
+A cassette holding interactions the run never asked for is the usual sign that a recording and the code have drifted apart — a code path removed, a cassette recorded once and never trimmed. That is worth knowing about without opting in, so a session that replayed a subset says so when it closes:
+
+```
+http-vcr: tests/Cassettes/shopify/checkout.yaml
+  1 of 2 recorded interactions was never replayed:
+    #2  POST https://shop.example.com/orders
+```
+
+It never fails anything, and it goes to standard error with the [rest of the run's warnings](../safety/redaction.md#the-automatic-check-after-recording). Only interactions the cassette already held when the session opened are counted, and only when the session actually opened it — a test that never touched its client has drifted from nothing.
+
+Set `reportUnplayedInteractions: false` in [`http-vcr.php`](../reference/configuration.md) for a suite where replaying a subset is the normal thing to do.
 
 ## `StrictMode::AllPlayed`
 
@@ -13,6 +27,8 @@ new VcrClient($inner, cassette: 'shopify/get-product', strictMode: StrictMode::A
 This catches drift in the opposite direction from a missing match: instead of "the code asked for something the cassette doesn't have," it's "the cassette has something the code never asked for" — usually a sign a code path got removed, or a cassette was recorded once and never trimmed down.
 
 A [`repeatablePlayback`](../concepts/record-modes.md) interaction never gets consumed, so "unplayed" means something slightly different for it: it counts as played once it's been replayed **at least once**. One that nothing ever asked for still fails `AllPlayed` — that's precisely the signal this mode is for.
+
+It is the report above, as a failure — so a session under `AllPlayed` gets the exception instead of the warning, never both. `InOrder` says nothing about what was never asked for, so it gets the report like any other session.
 
 It's an assertion about one file, which presumes that file belongs to this test alone — see [What one cassette covers](../concepts/how-it-works.md#what-one-cassette-covers).
 

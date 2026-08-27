@@ -130,6 +130,7 @@ final class VcrClient implements ClientInterface
             $scopeResolver ?? $config->scopeResolver(),
             scanner: $config->scanRecordingsForSecrets() ? new SecretScanner : null,
             warn: $warn === null ? null : $warn(...),
+            reportUnplayed: $config->reportUnplayedInteractions(),
         );
 
         foreach ($config->redactions() as $placeholder => $value) {
@@ -163,6 +164,7 @@ final class VcrClient implements ClientInterface
         ?UriFactoryInterface $uriFactory = null,
         ?ClockInterface $clock = null,
         ?bool $scanRecordingsForSecrets = null,
+        ?bool $reportUnplayedInteractions = null,
         array $redact = [],
         array $providers = [],
         array $testDirectories = [],
@@ -182,6 +184,7 @@ final class VcrClient implements ClientInterface
             $uriFactory,
             $clock,
             scanRecordingsForSecrets: $scanRecordingsForSecrets,
+            reportUnplayedInteractions: $reportUnplayedInteractions,
             redact: $redact,
             providers: $providers,
             testDirectories: $testDirectories,

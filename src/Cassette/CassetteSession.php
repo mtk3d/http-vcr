@@ -58,6 +58,7 @@ final class CassetteSession
         public readonly RedactionHooks $redaction = new RedactionHooks,
         private readonly ?SecretScanner $scanner = null,
         private readonly ?Closure $warn = null,
+        private readonly bool $reportUnplayed = true,
     ) {
         // Registered before any file is opened, so redaction is always the first hook in
         // either direction: a project-wide rule runs ahead of anything added by hand.
@@ -149,6 +150,7 @@ final class CassetteSession
             $this->redaction,
             $this->scanner,
             $this->warn,
+            $this->reportUnplayed,
         );
     }
 

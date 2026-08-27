@@ -24,10 +24,13 @@ examples in `examples/`, and the book built and published from CI.
 Every phase of the plan is built. New work is either a §8 idea being promoted (write the
 decision in §7 first) or a correction to something already here.
 
-The repository's own `http-vcr.php` pins the cassette format to JSON: `symfony/yaml` is a
-dev dependency here, so the default would resolve to YAML, while the committed fixtures are
-JSON and many tests read the file that landed on disk. It is this repository's
-configuration, not an example — a consuming project usually declares nothing.
+The repository's own `http-vcr.php` pins two things. The cassette format is JSON:
+`symfony/yaml` is a dev dependency here, so the default would resolve to YAML, while the
+committed fixtures are JSON and many tests read the file that landed on disk. And
+`reportUnplayedInteractions` is off (§7 decision 70), because dozens of tests replay one
+interaction out of a cassette on purpose and would each print a warning for it —
+`tests/Integration/StrictModeTest.php` turns it back on for itself. It is this
+repository's configuration, not an example — a consuming project usually declares nothing.
 
 `phpunit.xml.dist` also sets `NO_COLOR=1`: warnings printed to standard error are colored
 (§7 decision 66), and without that pin a suite asserting their text verbatim would pass in

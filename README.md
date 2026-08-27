@@ -320,9 +320,9 @@ scan-secrets`.
 
 ## More control
 
-- **Strict mode** — `StrictMode::AllPlayed` fails when the cassette closes with an
-  interaction nothing ever asked for; `StrictMode::InOrder` requires the recorded sequence
-  to be replayed in order.
+- **Strict mode** — a cassette that closes with an interaction nothing ever asked for
+  reports it by default; `StrictMode::AllPlayed` turns that report into a failure, and
+  `StrictMode::InOrder` requires the recorded sequence to be replayed in order.
 - **`staleAfter`** — flags interactions older than `Stale::Week` (or any `DateInterval`). Informational by
   default (`vendor/bin/http-vcr stale` as a non-blocking CI step), enforced per-run with
   `VCR_ENFORCE_STALE_CHECK=1`. "Now" comes from an injectable PSR-20 clock, and

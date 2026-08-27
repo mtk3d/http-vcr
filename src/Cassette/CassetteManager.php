@@ -75,6 +75,8 @@ final class CassetteManager
 
     private bool $reportedLock = false;
 
+    private bool $reportedUnplayed = false;
+
     public function __construct(
         private readonly string $name,
         private readonly ?string $scope,
@@ -93,6 +95,7 @@ final class CassetteManager
         public readonly RedactionHooks $redaction = new RedactionHooks,
         private readonly ?SecretScanner $scanner = null,
         private readonly ?Closure $warn = null,
+        private readonly bool $reportUnplayed = true,
     ) {
         $this->cassette = new Cassette;
     }
@@ -347,6 +350,7 @@ final class CassetteManager
         $this->releaseLock();
         $this->reportLockedCassette();
         $this->reportSecrets();
+        $this->reportUnplayed();
     }
 
     /**
@@ -437,6 +441,61 @@ final class CassetteManager
             Ansi::yellow('http-vcr:'),
             $this->location(),
             Ansi::bold('VCR_ERASE_TAPE'),
+        ));
+    }
+
+    /**
+     * Says which recorded interactions the run never asked for, without failing anything.
+     *
+     * Only what the cassette already held when the session opened, and only if the session
+     * actually opened it: interactions this run recorded itself have been replayed by
+     * nobody by definition, and a test that never touched its client has not drifted from
+     * anything. `StrictMode::AllPlayed` fails on the same finding, so it does not also get
+     * warned about; `InOrder` says nothing about it, so it does.
+     */
+    private function reportUnplayed(): void
+    {
+        if (! $this->reportUnplayed || $this->reportedUnplayed || ! $this->opened) {
+            return;
+        }
+
+        if ($this->strictMode === StrictMode::AllPlayed) {
+            return;
+        }
+
+        $this->reportedUnplayed = true;
+        $unplayed = [];
+
+        foreach ($this->baseline() as $position => $interaction) {
+            if (($this->played[$position] ?? 0) === 0) {
+                $unplayed[$position] = $interaction;
+            }
+        }
+
+        if ($unplayed === []) {
+            return;
+        }
+
+        $lines = '';
+
+        foreach ($unplayed as $position => $interaction) {
+            $lines .= sprintf(
+                "    #%d  %s %s\n",
+                $position + 1,
+                $interaction->request->method,
+                $interaction->request->uri,
+            );
+        }
+
+        $this->report(sprintf(
+            "%s %s\n  %d of %d recorded interaction%s %s never replayed:\n%s",
+            Ansi::yellow('http-vcr:'),
+            $this->location(),
+            count($unplayed),
+            $this->baseline,
+            $this->baseline === 1 ? '' : 's',
+            count($unplayed) === 1 ? 'was' : 'were',
+            $lines,
         ));
     }
 

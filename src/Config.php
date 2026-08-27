@@ -78,6 +78,7 @@ final class Config
         private readonly ?ClockInterface $clock,
         private readonly ?int $inlineBodyLimit,
         private readonly ?bool $scanRecordingsForSecrets,
+        private readonly ?bool $reportUnplayedInteractions,
         private readonly array $redact,
         private readonly array $providers,
         private readonly array $testDirectories,
@@ -112,6 +113,7 @@ final class Config
         ?ClockInterface $clock = null,
         ?int $inlineBodyLimit = null,
         ?bool $scanRecordingsForSecrets = null,
+        ?bool $reportUnplayedInteractions = null,
         array $redact = [],
         array $providers = [],
         array $testDirectories = [],
@@ -132,6 +134,7 @@ final class Config
             $clock,
             $inlineBodyLimit,
             $scanRecordingsForSecrets,
+            $reportUnplayedInteractions,
             $redact,
             $providers,
             $testDirectories,
@@ -249,6 +252,7 @@ final class Config
             $this->clock ?? $base->clock,
             $this->inlineBodyLimit ?? $base->inlineBodyLimit,
             $this->scanRecordingsForSecrets ?? $base->scanRecordingsForSecrets,
+            $this->reportUnplayedInteractions ?? $base->reportUnplayedInteractions,
             // Project-wide redaction rules add up rather than replace: a rule in the file
             // and a rule in the bootstrap are both things the project asked for.
             $this->redact + $base->redact,
@@ -373,6 +377,17 @@ final class Config
     public function scanRecordingsForSecrets(): bool
     {
         return $this->scanRecordingsForSecrets ?? true;
+    }
+
+    /**
+     * Whether a replayed cassette that kept interactions to itself says so. On by default:
+     * an interaction nothing asked for usually means the recording and the code have drifted
+     * apart, and `StrictMode::AllPlayed` — the version that fails the test — is a decision
+     * about the whole suite that a report doesn't require.
+     */
+    public function reportUnplayedInteractions(): bool
+    {
+        return $this->reportUnplayedInteractions ?? true;
     }
 
     /**
