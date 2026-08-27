@@ -61,4 +61,84 @@ final class QueryStringMatcherTest extends TestCase
         self::assertFalse($matcher->matches($recordedRequest, $incomingRequest));
         self::assertSame($detail, $matcher->explainMismatch($recordedRequest, $incomingRequest));
     }
+
+    public function testAnIgnoredParameterCountsAsEqualWhateverItHolds(): void
+    {
+        $matcher = (new QueryStringMatcher)->ignoreQueryParam('timestamp');
+
+        self::assertTrue($matcher->matches(
+            new RecordedRequest('GET', 'https://example.com/o?id=7&timestamp=1755000000'),
+            new RecordedRequest('GET', 'https://example.com/o?id=7&timestamp=1766000000'),
+        ));
+    }
+
+    public function testAnIgnoredParameterCountsAsEqualWhenItIsThereOnOnlyOneSide(): void
+    {
+        $matcher = (new QueryStringMatcher)->ignoreQueryParam('nonce');
+
+        self::assertTrue($matcher->matches(
+            new RecordedRequest('GET', 'https://example.com/o?id=7&nonce=abc'),
+            new RecordedRequest('GET', 'https://example.com/o?id=7'),
+        ));
+    }
+
+    public function testIgnoringOneParameterLeavesTheRestCompared(): void
+    {
+        $matcher = (new QueryStringMatcher)->ignoreQueryParam('timestamp');
+
+        self::assertSame(
+            'parameter "id" expected "7", got "8"',
+            $matcher->explainMismatch(
+                new RecordedRequest('GET', 'https://example.com/o?id=7&timestamp=1'),
+                new RecordedRequest('GET', 'https://example.com/o?id=8&timestamp=2'),
+            ),
+        );
+    }
+
+    public function testNamingTheParametersToMatchOnIgnoresEveryOtherOne(): void
+    {
+        $matcher = (new QueryStringMatcher)->matchOnlyQueryParams(['id', 'version']);
+
+        self::assertTrue($matcher->matches(
+            new RecordedRequest('GET', 'https://example.com/o?id=7&version=2&signature=aaa&ts=1'),
+            new RecordedRequest('GET', 'https://example.com/o?id=7&version=2&signature=bbb'),
+        ));
+
+        self::assertSame(
+            'parameter "version" expected "2", got "3"',
+            $matcher->explainMismatch(
+                new RecordedRequest('GET', 'https://example.com/o?id=7&version=2&signature=aaa'),
+                new RecordedRequest('GET', 'https://example.com/o?id=7&version=3&signature=aaa'),
+            ),
+        );
+    }
+
+    public function testAParameterNamedToMatchOnIsStillRequiredToBeThere(): void
+    {
+        $matcher = (new QueryStringMatcher)->matchOnlyQueryParams(['id']);
+
+        self::assertSame(
+            'parameter "id" missing',
+            $matcher->explainMismatch(
+                new RecordedRequest('GET', 'https://example.com/o?id=7'),
+                new RecordedRequest('GET', 'https://example.com/o?signature=aaa'),
+            ),
+        );
+    }
+
+    /**
+     * The convention every configurable matcher follows: configuring returns a new matcher,
+     * so one built in a `matchers:` array stays a value rather than something later calls
+     * can reach back into.
+     */
+    public function testConfiguringLeavesTheMatcherItWasCalledOnAlone(): void
+    {
+        $matcher = new QueryStringMatcher;
+        $matcher->ignoreQueryParam('timestamp');
+
+        self::assertFalse($matcher->matches(
+            new RecordedRequest('GET', 'https://example.com/o?timestamp=1'),
+            new RecordedRequest('GET', 'https://example.com/o?timestamp=2'),
+        ));
+    }
 }

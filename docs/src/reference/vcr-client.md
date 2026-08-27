@@ -75,7 +75,7 @@ The point is to make "the hook was registered too late, so the first interaction
 
 Note "session," not "instance." `withInner()` returns a new object, and the [Guzzle middleware](../integrations/guzzle.md) calls it on every single request — so a flag stored on the instance would reset constantly and never actually freeze anything under a middleware setup, which is precisely where it's needed. The flag lives with the rest of the session state (replay-consumption counters, the file lock) in the shared cassette manager, so it survives `withInner()`.
 
-Matchers are unaffected by any of this, since they're values rather than configurable services: `ignoreJsonField()` and `matchJsonField()` return a new matcher rather than mutating one.
+Matchers are unaffected by any of this, since they're values rather than configurable services: `ignoreJsonField()`, `matchJsonField()`, `ignoreQueryParam()` and `matchOnlyQueryParams()` return a new matcher rather than mutating one.
 
 ## Global configuration is frozen too, earlier
 

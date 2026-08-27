@@ -259,13 +259,17 @@ new VcrClient($inner, cassette: 'shopify/get-product', matchers: [
 | `BodyMatcher` | raw body, exact |
 | `BodyJsonMatcher` | semantic JSON — key order doesn't matter, types are compared strictly |
 
-Values that legitimately change every run are handled on the JSON matcher, since redaction
-can't help with a value not known in advance:
+Values that legitimately change every run are handled on the matcher that sees them, since
+redaction can't help with a value not known in advance:
 
 ```php
 (new BodyJsonMatcher())
     ->ignoreJsonField('/transactionId')                  // any value counts as equal
     ->matchJsonField('/requestId', '/^[0-9a-f-]{36}$/'); // must look like a UUID
+
+(new QueryStringMatcher)
+    ->ignoreQueryParam('timestamp')                      // a nonce, a cache-buster, a signature
+    ->matchOnlyQueryParams(['id', 'version']);           // or name the few that decide the match
 ```
 
 Writing your own means implementing one method — matchers compare two `RecordedRequest`

@@ -19,7 +19,7 @@ All configured matchers must agree (logical AND) for an interaction to count as 
 
 `[MethodMatcher, UriMatcher, QueryStringMatcher]`. The query string is part of the default deliberately: `UriMatcher` compares scheme, host and path only, so without it `?page=1` and `?page=2` would be the same interaction — and that failure is silent. The test wouldn't error; the code under test would just receive page two where it asked for page one, and find out several assertions later, if at all. A default should fail loudly rather than guess.
 
-The cost lands on throwaway parameters that change every run — a cache-buster `?_=1712345678`, a `?nonce=…`. Those now produce a *missing match*, which is noisy but obvious and has an immediate fix: drop `QueryStringMatcher` from the `matchers:` list, or supply your own. That trade is on purpose — a false miss announces itself, a silent match against the wrong interaction doesn't.
+The cost lands on throwaway parameters that change every run — a cache-buster `?_=1712345678`, a `?nonce=…`. Those produce a *missing match*, which is noisy but obvious, and the fix is to name them: `(new QueryStringMatcher)->ignoreQueryParam('_')`. That trade is on purpose — a false miss announces itself, a silent match against the wrong interaction doesn't.
 
 Matchers compare two `RecordedRequest` snapshots — the recorded one and the incoming one — not live PSR-7 objects:
 
@@ -37,6 +37,19 @@ Two reasons that matters if you write your own: a snapshot's body is a plain str
 - **`UriMatcher`** — scheme + host + path, normalized (lowercase host, default ports stripped). The query string is handled separately.
 - **`HostMatcher`** — just the host, for cases where matching the full path is too strict.
 - **`QueryStringMatcher`** — query params as an unordered set (`?a=1&b=2` equals `?b=2&a=1`), but repeated keys keep their order (`?tag=a&tag=b` is treated as a list).
+
+  Two builder methods handle parameters that change every run — a timestamp, a nonce, a signature computed over one of them:
+
+  ```php
+  (new QueryStringMatcher)
+      ->ignoreQueryParam('timestamp')                  // any value on either side, or none, counts as equal
+      ->ignoreQueryParam('signature');
+
+  (new QueryStringMatcher)
+      ->matchOnlyQueryParams(['id', 'version']);       // these two decide the match; every other parameter is ignored
+  ```
+
+  `matchOnlyQueryParams()` is the inverse of listing what to ignore, for a URL where the parameters that identify the request are outnumbered by the ones that don't. The named parameters are still compared in full — one missing on the incoming side is a mismatch, as it would be without any of this. A parameter named in both lists is ignored.
 - **`HeadersMatcher`** — subset match by default: recorded headers must be present in the incoming request, but extra headers on the incoming side don't fail the match. This matters because different HTTP client libraries add their own headers (`User-Agent`, `Accept-Encoding`) that have nothing to do with application code. Header names are lowercased before comparison, since PSR-7 treats them as case-insensitive but a recorded cassette and a live client don't necessarily agree on capitalization. It's the only built-in matcher that takes constructor arguments:
 
   ```php
@@ -55,7 +68,7 @@ Two reasons that matters if you write your own: a snapshot's body is a plain str
       ->matchJsonField('/requestId', '/^[0-9a-f-]{36}$/');      // must *look* like a UUID, need not be identical
   ```
 
-  Both return a new matcher rather than mutating the receiver, so a matcher stays a value that can be built in one expression inside the `matchers:` array.
+  As with `QueryStringMatcher`, both return a new matcher rather than mutating the receiver, so a matcher stays a value that can be built in one expression inside the `matchers:` array.
 
 ## Redacted values are normalized on both sides
 
