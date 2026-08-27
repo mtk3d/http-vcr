@@ -11,6 +11,7 @@ VcrException
 ├── MissingEnvironmentVariableException
 ├── MissingDependencyException
 ├── RecordingNotAllowedException
+├── EraseTapeSelectorException  (also InvalidArgumentException)
 ├── CassetteFormatException
 │   └── CassetteIntegrityException
 ├── VcrNetworkException        (also PSR-18 NetworkExceptionInterface)
@@ -26,6 +27,7 @@ VcrException
 | `MissingEnvironmentVariableException` | A variable listed in [`requiresEnv`](../integrations/phpunit.md#pre-validating-environment-variables) is empty at the moment a real request was about to be made. |
 | `MissingDependencyException` | No PSR-17 factory implementation could be found to rebuild responses with, or `#[UseCassette]` found no HTTP client to record through. Names the specific interface or class it looked for. Rare in practice — whichever HTTP client you use already brings a factory along. |
 | `RecordingNotAllowedException` | Something needed recording, but [`VCR_ALLOW_RECORDING=0`](environment.md) blocked it. The message says whether that `0` was set explicitly or inferred from CI detection, and from which variable. |
+| `EraseTapeSelectorException` | A [`VCR_ERASE_TAPE`](environment.md#vcr_erase_tape-selectors) value that cannot mean anything: a bare `1`/`0`, an `@` with nothing after it, or a `@name` that is neither a configured provider nor a hostname. Thrown while parsing the variable, before any cassette is opened. |
 | `CassetteFormatException` | A cassette's `schemaVersion` is unknown or newer than this installation understands, or its contents can't be deserialized. |
 | `CassetteIntegrityException` | A [sidecar file](cassette-format.md#sidecar-files) doesn't hash to the `bodySha256` recorded for it — hand-edited, truncated, or partially restored from a backup. |
 | `VcrNetworkException` / `VcrRequestException` | Replaying a recorded [transport failure](../advanced/transport-errors.md). |

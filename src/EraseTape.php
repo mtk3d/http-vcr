@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace HttpVcr;
 
 use HttpVcr\Cassette\Interaction;
-use InvalidArgumentException;
+use HttpVcr\Exception\EraseTapeSelectorException;
 
 /**
  * A parsed VCR_ERASE_TAPE value: which cassettes to re-record, and which interactions
@@ -30,12 +30,12 @@ final readonly class EraseTape
     }
 
     /**
-     * @throws InvalidArgumentException when the value is a bare boolean — the shortest
-     *                                  thing to type must not also be the widest blast
-     *                                  radius, so `all` has to be said out loud
-     */
-    /**
      * @param  array<string, Provider>  $providers  the APIs this project has named
+     *
+     * @throws EraseTapeSelectorException when the value is a bare boolean — the shortest
+     *                                    thing to type must not also be the widest blast
+     *                                    radius, so `all` has to be said out loud — or when
+     *                                    a `@name` could not have meant anything
      */
     public static function parse(?string $value, array $providers = []): self
     {
@@ -53,11 +53,7 @@ final readonly class EraseTape
             }
 
             if (in_array(strtolower($selector), ['0', '1', 'true', 'false'], true)) {
-                throw new InvalidArgumentException(sprintf(
-                    'VCR_ERASE_TAPE takes cassette selectors, not "%s". Name the cassette to re-record '
-                    .'("shopify/get-product"), the API ("@shopify"), or every cassette the run opens ("all").',
-                    $selector,
-                ));
+                throw EraseTapeSelectorException::bareBoolean($selector);
             }
 
             $at = strpos($selector, '@');
@@ -65,10 +61,11 @@ final readonly class EraseTape
             $provider = $at === false ? null : substr($selector, $at + 1);
 
             if ($provider === '') {
-                throw new InvalidArgumentException(sprintf(
-                    'VCR_ERASE_TAPE selector "%s" names no API after "@".',
-                    $selector,
-                ));
+                throw EraseTapeSelectorException::noApiAfterAt($selector);
+            }
+
+            if ($provider !== null && ! isset($providers[$provider]) && ! self::couldBeAHost($provider)) {
+                throw EraseTapeSelectorException::unknownProvider($provider, array_keys($providers));
             }
 
             $selectors[] = [
@@ -78,6 +75,18 @@ final readonly class EraseTape
         }
 
         return new self($selectors, $providers);
+    }
+
+    /**
+     * Whether a name that isn't a configured provider can still have been meant as a host.
+     *
+     * A dot settles it, since every public hostname has one and no provider name needs one.
+     * `localhost` is the one dotless host common enough to name — anything else without a
+     * dot is a name that resolves to nothing, which is the typo this is here to catch.
+     */
+    private static function couldBeAHost(string $name): bool
+    {
+        return str_contains($name, '.') || strcasecmp($name, 'localhost') === 0;
     }
 
     public function isActive(): bool

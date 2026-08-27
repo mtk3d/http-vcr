@@ -9,6 +9,7 @@ use HttpVcr\Cassette\Interaction;
 use HttpVcr\Cassette\RecordedRequest;
 use HttpVcr\Cassette\RecordedResponse;
 use HttpVcr\EraseTape;
+use HttpVcr\Exception\EraseTapeSelectorException;
 use HttpVcr\Provider;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -74,6 +75,54 @@ final class EraseTapeTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         EraseTape::parse('shopify/get-product@');
+    }
+
+    /**
+     * The failure this replaces was silence: a misspelled `@provider` matched no host, so
+     * every interaction was spared and the run looked exactly like one with nothing to
+     * re-record.
+     */
+    public function testAnApiNameThatIsNeitherConfiguredNorAHostnameIsRefused(): void
+    {
+        try {
+            EraseTape::parse('@shopfiy', [
+                'shopify' => new Provider(['*.myshopify.com']),
+                'stripe' => new Provider(['api.stripe.com']),
+            ]);
+            self::fail('a selector naming nothing that exists should be refused');
+        } catch (EraseTapeSelectorException $exception) {
+            self::assertStringContainsString('"@shopfiy" names no configured provider and is not a hostname', $exception->getMessage());
+            self::assertStringContainsString('Configured providers: shopify, stripe.', $exception->getMessage());
+        }
+    }
+
+    public function testTheRefusalSaysSoWhenThereAreNoProvidersToHaveMeant(): void
+    {
+        $this->expectException(EraseTapeSelectorException::class);
+        $this->expectExceptionMessage('No providers are configured');
+
+        EraseTape::parse('@shopfiy');
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function acceptedApiNames(): iterable
+    {
+        yield 'a configured provider' => ['@shopify'];
+        yield 'a hostname' => ['@shop.myshopify.com'];
+        yield 'localhost' => ['@localhost'];
+        yield 'a cassette and a provider' => ['sync/order-flow@shopify'];
+    }
+
+    /**
+     * A name with a dot in it is a host, and hosts need no configuration — the check is
+     * only there to catch a name that could never have been either.
+     */
+    #[DataProvider('acceptedApiNames')]
+    public function testANameThatCouldBeMeantIsAccepted(string $selector): void
+    {
+        self::assertTrue(EraseTape::parse($selector, ['shopify' => new Provider(['*.myshopify.com'])])->isActive());
     }
 
     public function testEverythingUnlockedIsErasedWhenNoApiIsNamed(): void
