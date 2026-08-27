@@ -6,6 +6,7 @@ namespace HttpVcr\Console;
 
 use DateInterval;
 use DateTimeImmutable;
+use HttpVcr\Ansi;
 use HttpVcr\Cassette\Staleness;
 use HttpVcr\Config;
 use HttpVcr\Exception\CassetteFormatException;
@@ -82,12 +83,12 @@ final class StaleCommand extends Command
 
                 foreach ($stale as $position => $interaction) {
                     $output->writeln(sprintf(
-                        '  #%d %s %s — recorded %s, %s past',
+                        '  #%d %s %s — recorded %s, %s',
                         $position + 1,
                         $interaction->request->method,
                         $interaction->request->uri,
                         $interaction->recordedAt->format('Y-m-d H:i'),
-                        $this->since($staleness->expiryOf($interaction, $threshold['interval']), $now),
+                        Ansi::yellow($this->since($staleness->expiryOf($interaction, $threshold['interval']), $now).' past'),
                     ));
                 }
 

@@ -64,6 +64,17 @@ final class ProvidersCommandTest extends TestCase
         );
     }
 
+    public function testTheColumnsAreNamed(): void
+    {
+        $this->configure(['shopify' => new Provider(hosts: ['*.myshopify.com'])]);
+        $this->record('shopify/checkout', ['https://shop.myshopify.com/cart']);
+
+        $display = $this->execute()->getDisplay();
+
+        self::assertMatchesRegularExpression('/Provider\s+Hosts\s+Requires\s+Recorded/', $display);
+        self::assertMatchesRegularExpression('/Recorded\n\s*shopify/', $display, 'the heading lines up with the rows under it');
+    }
+
     public function testAHostNoConfigurationClaimedIsListedAsImplicit(): void
     {
         $this->configure(['shopify' => new Provider(hosts: ['*.myshopify.com'])]);

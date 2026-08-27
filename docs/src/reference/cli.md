@@ -107,6 +107,10 @@ Sets or clears `"locked": true` on a specific interaction. Without `--interactio
 
 A finding is not a failure. `stale` reports interactions past their threshold and still exits 0 — crossing a threshold is a fact about the clock, and the same commit run an hour later would answer differently — and `scan-secrets` exits 0 unless asked for `--fail-on-findings`. What does exit non-zero, in every command that reads cassettes, is a cassette that cannot be parsed: that is a defect in the file rather than a verdict about its contents. `tests` also exits non-zero when `--provider` names something that is neither a configured provider nor a host in any cassette, and lists both sets. `migrate` exits non-zero when it left any cassette behind — a name already taken in the target format, or a file it could not read.
 
+## Color
+
+Output is colored on a terminal and plain everywhere else, with three spans carrying it: a cassette path, a finding — the credential-shaped value in `scan-secrets`, how far past its threshold an interaction is in `stale` — and a table heading. `--no-ansi` turns it off and `--ansi` forces it on, and both also settle it for [any warning a command's own run prints](environment.md#color), so one run never comes out half-colored.
+
 ## Running from inside a consuming project
 
 Composer links the binary into the consuming project's `vendor/bin`, and the script resolves the *host* project's `vendor/autoload.php` and `http-vcr.php`, not its own package directory — so it works the same whether it's run from a project that depends on http-vcr or from http-vcr's own test suite. For an unusual layout, point it at a config explicitly:

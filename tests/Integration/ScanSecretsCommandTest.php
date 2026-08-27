@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr\Tests\Integration;
 
+use HttpVcr\Ansi;
 use HttpVcr\Config;
 use HttpVcr\Console\Application;
 use HttpVcr\Console\ScanSecretsCommand;
@@ -113,6 +114,27 @@ final class ScanSecretsCommandTest extends TestCase
 
         self::assertStringContainsString('<COMPANY_PROXY_TOKEN>', $display);
         self::assertStringContainsString('billing/charge.json', $display);
+    }
+
+    /**
+     * The same three colours the warning printed after a recording uses, so one finding
+     * looks like itself wherever it surfaces (§7 decision 66).
+     */
+    public function testOnATerminalTheFindingCarriesTheSameColorsTheRunTimeWarningDoes(): void
+    {
+        $this->configure();
+        $this->record('billing/charge', new Response(200, [], '{"api_key":"sk_live_51H8sT2eZvKYlo2CabcdefghijklmnopQR"}'));
+
+        Ansi::assume(true);
+
+        try {
+            $display = $this->execute()->getDisplay();
+        } finally {
+            Ansi::assume(null);
+        }
+
+        self::assertStringContainsString("\033[1mresponse.body (/api_key)\033[0m", $display);
+        self::assertStringContainsString("\033[31m\"sk_live_…\"\033[0m", $display);
     }
 
     public function testASidecarBodyIsScannedLikeAnyOtherBody(): void

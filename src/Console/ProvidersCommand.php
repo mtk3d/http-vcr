@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr\Console;
 
+use HttpVcr\Ansi;
 use HttpVcr\Config;
 use HttpVcr\Provider;
 use Symfony\Component\Console\Command\Command;
@@ -80,7 +81,7 @@ final class ProvidersCommand extends Command
             ];
         }
 
-        $this->writeTable($output, $rows);
+        $this->writeTable($output, $rows, ['Provider', 'Hosts', 'Requires', 'Recorded']);
     }
 
     /**
@@ -106,29 +107,49 @@ final class ProvidersCommand extends Command
     }
 
     /**
+     * Columns padded to the widest cell, with no rules or borders: four short columns read
+     * as a table on their own, and a box around them would be the widest thing on screen.
+     *
+     * The heading is emphasised after the padding is worked out, never before — an escape
+     * sequence counted as width would push every other row out of line.
+     *
      * @param  list<list<string>>  $rows
+     * @param  list<string>  $heading
      */
-    private function writeTable(OutputInterface $output, array $rows): void
+    private function writeTable(OutputInterface $output, array $rows, array $heading = []): void
     {
         $widths = [];
 
-        foreach ($rows as $row) {
+        foreach ([...($heading === [] ? [] : [$heading]), ...$rows] as $row) {
             foreach ($row as $column => $cell) {
                 $widths[$column] = max($widths[$column] ?? 0, mb_strlen($cell));
             }
         }
 
-        foreach ($rows as $row) {
-            $line = '';
-
-            foreach ($row as $column => $cell) {
-                $line .= $column === array_key_last($row)
-                    ? $cell
-                    : $cell.str_repeat(' ', $widths[$column] - mb_strlen($cell) + 2);
-            }
-
-            $output->writeln($line);
+        if ($heading !== []) {
+            $output->writeln(Ansi::bold($this->line($heading, $widths)));
         }
+
+        foreach ($rows as $row) {
+            $output->writeln($this->line($row, $widths));
+        }
+    }
+
+    /**
+     * @param  list<string>  $row
+     * @param  array<int, int>  $widths
+     */
+    private function line(array $row, array $widths): string
+    {
+        $line = '';
+
+        foreach ($row as $column => $cell) {
+            $line .= $column === array_key_last($row)
+                ? $cell
+                : $cell.str_repeat(' ', $widths[$column] - mb_strlen($cell) + 2);
+        }
+
+        return $line;
     }
 
     private function counts(int $cassettes, int $interactions): string

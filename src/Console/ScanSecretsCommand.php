@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HttpVcr\Console;
 
+use HttpVcr\Ansi;
 use HttpVcr\Cassette\Interaction;
 use HttpVcr\Config;
 use HttpVcr\Exception\CassetteFormatException;
@@ -78,11 +79,15 @@ final class ScanSecretsCommand extends Command
 
                 foreach ($cassette->interactions as $position => $interaction) {
                     foreach ([...$scanner->scan($interaction), ...$this->literals($interaction, $secrets)] as $finding) {
+                        // Coloured through Ansi rather than the formatter's tags, so a
+                        // finding looks the same here as it does in the warning a run
+                        // prints (§7 decision 66) — the application hands Ansi the
+                        // console's own --ansi/--no-ansi answer.
                         $lines[] = sprintf(
-                            '  #%d %s — "%s" (%d chars)',
+                            '  #%d %s — %s (%d chars)',
                             $position + 1,
-                            $finding->location,
-                            $finding->excerpt(),
+                            Ansi::bold($finding->location),
+                            Ansi::red('"'.$finding->excerpt().'"'),
                             $finding->length(),
                         );
                     }
