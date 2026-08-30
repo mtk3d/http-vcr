@@ -8,12 +8,18 @@ use HttpVcr\Ansi;
 use HttpVcr\Cassette\Interaction;
 use HttpVcr\Config;
 use HttpVcr\Exception\CassetteFormatException;
+use HttpVcr\Hook\Redaction;
+use HttpVcr\Hook\RedactionHooks;
 use HttpVcr\SecretFinding;
 use HttpVcr\SecretScanner;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\QuestionHelper;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Symfony\Component\Console\Question\Question;
 
 /**
  * `scan-secrets`: the full, manual pass of the scanner that otherwise runs by itself after
@@ -41,6 +47,23 @@ final class ScanSecretsCommand extends Command
     {
         $this
             ->setDescription('Sweeps every cassette for credential-shaped values')
+            ->addArgument(
+                'cassette',
+                InputArgument::OPTIONAL,
+                'One cassette to sweep, scope files included — every cassette in the project by default',
+            )
+            ->addOption(
+                'provider',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Only interactions belonging to this provider, or to this host',
+            )
+            ->addOption(
+                'redact',
+                null,
+                InputOption::VALUE_NONE,
+                'Ask about each finding and replace the ones confirmed with a placeholder',
+            )
             ->addOption(
                 'fail-on-findings',
                 null,
@@ -55,15 +78,32 @@ final class ScanSecretsCommand extends Command
         $scanner = new SecretScanner;
         $secrets = $this->declaredSecrets($config);
 
+        $named = $input->getArgument('cassette');
+        $named = is_string($named) ? $named : null;
+        $provider = $input->getOption('provider');
+        $provider = is_string($provider) && $provider !== '' ? $provider : null;
+        $redacting = $input->getOption('redact') === true;
+
+        // Nobody to ask means nobody decided, and a pipeline quietly rewriting cassettes is
+        // the opposite of what this is for.
+        if ($redacting && ! $input->isInteractive()) {
+            $output->writeln('<error>--redact needs a terminal to ask on, and this run has none.</error>');
+
+            return Command::FAILURE;
+        }
+
         $found = 0;
         $cassettes = 0;
         $scanned = 0;
         $unreadable = false;
+        $matched = false;
+        $ofProvider = false;
 
         foreach ($this->directories($config) as $directory) {
             $editor = new CassetteEditor($config, $directory);
 
-            foreach ($editor->all() as $file) {
+            foreach ($named === null ? $editor->all() : $editor->files($named, null) as $file) {
+                $matched = true;
                 $scanned++;
 
                 try {
@@ -75,39 +115,51 @@ final class ScanSecretsCommand extends Command
                     continue;
                 }
 
-                $lines = [];
+                $findings = [];
 
                 foreach ($cassette->interactions as $position => $interaction) {
+                    if ($provider !== null && ! $this->belongsTo($interaction, $provider, $config)) {
+                        continue;
+                    }
+
+                    $ofProvider = true;
+
                     foreach ([...$scanner->scan($interaction), ...$this->literals($interaction, $secrets)] as $finding) {
-                        // Coloured through Ansi rather than the formatter's tags, so a
-                        // finding looks the same here as it does in the warning a run
-                        // prints (§7 decision 66) — the application hands Ansi the
-                        // console's own --ansi/--no-ansi answer.
-                        $lines[] = sprintf(
-                            '  #%d %s — %s (%d chars)',
-                            $position + 1,
-                            Ansi::bold($finding->location),
-                            Ansi::red('"'.$finding->excerpt().'"'),
-                            $finding->length(),
-                        );
+                        $findings[] = [$position, $finding];
                     }
                 }
 
-                if ($lines === []) {
+                if ($findings === []) {
                     continue;
                 }
 
                 $cassettes++;
-                $found += count($lines);
+                $found += count($findings);
 
                 $output->writeln(sprintf('<info>%s</info>', $editor->describe($file)));
 
-                foreach ($lines as $line) {
-                    $output->writeln($line);
+                if ($redacting) {
+                    $this->redact($editor, $file, $findings, $input, $output);
+                } else {
+                    foreach ($findings as [$position, $finding]) {
+                        $output->writeln($this->describe($position, $finding));
+                    }
                 }
 
                 $output->writeln('');
             }
+        }
+
+        if (! $matched && $named !== null) {
+            $output->writeln(sprintf('<error>No cassette named "%s" is on disk.</error>', $named));
+
+            return Command::FAILURE;
+        }
+
+        if (! $ofProvider && $provider !== null) {
+            $output->writeln($this->unknownProvider($provider, $config));
+
+            return Command::FAILURE;
         }
 
         $output->writeln($this->summary($found, $cassettes, $scanned));
@@ -119,6 +171,163 @@ final class ScanSecretsCommand extends Command
         return $found > 0 && $input->getOption('fail-on-findings') === true
             ? Command::FAILURE
             : Command::SUCCESS;
+    }
+
+    /**
+     * Coloured through Ansi rather than the formatter's tags, so a finding looks the same
+     * here as it does in the warning a run prints (§7 decision 66) — the application hands
+     * Ansi the console's own --ansi/--no-ansi answer.
+     */
+    private function describe(int $position, SecretFinding $finding): string
+    {
+        return sprintf(
+            '  #%d %s — %s (%d chars)',
+            $position + 1,
+            Ansi::bold($finding->location),
+            Ansi::red('"'.$finding->excerpt().'"'),
+            $finding->length(),
+        );
+    }
+
+    /**
+     * Whether this interaction's host answers to the name given: a configured provider's,
+     * or the host itself, which is a provider of its own without anyone declaring it — the
+     * same rule `VCR_ERASE_TAPE=@name` follows (§3.12).
+     */
+    private function belongsTo(Interaction $interaction, string $provider, Config $config): bool
+    {
+        $host = parse_url($interaction->request->uri, PHP_URL_HOST);
+
+        if (! is_string($host) || $host === '') {
+            return false;
+        }
+
+        return strcasecmp($config->providerFor($host) ?? $host, $provider) === 0;
+    }
+
+    private function unknownProvider(string $provider, Config $config): string
+    {
+        $configured = array_keys($config->providers());
+
+        return sprintf(
+            '<error>Nothing recorded belongs to "%s". %s</error>',
+            $provider,
+            $configured === []
+                ? 'No providers are configured, so a name here is a host in one of the cassettes.'
+                : 'Configured providers: '.implode(', ', $configured).'.',
+        );
+    }
+
+    /**
+     * Asks about each finding in one cassette and rewrites the file with whatever was
+     * confirmed — every occurrence of the value, not only the one that was found: a
+     * credential repeated in three places must not survive in two.
+     *
+     * One way, and said so: the value is replaced in the file and http-vcr has nothing to
+     * put back. Replay keeps working for a response body, which nothing matches on. A value
+     * in the request is matched on, so the same substitution has to exist in `http-vcr.php`
+     * for a live request to line up with the recording again — which is what the note after
+     * such a finding is for.
+     *
+     * @param  list<array{int, SecretFinding}>  $findings
+     */
+    private function redact(
+        CassetteEditor $editor,
+        string $file,
+        array $findings,
+        InputInterface $input,
+        OutputInterface $output,
+    ): void {
+        $questions = $this->getHelper('question');
+
+        if (! $questions instanceof QuestionHelper) {
+            return;
+        }
+
+        /** @var list<array{string, string}> $confirmed value and the placeholder taking its place */
+        $confirmed = [];
+        $answered = [];
+
+        foreach ($findings as [$position, $finding]) {
+            $output->writeln($this->describe($position, $finding));
+
+            if (in_array($finding->value, $answered, true)) {
+                continue;
+            }
+
+            $answered[] = $finding->value;
+
+            if ($questions->ask($input, $output, new ConfirmationQuestion('     Redact it? [y/N] ', false)) !== true) {
+                continue;
+            }
+
+            $placeholder = $questions->ask($input, $output, new Question(
+                sprintf('     Placeholder [%s] ', $this->placeholderFor($finding)),
+                $this->placeholderFor($finding),
+            ));
+
+            $confirmed[] = [$finding->value, is_string($placeholder) && $placeholder !== '' ? $placeholder : $this->placeholderFor($finding)];
+
+            if (str_starts_with($finding->location, 'request.')) {
+                $output->writeln(
+                    '     This one sits in the request, which is what replay matches on — '
+                    .'it will only match again if http-vcr.php redacts the same field.',
+                );
+            }
+        }
+
+        if ($confirmed === []) {
+            return;
+        }
+
+        $editor->locking($file, static function () use ($editor, $file, $confirmed): void {
+            $cassette = $editor->read($file);
+            $hooks = new RedactionHooks;
+
+            // The four headers redacted with no configuration at all are opted out of here:
+            // this pass must change what was confirmed and nothing else, and a cassette
+            // imported from a HAR can still be carrying one of them in the clear.
+            $hooks->includeSensitiveHeaders(['Authorization', 'Proxy-Authorization', 'Cookie', 'Set-Cookie']);
+
+            foreach ($confirmed as [$value, $placeholder]) {
+                $hooks->redact($placeholder, static fn (): string => $value);
+            }
+
+            $editor->write($file, $cassette->withInteractions(array_map(
+                static fn (Interaction $interaction): Interaction => $hooks->beforeRecord($interaction),
+                $cassette->interactions,
+            )));
+        });
+
+        $output->writeln(sprintf(
+            '  %s — one-way: the original values are not in this file any more.',
+            $this->redacted(count($confirmed)),
+        ));
+    }
+
+    private function redacted(int $count): string
+    {
+        return sprintf('redacted %d value%s', $count, $count === 1 ? '' : 's');
+    }
+
+    /**
+     * The placeholder offered for a finding, in the convention the redaction rules use:
+     * the field's own name where the location names one, and a neutral one where the value
+     * was found loose in a body.
+     */
+    private function placeholderFor(SecretFinding $finding): string
+    {
+        if (preg_match('/\(([^)]+)\)/', $finding->location, $found) === 1) {
+            $name = (string) preg_replace('#^.*/#', '', $found[1]);
+
+            return Redaction::placeholderFor($name);
+        }
+
+        if (str_contains($finding->location, '.headers.')) {
+            return Redaction::placeholderFor(substr($finding->location, (int) strrpos($finding->location, '.') + 1));
+        }
+
+        return Redaction::placeholderFor('secret');
     }
 
     /**

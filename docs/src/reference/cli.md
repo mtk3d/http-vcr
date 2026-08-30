@@ -76,6 +76,37 @@ Without that flag a finding is reported and the command still exits 0.
 
 The test is what the value *looks like*, not which `redact()` rules exist: this command doesn't run the test suite, so it can't know about rules registered imperatively in a `setUp()`. Anything in the `<...>` convention counts as a placeholder — both the built-in `<REDACTED-*>` values and your own `<API_KEY>`. Rules declared in `http-vcr.php` are read too, since that file can be loaded without running anything.
 
+### Narrowing the sweep
+
+```bash
+vendor/bin/http-vcr scan-secrets shopify/get-product     # one cassette, its scope files included
+vendor/bin/http-vcr scan-secrets --provider=stripe       # only interactions belonging to one API
+```
+
+A `--provider` resolves the way [`VCR_ERASE_TAPE=@name`](environment.md#vcr_erase_tape-selectors) does: a name configured in `http-vcr.php`, or a host, which is a provider of its own without being declared. A name nothing recorded answers to fails the command rather than reporting a clean sweep — a selector that selects nothing looks exactly like a project with no secrets in it. A cassette name that is not on disk fails the same way.
+
+### Hiding a value that is already recorded
+
+```bash
+vendor/bin/http-vcr scan-secrets --redact
+```
+
+Walks the findings one at a time, asks about each, and rewrites the cassettes with what was confirmed:
+
+```
+tests/Cassettes/billing/charge.yaml
+  #1 response.body (/api_key) — "sk_live_…" (32 chars)
+     Redact it? [y/N] y
+     Placeholder [<REDACTED-API-KEY>]
+  redacted 1 value — one-way: the original values are not in this file any more.
+```
+
+Every occurrence of the value goes, not only the one that was found — a credential repeated in three places must not survive in two. The offered placeholder follows the field's name, and anything can be typed over it.
+
+**One way.** http-vcr has nothing to put back: unlike a [`redact()` rule with a value provider](../safety/redaction.md#two-way-redaction), this is an edit to the file. For a response body that changes nothing about replay, since nothing matches on it. A value in the **request** is matched on, so replacing it here means a live request no longer lines up with the recording unless `http-vcr.php` redacts the same field — the command says so under any such finding.
+
+It refuses to run without a terminal to ask on, so `--redact` in a pipeline redacts nothing rather than quietly rewriting cassettes.
+
 [Sidecar files](cassette-format.md#sidecar-files) are scanned as well. They hold the largest payloads in the project and go through redaction like any inline body, so leaving them out would be the exact gap this command exists to close. Sidecars whose content isn't text (an image, an archive) are skipped, to avoid false positives from arbitrary byte sequences.
 
 ## `migrate`

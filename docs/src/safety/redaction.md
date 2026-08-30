@@ -26,7 +26,7 @@ On a terminal the cassette, the location and the value are colored, so the findi
 
 It never fails a test and never blocks the write — the cassette is on disk either way, and the point is to put the finding in front of you while the context is still fresh, before the file is committed. Only interactions recorded *in that session* are checked, so a finding you've looked at and accepted doesn't come back every run.
 
-For the blocking version — every cassette, with an exit code CI can act on — run [`vendor/bin/http-vcr scan-secrets`](../reference/cli.md#scan-secrets). To turn the automatic check off, set `scanRecordingsForSecrets: false` in [`http-vcr.php`](../reference/configuration.md); there's deliberately no environment variable for it, since silencing a secrets warning should be a decision visible in review rather than something appended to one command.
+For the blocking version — every cassette, with an exit code CI can act on — run [`vendor/bin/http-vcr scan-secrets`](../reference/cli.md#scan-secrets); `scan-secrets --redact` asks about each finding and replaces the confirmed ones in the file, for a credential that is already recorded and would otherwise have to be edited out by hand. To turn the automatic check off, set `scanRecordingsForSecrets: false` in [`http-vcr.php`](../reference/configuration.md); there's deliberately no environment variable for it, since silencing a secrets warning should be a decision visible in review rather than something appended to one command.
 
 ```php
 $vcr->redact('<SHOPIFY_API_KEY>', fn () => $_ENV['SHOPIFY_API_KEY']);

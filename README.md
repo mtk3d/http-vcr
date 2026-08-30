@@ -316,7 +316,8 @@ http-vcr: recorded 1 interaction → tests/Cassettes/shopify/get-product.yaml
 It never fails a test and never blocks the write — the point is to put the finding in front
 of you while the context is fresh, before the file is committed. For the blocking version
 across every cassette, with an exit code CI can act on, run `vendor/bin/http-vcr
-scan-secrets`.
+scan-secrets` — and `--redact` on the same command asks about each finding and replaces
+the confirmed ones in the file, one way.
 
 ## More control
 
