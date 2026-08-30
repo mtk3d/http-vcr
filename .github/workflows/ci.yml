@@ -25,6 +25,28 @@ jobs:
 
       - run: vendor/bin/phpunit
 
+  # The matrix above always resolves to the newest release of everything, so the bottom of
+  # every constraint we publish goes untested — which is how a bridge that warns on
+  # symfony/http-client 7.1 and 7.2 stayed invisible (§7 decisions 77, 78). Lowest is run on
+  # the lowest supported PHP because that is the only place Composer can reach the floor:
+  # Symfony 8 needs PHP 8.4+, so on a newer runtime "lowest" never descends that far.
+  lowest-dependencies:
+    name: PHPUnit (lowest dependencies)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: lowest
+
+      - run: vendor/bin/phpunit
+
   static-analysis:
     name: PHPStan
     runs-on: ubuntu-latest
