@@ -42,6 +42,27 @@ final class BinaryAutoloaderTest extends TestCase
         self::assertSame('host', $this->execute($binary));
     }
 
+    /**
+     * The case a path repository actually produces: `vendor/bin` holds a Composer proxy
+     * that names the host autoloader outright, and the package directory is a symlink to a
+     * checkout elsewhere — so counting directories up from the binary lands outside the
+     * project entirely and only the proxy knows the answer.
+     */
+    public function testComposersProxyDecidesWhenItSaysSo(): void
+    {
+        $binary = $this->installAt('elsewhere/http-vcr');
+
+        $this->writeAutoloader('elsewhere/http-vcr/vendor/autoload.php', 'own');
+        $this->writeAutoloader('project/vendor/autoload.php', 'host');
+        $this->write($this->root.'/project/vendor/bin/http-vcr', <<<'PHP'
+            <?php
+            $GLOBALS['_composer_autoload_path'] = __DIR__ . '/../autoload.php';
+            require __DIR__ . '/../../../elsewhere/http-vcr/bin/http-vcr';
+            PHP);
+
+        self::assertSame('host', $this->execute($this->root.'/project/vendor/bin/http-vcr'));
+    }
+
     public function testAnOwnCheckoutFallsBackToItsOwnAutoloader(): void
     {
         $binary = $this->installAt('http-vcr');

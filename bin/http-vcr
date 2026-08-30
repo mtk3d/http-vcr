@@ -5,17 +5,21 @@ declare(strict_types=1);
 
 use HttpVcr\Console\Application;
 
-// The host project's autoloader, not this package's: Composer links the binary into a
-// consuming project's vendor/bin, and the commands read that project's cassettes. So the
-// installed-package path is tried first and the own-checkout path second — the other order
-// says the same thing until both exist, which is what a path repository produces, and then
-// it loads the wrong one. That is not hypothetical: our own vendor/ carries symfony/yaml,
-// so the default serializer would flip to YAML and every JSON cassette in the host project
-// would go missing from `scan-secrets` and `providers` without a word (§7 decision 79).
-$autoloaders = [
+// The host project's autoloader, not this package's: the commands read that project's
+// cassettes, and loading ours instead is silent rather than fatal — our vendor/ carries
+// symfony/yaml, so the default serializer flips to YAML and every JSON cassette in the host
+// project disappears from `scan-secrets` and `providers` without a word about why
+// (§7 decision 79).
+//
+// Composer's generated bin proxy says outright which file that is, so ask it rather than
+// counting directories up from here. The two paths are the fallback for a binary invoked
+// directly: first the installed-package layout, then our own checkout. Order matters, since
+// a path repository produces both at once.
+$autoloaders = array_filter([
+    $GLOBALS['_composer_autoload_path'] ?? null,
     __DIR__ . '/../../../autoload.php',
     __DIR__ . '/../vendor/autoload.php',
-];
+], 'is_string');
 
 foreach ($autoloaders as $autoloader) {
     if (is_file($autoloader)) {
