@@ -45,7 +45,7 @@ public function withInner(ClientInterface $inner): self;
 | `scopeResolver` | `NullScopeResolver` | [Scoping](../advanced/scoping.md) — splits one cassette name across several files by API version. |
 | `persister` / `serializer` | from config | [Where and in what format](../advanced/storage-and-formats.md) cassettes are stored. |
 | `responseFactory` / `streamFactory` | detected | PSR-17, used to rebuild a replayed response. See below. |
-| `warn` | standard error | Where this session's warnings go: what the [secret scan](../safety/redaction.md#the-automatic-check-after-recording) found, and a forced recording a [lock](../safety/locked-interactions.md) made a no-op. The PHPUnit bridge passes its own, so a run prints them together at the end instead of scattered through the output. |
+| `warn` | the run's collector, else standard error | Overrides where this session's warnings go: what the [secret scan](../safety/redaction.md#the-automatic-check-after-recording) found, interactions [nothing replayed](../advanced/strict-mode.md), and a forced recording a [lock](../safety/locked-interactions.md) made a no-op. Under a test run the session finds the collector by itself and the whole run prints as one block at the end — pass this only to send a cassette's warnings somewhere else. |
 | `clock` | `SystemClock` | Any PSR-20 `Psr\Clock\ClockInterface` — the source of "now" for `staleAfter`; `FrozenClock` ships with the package for testing that. |
 
 Where a parameter is nullable, `null` means "whatever the project configured" — the Default column is the value that applies when nothing configured one either.

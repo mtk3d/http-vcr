@@ -20,6 +20,7 @@ use HttpVcr\Persistence\CassettePersisterInterface;
 use HttpVcr\Persistence\SidecarBodies;
 use HttpVcr\Persistence\SupportsSessionLocking;
 use HttpVcr\RecordMode;
+use HttpVcr\RunWarnings;
 use HttpVcr\SecretScanner;
 use HttpVcr\Serializer\CassetteSerializerInterface;
 use HttpVcr\StrictMode;
@@ -531,11 +532,23 @@ final class CassetteManager
      * Standard error unless a harness offered somewhere better: a test runner collects the
      * whole run's warnings and prints them together, where they can still be read after
      * hundreds of tests have scrolled past (§3.4).
+     *
+     * The collector is looked up rather than waited for (§7 decision 75). A session told
+     * where to report still reports there — `warn:` is how a caller overrides the ambient
+     * choice, including back to standard error with `fn ($w) => fwrite(STDERR, $w)`.
      */
     private function report(string $warning): void
     {
         if ($this->warn !== null) {
             ($this->warn)($warning);
+
+            return;
+        }
+
+        $collector = RunWarnings::current();
+
+        if ($collector !== null) {
+            $collector->report($warning);
 
             return;
         }

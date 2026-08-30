@@ -25,8 +25,8 @@ final class CassetteFactory
 {
     public function open(UseCassette $cassette, ?string $directory = null): VcrClient
     {
-        $warnings = RunWarnings::current();
-
+        // Nothing passes `warn:` here: a cassette finds the run's collector by itself, so
+        // the clients a test builds by hand report to the same block this one does.
         return new VcrClient(
             new DeferredClient(static fn (): ClientInterface => Config::global()->innerClient()),
             $cassette->name,
@@ -36,7 +36,6 @@ final class CassetteFactory
             requiresEnv: $cassette->requiresEnv,
             locked: $cassette->locked,
             persister: $directory === null ? null : new FilesystemCassettePersister($directory),
-            warn: $warnings === null ? null : $warnings->report(...),
         );
     }
 

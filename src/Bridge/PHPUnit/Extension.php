@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HttpVcr\Bridge\PHPUnit;
 
 use HttpVcr\Ansi;
+use HttpVcr\RunWarnings;
 use PHPUnit\Runner\Extension\Extension as PHPUnitExtension;
 use PHPUnit\Runner\Extension\Facade;
 use PHPUnit\Runner\Extension\ParameterCollection;

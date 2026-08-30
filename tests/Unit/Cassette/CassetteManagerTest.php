@@ -18,6 +18,7 @@ use HttpVcr\Matching\MethodMatcher;
 use HttpVcr\Matching\QueryStringMatcher;
 use HttpVcr\Matching\UriMatcher;
 use HttpVcr\RecordMode;
+use HttpVcr\RunWarnings;
 use HttpVcr\SecretScanner;
 use HttpVcr\Serializer\JsonCassetteSerializer;
 use HttpVcr\StrictMode;
@@ -119,6 +120,60 @@ final class CassetteManagerTest extends TestCase
 
         self::assertCount(1, $warnings);
         self::assertStringContainsString('response.body (/key)', $warnings[0]);
+    }
+
+    /**
+     * The case a hand-built client is in: nobody passed `warn:`, and reporting straight to
+     * standard error would land in the middle of the runner's progress output while every
+     * cassette the bridge opened waited for the block at the end (§7 decision 75).
+     */
+    public function testASessionNobodyToldWhereToReportFindsTheRunsCollector(): void
+    {
+        $previous = RunWarnings::current();
+        $collector = RunWarnings::collect();
+
+        try {
+            $manager = $this->manager(new InMemoryCassettePersister, scanner: new SecretScanner);
+
+            $manager->record(
+                new RecordedRequest('POST', 'https://example.com/token'),
+                new RecordedResponse(200, [], '{"key":"tk_live_9f8e7d6c5b4a3210FEDCBA"}'),
+            );
+            $manager->close();
+        } finally {
+            RunWarnings::resume($previous);
+        }
+
+        self::assertCount(1, $collector->all());
+        self::assertStringContainsString('response.body (/key)', $collector->all()[0]);
+    }
+
+    public function testAnExplicitSinkStillWinsOverTheRunsCollector(): void
+    {
+        $previous = RunWarnings::current();
+        $collector = RunWarnings::collect();
+        $warnings = [];
+
+        try {
+            $manager = $this->manager(
+                new InMemoryCassettePersister,
+                scanner: new SecretScanner,
+                warn: static function (string $warning) use (&$warnings): void {
+                    $warnings[] = $warning;
+                },
+            );
+
+            $manager->record(
+                new RecordedRequest('POST', 'https://example.com/token'),
+                new RecordedResponse(200, [], '{"key":"tk_live_9f8e7d6c5b4a3210FEDCBA"}'),
+            );
+            $manager->close();
+        } finally {
+            RunWarnings::resume($previous);
+        }
+
+        self::assertCount(1, $warnings);
+        self::assertSame([], $collector->all());
     }
 
     public function testTheWarningIsPrintedOnceEvenIfTheSessionIsClosedTwice(): void

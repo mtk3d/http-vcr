@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace HttpVcr\Bridge\PHPUnit;
-
-use HttpVcr\Ansi;
+namespace HttpVcr;
 
 /**
  * What the cassettes reported over a whole test run, held until the run is over.
@@ -14,7 +12,14 @@ use HttpVcr\Ansi;
  * happens buries it under whatever the next few hundred tests print. Collected here, they
  * come out in one block at the end, which is the only reason the sink exists (§3.4).
  *
- * @internal
+ * Ambient rather than injected, and in the core rather than in the PHPUnit bridge, because
+ * a cassette has to find it without being told (§7 decision 75): a `new VcrClient(...)`
+ * written by hand in a test is the normal way to reach what `#[UseCassette]` doesn't
+ * expose, and one that reported straight to standard error would interleave with the
+ * runner's progress output while its neighbours waited for the block at the end.
+ *
+ * A harness other than PHPUnit opts in the same way the bundled extension does: `collect()`
+ * when the run starts, `summary()` and `stop()` when it ends.
  */
 final class RunWarnings
 {
@@ -40,6 +45,16 @@ final class RunWarnings
     public static function stop(): void
     {
         self::$current = null;
+    }
+
+    /**
+     * Puts a collector back, for anything that took the sink over for part of a run and
+     * owes the rest of it what was there before — `null` is the same statement as
+     * {@see stop()}.
+     */
+    public static function resume(?self $collector): void
+    {
+        self::$current = $collector;
     }
 
     public function report(string $warning): void
