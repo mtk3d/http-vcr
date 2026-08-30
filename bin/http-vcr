@@ -6,11 +6,15 @@ declare(strict_types=1);
 use HttpVcr\Console\Application;
 
 // The host project's autoloader, not this package's: Composer links the binary into a
-// consuming project's vendor/bin, and the commands read that project's cassettes. The
-// first path covers running from http-vcr's own checkout, the second an installed package.
+// consuming project's vendor/bin, and the commands read that project's cassettes. So the
+// installed-package path is tried first and the own-checkout path second — the other order
+// says the same thing until both exist, which is what a path repository produces, and then
+// it loads the wrong one. That is not hypothetical: our own vendor/ carries symfony/yaml,
+// so the default serializer would flip to YAML and every JSON cassette in the host project
+// would go missing from `scan-secrets` and `providers` without a word (§7 decision 79).
 $autoloaders = [
-    __DIR__ . '/../vendor/autoload.php',
     __DIR__ . '/../../../autoload.php',
+    __DIR__ . '/../vendor/autoload.php',
 ];
 
 foreach ($autoloaders as $autoloader) {
