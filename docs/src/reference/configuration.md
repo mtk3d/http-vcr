@@ -38,6 +38,7 @@ return Config::create(
 | `persister` | `FilesystemCassettePersister` | [Where cassettes are stored](../advanced/storage-and-formats.md#persisters). |
 | `serializer` | `YamlCassetteSerializer` where `symfony/yaml` is installed, `JsonCassetteSerializer` otherwise | [The on-disk format](../advanced/storage-and-formats.md#serializers). Naming one here pins it whatever the project has installed; changing it means running [`migrate`](cli.md#migrate). |
 | `defaultMatchers` | `[MethodMatcher, UriMatcher, QueryStringMatcher]` | Used by any `VcrClient` constructed without an explicit `matchers` list. See [why the query string is in there](../concepts/matching.md#the-default-set). |
+| `includeSensitiveHeaders` | `[]` | Headers taken back out of the [four redacted with no configuration](../safety/redaction.md#opting-out-of-the-default-header-redaction) — naming all four turns that off. Added to, not replaced by, a client's own `includeSensitiveHeaders()`. |
 | `redact` | `[]` | Project-wide [redaction rules](../safety/redaction.md#project-wide-redaction), as `placeholder => value provider`. |
 | `innerClientFactory` | detected | Builds the real PSR-18 client `#[UseCassette]` uses when it has to record. See below. |
 | PSR-17 factories, `clock`, `scopeResolver`, `strictMode`, `staleAfter`, `inlineBodyLimit` | see [VcrClient Reference](vcr-client.md) | The `VcrClient` constructor parameters that make sense project-wide, as defaults for every instance. |

@@ -61,6 +61,7 @@ final class Config
      * @param  array<string, string>  $cassetteDirectories
      * @param  list<RequestMatcherInterface>  $defaultMatchers
      * @param  array<string, callable(): mixed>  $redact
+     * @param  list<string>  $includeSensitiveHeaders
      * @param  array<string, Provider>  $providers
      * @param  list<string>  $testDirectories
      */
@@ -82,6 +83,7 @@ final class Config
         private readonly ?bool $scanRecordingsForSecrets,
         private readonly ?bool $reportUnplayedInteractions,
         private readonly array $redact,
+        private readonly array $includeSensitiveHeaders,
         private readonly array $providers,
         private readonly array $testDirectories,
         private readonly ?Closure $innerClientFactory,
@@ -97,6 +99,8 @@ final class Config
      * @param  array<string, callable(): mixed>  $redact  placeholder to value provider, for a
      *                                                    secret every cassette in the project
      *                                                    would otherwise have to redact itself
+     * @param  list<string>  $includeSensitiveHeaders  headers taken back out of the automatic
+     *                                                 redaction, project-wide (§3.4)
      * @param  array<string, Provider>  $providers  named APIs, recognised by host (§3.12)
      * @param  list<string>  $testDirectories  where the CLI looks for the test
      *                                         files it scans; nothing else reads it
@@ -121,6 +125,7 @@ final class Config
         ?bool $scanRecordingsForSecrets = null,
         ?bool $reportUnplayedInteractions = null,
         array $redact = [],
+        array $includeSensitiveHeaders = [],
         array $providers = [],
         array $testDirectories = [],
         ?callable $innerClientFactory = null,
@@ -143,6 +148,7 @@ final class Config
             $scanRecordingsForSecrets,
             $reportUnplayedInteractions,
             $redact,
+            $includeSensitiveHeaders,
             $providers,
             $testDirectories,
             $innerClientFactory === null ? null : $innerClientFactory(...),
@@ -262,8 +268,10 @@ final class Config
             $this->scanRecordingsForSecrets ?? $base->scanRecordingsForSecrets,
             $this->reportUnplayedInteractions ?? $base->reportUnplayedInteractions,
             // Project-wide redaction rules add up rather than replace: a rule in the file
-            // and a rule in the bootstrap are both things the project asked for.
+            // and a rule in the bootstrap are both things the project asked for. Same for
+            // the headers taken back out of automatic redaction.
             $this->redact + $base->redact,
+            array_values(array_unique([...$base->includeSensitiveHeaders, ...$this->includeSensitiveHeaders])),
             $this->providers !== [] ? $this->providers : $base->providers,
             $this->testDirectories !== [] ? $this->testDirectories : $base->testDirectories,
             $this->innerClientFactory ?? $base->innerClientFactory,
@@ -374,6 +382,21 @@ final class Config
     public function redactions(): array
     {
         return $this->redact;
+    }
+
+    /**
+     * The headers this project takes back out of the four http-vcr redacts with no
+     * configuration at all (§3.4) — for an `Authorization` that carries a public key, or a
+     * `Cookie` a test asserts on. Naming all four turns the automatic redaction off.
+     *
+     * Anything a client adds with `includeSensitiveHeaders()` is on top of this: both are
+     * statements that a header is safe to store, and neither cancels the other.
+     *
+     * @return list<string>
+     */
+    public function includeSensitiveHeaders(): array
+    {
+        return $this->includeSensitiveHeaders;
     }
 
     /**

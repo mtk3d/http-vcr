@@ -34,7 +34,7 @@ final class RedactionHooks
      * credential and almost never carry what a test asserts on, so a false positive costs
      * nothing and a miss costs a token in git history, which is permanent.
      */
-    private const SENSITIVE_HEADERS = ['Authorization', 'Proxy-Authorization', 'Cookie', 'Set-Cookie'];
+    public const SENSITIVE_HEADERS = ['Authorization', 'Proxy-Authorization', 'Cookie', 'Set-Cookie'];
 
     /** @var list<Redaction> */
     private array $rules = [];

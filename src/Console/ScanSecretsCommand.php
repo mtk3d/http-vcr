@@ -287,7 +287,7 @@ final class ScanSecretsCommand extends Command
             // The four headers redacted with no configuration at all are opted out of here:
             // this pass must change what was confirmed and nothing else, and a cassette
             // imported from a HAR can still be carrying one of them in the clear.
-            $hooks->includeSensitiveHeaders(['Authorization', 'Proxy-Authorization', 'Cookie', 'Set-Cookie']);
+            $hooks->includeSensitiveHeaders(RedactionHooks::SENSITIVE_HEADERS);
 
             foreach ($confirmed as [$value, $placeholder]) {
                 $hooks->redact($placeholder, static fn (): string => $value);

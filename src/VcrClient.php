@@ -133,6 +133,8 @@ final class VcrClient implements ClientInterface
             reportUnplayed: $config->reportUnplayedInteractions(),
         );
 
+        $this->cassette->redaction->includeSensitiveHeaders($config->includeSensitiveHeaders());
+
         foreach ($config->redactions() as $placeholder => $value) {
             $this->cassette->redaction->redact($placeholder, $value);
         }
@@ -146,6 +148,7 @@ final class VcrClient implements ClientInterface
      *
      * @param  list<RequestMatcherInterface>  $defaultMatchers
      * @param  array<string, callable(): mixed>  $redact  project-wide redaction rules
+     * @param  list<string>  $includeSensitiveHeaders  headers taken back out of automatic redaction
      * @param  array<string, Provider>  $providers  named APIs, recognised by host
      * @param  array<string, string>  $cassetteDirectories  path pattern to cassette directory (§3.12)
      * @param  list<string>  $testDirectories  where the CLI scans for tests
@@ -168,6 +171,7 @@ final class VcrClient implements ClientInterface
         ?bool $scanRecordingsForSecrets = null,
         ?bool $reportUnplayedInteractions = null,
         array $redact = [],
+        array $includeSensitiveHeaders = [],
         array $providers = [],
         array $testDirectories = [],
         ?callable $innerClientFactory = null,
@@ -189,6 +193,7 @@ final class VcrClient implements ClientInterface
             scanRecordingsForSecrets: $scanRecordingsForSecrets,
             reportUnplayedInteractions: $reportUnplayedInteractions,
             redact: $redact,
+            includeSensitiveHeaders: $includeSensitiveHeaders,
             providers: $providers,
             testDirectories: $testDirectories,
             innerClientFactory: $innerClientFactory,

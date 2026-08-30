@@ -101,6 +101,16 @@ That default redaction is one-way — the library never knew the real value — 
 $vcr->includeSensitiveHeaders(['Authorization']);
 ```
 
+Where the decision belongs to the project rather than to one test — a gateway whose `Authorization` header is a fixed public key, a `Cookie` the whole suite asserts on — say it once in [`http-vcr.php`](../reference/configuration.md):
+
+```php
+return Config::create(
+    includeSensitiveHeaders: ['Authorization'],
+);
+```
+
+Naming all four turns the automatic redaction off entirely. What a client adds with `includeSensitiveHeaders()` is on top of what the project named: both say a header is safe to store, and neither cancels the other.
+
 This doesn't replace `vendor/bin/http-vcr scan-secrets` — that command scans for secrets *outside* this default set (custom headers, tokens embedded in a body or query string). The default redaction only covers the one case common enough not to require any setup at all.
 
 ## Project-wide redaction

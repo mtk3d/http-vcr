@@ -261,6 +261,55 @@ final class RedactionTest extends TestCase
         self::assertStringContainsString('<COMPANY_PROXY_TOKEN>', $this->cassettes->read('payments.json'));
     }
 
+    /**
+     * The same opt-out as `includeSensitiveHeaders()` on the client, for a project where
+     * the decision is the project's rather than one test's — a gateway whose `Authorization`
+     * header is a fixed public key, say.
+     */
+    public function testAProjectWideOptOutStoresTheHeaderAsItWasSent(): void
+    {
+        VcrClient::configure(
+            includeSensitiveHeaders: ['Authorization'],
+            scanRecordingsForSecrets: false,
+        );
+
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'));
+        $vcr->sendRequest($this->bearing('sk_live_4eC39H'));
+        $vcr->close();
+
+        self::assertStringContainsString('sk_live_4eC39H', $this->cassettes->read('payments.json'));
+    }
+
+    public function testTheHeadersNotNamedAreStillRedactedAutomatically(): void
+    {
+        VcrClient::configure(includeSensitiveHeaders: ['Authorization'], scanRecordingsForSecrets: false);
+
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'));
+        $vcr->sendRequest(
+            $this->bearing('sk_live_4eC39H')->withHeader('Cookie', 'session=abcdef0123456789'),
+        );
+        $vcr->close();
+
+        self::assertStringContainsString('sk_live_4eC39H', $this->cassettes->read('payments.json'));
+        self::assertStringContainsString('<REDACTED-COOKIE>', $this->cassettes->read('payments.json'));
+        self::assertStringNotContainsString('session=abcdef0123456789', $this->cassettes->read('payments.json'));
+    }
+
+    public function testWhatTheClientNamesIsAddedToWhatTheProjectNamed(): void
+    {
+        VcrClient::configure(includeSensitiveHeaders: ['Authorization'], scanRecordingsForSecrets: false);
+
+        $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'));
+        $vcr->includeSensitiveHeaders(['Cookie']);
+        $vcr->sendRequest(
+            $this->bearing('sk_live_4eC39H')->withHeader('Cookie', 'session=abcdef0123456789'),
+        );
+        $vcr->close();
+
+        self::assertStringContainsString('sk_live_4eC39H', $this->cassettes->read('payments.json'));
+        self::assertStringContainsString('session=abcdef0123456789', $this->cassettes->read('payments.json'));
+    }
+
     public function testRedactionRegisteredAfterTheFirstRequestIsRefused(): void
     {
         $vcr = $this->client((new FakeHttpClient)->willRespond('{"ok":true}'));
