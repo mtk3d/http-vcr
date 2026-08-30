@@ -132,6 +132,33 @@ final class SymfonyHttpClientTest extends TestCase
         self::assertSame(['shop.example.com'], $cassette->requestHeader(0, 'X-Shop-Domain'));
     }
 
+    /**
+     * Only has teeth on the oldest symfony/http-client the constraint allows, which is why
+     * CI installs that combination as a leg of its own: from 7.3 the reads this covers are
+     * guarded, so a bridge starting from an incomplete options array looks fine here and
+     * warns on every request in a project one minor version behind.
+     */
+    public function testARequestRaisesNoPhpDiagnosticOfItsOwn(): void
+    {
+        $diagnostics = [];
+
+        set_error_handler(static function (int $severity, string $message) use (&$diagnostics): bool {
+            $diagnostics[] = $message;
+
+            return true;
+        });
+
+        try {
+            $inner = (new FakeHttpClient)->willRespond('{"ok":true}');
+
+            (new VcrHttpClient($this->vcr($inner)))->request('GET', 'https://shop.example.com/products/1.json');
+        } finally {
+            restore_error_handler();
+        }
+
+        self::assertSame([], $diagnostics);
+    }
+
     public function testStreamingAReplayedResponseYieldsItsChunks(): void
     {
         $this->record();

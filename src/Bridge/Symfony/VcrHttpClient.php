@@ -37,8 +37,17 @@ final class VcrHttpClient implements HttpClientInterface
 {
     use HttpClientTrait;
 
-    /** @var array<string, mixed> */
-    private array $defaultOptions = [];
+    /**
+     * The interface's own defaults, which is where `NativeHttpClient` and `CurlHttpClient`
+     * both start. An empty array is not a smaller version of this: `prepareRequest()` reads
+     * keys out of the merged options expecting them to be there, and before
+     * symfony/http-client 7.3 it reads `base_uri` and `timeout` without guarding for
+     * absence — so every request through a bridge starting from `[]` raises a PHP warning
+     * on the lowest version this package supports.
+     *
+     * @var array<string, mixed>
+     */
+    private array $defaultOptions = HttpClientInterface::OPTIONS_DEFAULTS;
 
     private readonly RequestFactoryInterface $requestFactory;
 
