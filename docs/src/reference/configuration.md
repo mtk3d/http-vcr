@@ -87,7 +87,7 @@ It must be called **once, before the first `VcrClient` is constructed in the pro
 
 ## Laravel
 
-The separate [`mtk3d/laravel-http-vcr` package](../integrations/laravel.md) publishes `config/http-vcr.php` with the same options, defaulting `cassetteDirectory` to `base_path('tests/Cassettes')` and `testDirectories` to `base_path('tests')`:
+A Laravel application configures http-vcr through the same `http-vcr.php` as any other project. The [`mtk3d/laravel-http-vcr` package](../integrations/laravel.md) — in progress, not released — will publish it as `config/http-vcr.php` with `cassetteDirectory` defaulting to `base_path('tests/Cassettes')` and `testDirectories` to `base_path('tests')`:
 
 ```bash
 php artisan vendor:publish --provider="HttpVcr\Laravel\HttpVcrServiceProvider"

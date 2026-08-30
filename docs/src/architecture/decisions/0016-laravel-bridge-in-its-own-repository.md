@@ -15,7 +15,12 @@ constructs them.
 ## Decision
 
 Guzzle and Symfony bridges stay in `src/Bridge/`. Laravel goes to a separate package,
-`mtk3d/laravel-http-vcr`, listed under `suggest`.
+`mtk3d/laravel-http-vcr`.
+
+That package is in progress and was not released with 0.1.0, so nothing here `suggest`s it
+yet. Laravel is served in the meantime by the recipe in
+[Laravel](../../integrations/laravel.md) — `Http::` goes through Guzzle, so the middleware
+bridge already covers it, at the cost of wiring the handler by hand.
 
 ## Consequences
 

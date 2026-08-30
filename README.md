@@ -55,13 +55,6 @@ cassette fails loudly instead of quietly reaching for a real API without credent
 composer require --dev mtk3d/http-vcr
 ```
 
-> No release is tagged yet. The package is on Packagist, so until one is, ask for the
-> development branch:
->
-> ```bash
-> composer require --dev mtk3d/http-vcr:dev-master
-> ```
-
 You need PHP 8.2+ and an HTTP client to wrap — whichever one the project already uses. To
 rebuild a replayed response http-vcr also needs a PSR-17 factory, and it takes that from
 the client library you already have (Guzzle ships one, Symfony's client pulls one in). If
@@ -349,7 +342,7 @@ the confirmed ones in the file, one way.
 | **Guzzle** | `VcrMiddleware` on the `HandlerStack`, so `$client->get()` and friends are covered too — those bypass any decorator around the client |
 | **Symfony** | `VcrHttpClient` implements `HttpClientInterface`, the one a Symfony app injects into services. `Psr18Client` needs no bridge |
 | **PHPUnit** | `#[UseCassette]`, `#[CassetteDirectory]`, `InteractsWithCassettes`, `Extension`. PHPUnit 10–13 |
-| **Laravel** | [`mtk3d/laravel-http-vcr`](https://github.com/mtk3d/laravel-http-vcr) — a separate package: auto-registered provider, `Http` facade interception, `artisan vcr:*`. Laravel 11+ |
+| **Laravel** | The [manual recipe](https://mtk3d.github.io/http-vcr/integrations/laravel.html) — `Http::` goes through Guzzle, so `VcrMiddleware` covers it. A `mtk3d/laravel-http-vcr` package doing the same with no wiring is in progress and not released |
 
 Runnable versions of each are in [`examples/`](./examples).
 

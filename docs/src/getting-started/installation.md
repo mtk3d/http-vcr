@@ -23,7 +23,7 @@ Install these only if needed:
 | `symfony/http-client` | The `VcrHttpClient` bridge for Symfony's native `HttpClientInterface` — `Psr18Client` works without it |
 | `symfony/yaml` | Makes [YAML the cassette format](../advanced/storage-and-formats.md#serializers) instead of JSON. Already present in most Laravel and Symfony projects, in which case it is what you get |
 | `phpunit/phpunit` | The [`#[UseCassette]` attribute and `InteractsWithCassettes` trait](../integrations/phpunit.md). The attribute is built on the Extension API, so the bridge supports **PHPUnit 10 through 13** — http-vcr's own test suite runs on 11.5–13, but that's a separate matter from what the bridge supports in your project |
-| `mtk3d/laravel-http-vcr` | Zero-setup use in a Laravel app — auto-registered service provider, `Http` facade interception, `artisan vcr:*` commands. A [separate package](../integrations/laravel.md) that depends on this one; needs **Laravel 11 or newer** |
+| — | Laravel needs no extra package: `Http::` goes through Guzzle, so the [recipe on the Laravel page](../integrations/laravel.md) covers it. A `mtk3d/laravel-http-vcr` package that does the same with no wiring is in progress and not released |
 
 See [Framework Integration](../integrations/guzzle.md) for details on each.
 

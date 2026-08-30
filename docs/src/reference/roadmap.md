@@ -10,7 +10,7 @@ Ideas worth keeping track of, but not scheduled into any milestone yet:
 - **`MultipartMatcher`** — structural matching for `multipart/form-data`, since a random boundary makes raw body matching useless.
 - **`CookieMatcher` / `SetCookieMatcher`** — structural parsing of `Cookie`/`Set-Cookie` instead of treating them as opaque header strings.
 - **Pattern-based header matching** — a header equivalent of `matchJsonField`, for headers like `Idempotency-Key` or `traceparent` that shouldn't be matched exactly or ignored entirely.
-- **Configurable query string matching** — `ordered` / `unordered` / `ignore(['page'])` per parameter, instead of one fixed comparison strategy.
+- **Ordered query string matching** — `QueryStringMatcher` compares parameters as an unordered set and can be told which ones count (`ignoreQueryParam()`, `matchOnlyQueryParams()` — both built); what's left is choosing order-sensitive comparison for an API where `?a=1&b=2` and `?b=2&a=1` are not the same request.
 - **Request assertions (`expectRequest()`)** — a cassette that's both a fixture and a verification that the code under test actually sent the expected data, not just that it got a response back.
 - **Deduplication via repeat count** — one entry plus `repeat: N` instead of N identical interactions for N identical calls.
 - **Parallel recording to separate files, merged after the fact** — an alternative to the session-wide lock, for teams that deliberately want to record in parallel.

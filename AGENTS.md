@@ -93,7 +93,9 @@ verified fact turns out wrong, record the correction in place — do not quietly
   `RecordMode::RecordIfAbsent` to someone else's vocabulary.
 - **The Laravel bridge lives in a separate repository** (`mtk3d/laravel-http-vcr`,
   §3.13). Nothing Laravel-specific belongs in `src/`, and `composer.json` carries no
-  `extra.laravel` entry.
+  `extra.laravel` entry. That package is in progress and was not released with 0.1.0, so
+  nothing here `suggest`s it and the docs describe it as planned (§7 decision 81) — Laravel
+  is served by the recipe on `docs/src/integrations/laravel.md` until it ships.
 
 ## Public surface
 
