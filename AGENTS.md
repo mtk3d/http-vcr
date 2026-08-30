@@ -93,9 +93,10 @@ verified fact turns out wrong, record the correction in place — do not quietly
   `RecordMode::RecordIfAbsent` to someone else's vocabulary.
 - **The Laravel bridge lives in a separate repository** (`mtk3d/laravel-http-vcr`,
   §3.13). Nothing Laravel-specific belongs in `src/`, and `composer.json` carries no
-  `extra.laravel` entry. That package is in progress and was not released with 0.1.0, so
-  nothing here `suggest`s it and the docs describe it as planned (§7 decision 81) — Laravel
-  is served by the recipe on `docs/src/integrations/laravel.md` until it ships.
+  `extra.laravel` entry. It is built (`../laravel-http-vcr`) but not published, so nothing
+  here `suggest`s it yet (§7 decisions 81, 82) — the recipe on
+  `docs/src/integrations/laravel.md` covers Laravel until it ships. Building it corrected
+  three facts §3.13 had asserted in advance; decision 82 says which.
 
 ## Public surface
 

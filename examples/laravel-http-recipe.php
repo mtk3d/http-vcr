@@ -10,16 +10,20 @@ declare(strict_types=1);
  * for a project that would rather not install anything else — it is a recipe to copy, not
  * part of the library, and nothing autoloads it.
  *
- * Under the facade is Guzzle with a configurable handler, so the Guzzle middleware (§3.9)
- * is all that is needed. `Http::globalOptions()` — Laravel 11 and newer — applies the
- * handler to every request the facade makes, whichever method the calling code used.
+ * Under the facade is Guzzle with a handler stack, so the Guzzle middleware (§3.9) is all
+ * that is needed. `Http::globalMiddleware()` pushes onto that stack for every request the
+ * facade makes, whichever method the calling code used, and appends rather than replacing
+ * whatever the application registered itself.
  *
- * `Http::withOptions()` is not the same thing and does not work here: it returns a
- * PendingRequest configured for one call, so on its own it configures an object that is
- * then thrown away.
+ * Two neighbours that look like they would do this and do not:
+ *
+ * - `Http::globalOptions(['handler' => ...])` is inert. `PendingRequest::createClient()`
+ *   hands its own stack to the Guzzle client as a constructor option, and `handler` is not
+ *   a per-request option, so a handler set that way is never consulted.
+ * - `Http::withOptions()` returns a PendingRequest configured for one call, so on its own it
+ *   configures an object that is then thrown away.
  */
 
-use GuzzleHttp\HandlerStack;
 use HttpVcr\Bridge\Guzzle\VcrMiddleware;
 use HttpVcr\Bridge\PHPUnit\CurrentCassetteSession;
 use HttpVcr\Bridge\PHPUnit\InteractsWithCassettes;
@@ -46,10 +50,7 @@ abstract class RecordsHttpFacadeCalls extends TestCase
             return;
         }
 
-        $stack = HandlerStack::create();
-        $stack->push(VcrMiddleware::create($this->vcrClient()));
-
-        Http::globalOptions(['handler' => $stack]);
+        Http::globalMiddleware(VcrMiddleware::create($this->vcrClient()));
     }
 }
 

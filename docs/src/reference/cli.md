@@ -4,7 +4,7 @@
 vendor/bin/http-vcr <command> [options]
 ```
 
-The [`mtk3d/laravel-http-vcr` package](../integrations/laravel.md), which is in progress and not released, will expose the same seven commands as Artisan commands prefixed with `vcr:` (`stale` → `vcr:stale`, `tests` → `vcr:tests`, and so on) — Artisan commands share one flat namespace across the whole framework and every installed package, so they need a prefix to stay collision-free and easy to find in `artisan list`; a standalone single-purpose binary like `vendor/bin/http-vcr` doesn't have that problem, so its commands stay bare.
+The [`mtk3d/laravel-http-vcr` package](../integrations/laravel.md), built but not published yet, exposes the same seven commands as Artisan commands prefixed with `vcr:` (`stale` → `vcr:stale`, `tests` → `vcr:tests`, and so on) — Artisan commands share one flat namespace across the whole framework and every installed package, so they need a prefix to stay collision-free and easy to find in `artisan list`; a standalone single-purpose binary like `vendor/bin/http-vcr` doesn't have that problem, so its commands stay bare.
 
 ## `stale`
 

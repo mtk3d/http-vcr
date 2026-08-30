@@ -87,8 +87,15 @@ It must be called **once, before the first `VcrClient` is constructed in the pro
 
 ## Laravel
 
-A Laravel application configures http-vcr through the same `http-vcr.php` as any other project. The [`mtk3d/laravel-http-vcr` package](../integrations/laravel.md) — in progress, not released — will publish it as `config/http-vcr.php` with `cassetteDirectory` defaulting to `base_path('tests/Cassettes')` and `testDirectories` to `base_path('tests')`:
+A Laravel application configures http-vcr through the same `http-vcr.php` in the project root as any other project, and needs to declare nothing for the common case: the defaults above are computed from the directory holding `composer.json`, which in a Laravel application makes them `base_path('tests/Cassettes')` and `base_path('tests')` already.
 
-```bash
-php artisan vendor:publish --provider="HttpVcr\Laravel\HttpVcrServiceProvider"
+The [`mtk3d/laravel-http-vcr` package](../integrations/laravel.md) publishes no `config/http-vcr.php` of its own, and there is nothing to `vendor:publish`. This file returns a `Config` object carrying closures, and `php artisan config:cache` runs `var_export()` over every file in `config/` — a closure there turns a cached configuration into a fatal. The root-level file has no such problem, and `env()` works inside it as it does anywhere else:
+
+```php
+return Config::create(
+    providers: [
+        'shopify' => new Provider(hosts: ['*.myshopify.com'], requiresEnv: ['SHOPIFY_API_KEY']),
+    ],
+    redact: ['<SHOPIFY_API_KEY>' => fn () => env('SHOPIFY_API_KEY')],
+);
 ```
