@@ -34,7 +34,7 @@ public function withInner(ClientInterface $inner): self;
 | `cassette` | — | Cassette name, without extension or [scope](../advanced/scoping.md) suffix. A path relative to `cassetteDirectory`: `shopify/get-product` → `tests/Cassettes/shopify/get-product.yaml`. |
 | `mode` | `RecordIfAbsent` | [Record mode](../concepts/record-modes.md). |
 | `matchers` | `[]` → `[Method, Uri, QueryString]` | [Matchers](../concepts/matching.md), combined with AND. Empty means the project default from config. |
-| `strictMode` | `None` | [`AllPlayed` / `InOrder`](../advanced/strict-mode.md) assertions at cassette close. |
+| `strictMode` | `None` | [`AllPlayed` / `InOrder`](../advanced/strict-mode.md) assertions at cassette close. `None` still [reports](../advanced/strict-mode.md#what-happens-without-any-of-it) interactions nothing replayed; it just doesn't fail on them. |
 | `staleAfter` | `null` | [Staleness threshold](../advanced/stale-after.md), as a [named interval](../advanced/stale-after.md#naming-the-interval) (`Stale::Week`) or a `DateInterval` of your own. `null` means freshness isn't tracked. |
 | `requiresEnv` | `[]` | Environment variables that must be set — checked on the recording branch, not at construction. See [PHPUnit](../integrations/phpunit.md#pre-validating-environment-variables). |
 | `recordTransportErrors` | `false` | Whether to persist [transport failures](../advanced/transport-errors.md) instead of letting them pass through unrecorded. |
