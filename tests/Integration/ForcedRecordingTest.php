@@ -8,9 +8,11 @@ use HttpVcr\Ansi;
 use HttpVcr\Cassette\CassetteManager;
 use HttpVcr\Config;
 use HttpVcr\EraseTape;
+use HttpVcr\Exception\NoMatchingInteractionException;
 use HttpVcr\Exception\RecordingNotAllowedException;
 use HttpVcr\Persistence\FilesystemCassettePersister;
 use HttpVcr\Provider;
+use HttpVcr\RecordMode;
 use HttpVcr\Tests\Support\CassetteDirectory;
 use HttpVcr\Tests\Support\ControlsEnvironment;
 use HttpVcr\Tests\Support\FakeHttpClient;
@@ -148,6 +150,105 @@ final class ForcedRecordingTest extends TestCase
 
         self::assertSame('{"ticket":"old"}', (string) $ticket->getBody());
         self::assertSame('{"order":"new"}', (string) $order->getBody());
+    }
+
+    /**
+     * The half a `@provider` selector is for: it re-records that API and hands everything
+     * else back to the mode the session declared (§7 decision 76). Without the narrowing,
+     * a miss on the other API in the cassette reaches the real thing and is appended —
+     * from a client that said it never records.
+     */
+    public function testAMissOnAnApiTheSelectorNeverNamedFollowsTheDeclaredMode(): void
+    {
+        $this->seed('sync/order-flow', [
+            $this->interaction('https://shop.example.com/orders/1', '{"order":"old"}'),
+            $this->interaction('https://acme.zendesk.com/tickets', '{"ticket":"old"}'),
+        ]);
+        $_ENV['VCR_ERASE_TAPE'] = '@shop.example.com';
+
+        $inner = (new FakeHttpClient)->willRespond('{"ticket":"live"}');
+        $vcr = new VcrClient(
+            $inner,
+            'sync/order-flow',
+            mode: RecordMode::PlaybackOnly,
+            persister: $this->persister(),
+        );
+
+        try {
+            $vcr->sendRequest(new Request('GET', 'https://acme.zendesk.com/tickets/999'));
+            self::fail('A request to the API the selector left alone should have followed PlaybackOnly.');
+        } catch (NoMatchingInteractionException) {
+            // the mode, not the tape
+        } finally {
+            $vcr->close();
+        }
+
+        self::assertSame(0, $inner->sentCount());
+        self::assertSame(['{"ticket":"old"}'], $this->cassettes->cassette('sync/order-flow.json')->responseBodies());
+    }
+
+    public function testRecordIfAbsentOnACassetteAlreadyThereRefusesTheSameWay(): void
+    {
+        $this->seed('sync/order-flow', [
+            $this->interaction('https://acme.zendesk.com/tickets', '{"ticket":"old"}'),
+        ]);
+        $_ENV['VCR_ERASE_TAPE'] = '@shop.example.com';
+
+        $inner = (new FakeHttpClient)->willRespond('{"ticket":"live"}');
+        $vcr = new VcrClient($inner, 'sync/order-flow', persister: $this->persister());
+
+        $this->expectException(NoMatchingInteractionException::class);
+
+        try {
+            $vcr->sendRequest(new Request('GET', 'https://acme.zendesk.com/tickets/999'));
+        } finally {
+            self::assertSame(0, $inner->sentCount());
+        }
+    }
+
+    /**
+     * The selector still overrides the mode for the API it did name — a cassette holding
+     * nothing of that API's traffic yet is the case a first partial re-record starts from.
+     */
+    public function testTheApiTheSelectorNamedIsStillRecordedOverAPlaybackOnlyMode(): void
+    {
+        $this->seed('sync/order-flow', [
+            $this->interaction('https://acme.zendesk.com/tickets', '{"ticket":"old"}'),
+        ]);
+        $_ENV['VCR_ERASE_TAPE'] = '@shop.example.com';
+
+        $inner = (new FakeHttpClient)->willRespond('{"order":"new"}');
+        $vcr = new VcrClient(
+            $inner,
+            'sync/order-flow',
+            mode: RecordMode::PlaybackOnly,
+            persister: $this->persister(),
+        );
+
+        $order = $vcr->sendRequest(new Request('GET', 'https://shop.example.com/orders/1'));
+        $vcr->close();
+
+        self::assertSame('{"order":"new"}', (string) $order->getBody());
+        self::assertSame(1, $inner->sentCount());
+    }
+
+    /**
+     * A run refreshing one API opens every cassette it touches. Restamping the ones it took
+     * nothing out of turns a narrow re-record into a directory-wide diff.
+     */
+    public function testACassetteTheSelectorTookNothingOutOfIsLeftByteForByte(): void
+    {
+        $this->seed('zendesk/tickets', [
+            $this->interaction('https://acme.zendesk.com/tickets', '{"ticket":"old"}'),
+        ]);
+        $before = $this->cassettes->read('zendesk/tickets.json');
+        $_ENV['VCR_ERASE_TAPE'] = '@shop.example.com';
+
+        $vcr = new VcrClient(new FakeHttpClient, 'zendesk/tickets', persister: $this->persister());
+        $vcr->sendRequest(new Request('GET', 'https://acme.zendesk.com/tickets'));
+        $vcr->close();
+
+        self::assertSame($before, $this->cassettes->read('zendesk/tickets.json'));
     }
 
     public function testSurvivorsKeepTheirOrderAtTheFrontAndFreshRecordingsFollow(): void

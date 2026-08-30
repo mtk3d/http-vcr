@@ -116,13 +116,32 @@ final readonly class EraseTape
             return true;
         }
 
+        $host = parse_url($interaction->request->uri, PHP_URL_HOST);
+
+        return ! $this->erases($cassetteName, is_string($host) ? $host : null);
+    }
+
+    /**
+     * Whether the tape erases — and so re-records — traffic to $host in this cassette.
+     *
+     * The question `spares()` asks about an interaction already on disk, asked about a
+     * request about to happen: a `@provider` selector re-records that API and leaves the
+     * rest of the cassette to the mode the session declared (§7 decision 76). A selector
+     * with no `@` half names the whole cassette, so every host in it is covered.
+     */
+    public function erases(string $cassetteName, ?string $host): bool
+    {
         foreach ($this->selectorsFor($cassetteName) as $selector) {
-            if ($selector['provider'] === null || $this->belongsTo($interaction, $selector['provider'])) {
-                return false;
+            if ($selector['provider'] === null) {
+                return true;
+            }
+
+            if ($host !== null && $this->belongsTo($host, $selector['provider'])) {
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -145,14 +164,8 @@ final readonly class EraseTape
      * than something readable out of the data. A host a named provider has claimed stops
      * answering to its own name, so one thing always has exactly one selector.
      */
-    private function belongsTo(Interaction $interaction, string $provider): bool
+    private function belongsTo(string $host, string $provider): bool
     {
-        $host = parse_url($interaction->request->uri, PHP_URL_HOST);
-
-        if (! is_string($host)) {
-            return false;
-        }
-
         $named = $this->providers[$provider] ?? null;
 
         if ($named !== null) {

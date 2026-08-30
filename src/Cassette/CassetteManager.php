@@ -8,6 +8,7 @@ use Closure;
 use DateInterval;
 use HttpVcr\Ansi;
 use HttpVcr\Environment;
+use HttpVcr\EraseTape;
 use HttpVcr\Exception\CassetteFormatException;
 use HttpVcr\Exception\RecordingNotAllowedException;
 use HttpVcr\Exception\StaleCassetteException;
@@ -50,6 +51,14 @@ final class CassetteManager
     private bool $existed = false;
 
     private bool $holdsLock = false;
+
+    /**
+     * Whether VCR_ERASE_TAPE opened this cassette, kept apart from `recording` because a
+     * `@provider` selector overrides the declared mode only for that API (§7 decision 76).
+     */
+    private bool $erasing = false;
+
+    private EraseTape $eraseTape;
 
     private bool $eraseTapeHadNoEffect = false;
 
@@ -260,14 +269,24 @@ final class CassetteManager
     }
 
     /**
-     * Whether this session may perform and record real requests: the mode allows it, or
-     * forced recording is in play for this cassette.
+     * Whether this session may perform and record a real request to $host: the mode allows
+     * it, or forced recording is in play for that host's traffic.
+     *
+     * The host matters because a `@provider` selector overrides the declared mode only for
+     * the API it named (§7 decision 76) — everything else in the same cassette follows the
+     * mode the session was opened with, which is why the two are tracked apart. A host that
+     * could not be read out of the request is no API a selector can have narrowed to, the
+     * same reading {@see EraseTape::spares()} takes of an interaction.
      */
-    public function isRecording(): bool
+    public function isRecording(?string $host = null): bool
     {
         $this->open();
 
-        return $this->recording;
+        if ($this->recording) {
+            return true;
+        }
+
+        return $this->erasing && $this->eraseTape->erases($this->name, $host);
     }
 
     /**
@@ -602,7 +621,7 @@ final class CassetteManager
 
     private function openCassette(): void
     {
-        $eraseTape = $this->environment->eraseTape();
+        $this->eraseTape = $eraseTape = $this->environment->eraseTape();
 
         if ($eraseTape->covers($this->name)) {
             $this->openErased();
@@ -657,6 +676,13 @@ final class CassetteManager
      * selector spares: locked interactions always, and everything outside the API a
      * `@provider` selector narrowed to. Requests are still matched against those
      * survivors — that is what makes leaving a locked interaction alone possible.
+     *
+     * The override of the declared mode is narrowed the same way (§7 decision 76), so
+     * `recording` keeps meaning what it means everywhere else — whether the mode this
+     * session declared would record — and `erasing` carries the tape's override beside it.
+     * A request to an API the selector never named then follows the mode, which for
+     * `PlaybackOnly` and for `RecordIfAbsent` on a cassette that was already there means
+     * refusing rather than reaching the real API.
      */
     private function openErased(): void
     {
@@ -668,7 +694,9 @@ final class CassetteManager
         }
 
         $this->takeLock();
-        $this->recording = true;
+        $this->erasing = true;
+        $this->recording = $this->mode === RecordMode::ExtendCassette
+            || ($this->mode === RecordMode::RecordIfAbsent && ! $this->existed);
 
         $recorded = $this->readFromDisk();
         $eraseTape = $this->environment->eraseTape();
@@ -685,7 +713,10 @@ final class CassetteManager
         // of them would be noise on the normal path.
         $this->eraseTapeHadNoEffect = $recorded->interactions !== [] && $this->allLocked($recorded->interactions);
 
-        if (! $this->eraseTapeHadNoEffect && $this->existed) {
+        // Only when the truncation actually removed something. A `@provider` selector opens
+        // every cassette the run touches, and rewriting the ones it took nothing out of
+        // would restamp half the cassette directory on a run that changed none of it.
+        if (! $this->eraseTapeHadNoEffect && $this->existed && count($survivors) !== count($recorded->interactions)) {
             $this->persist();
         }
     }

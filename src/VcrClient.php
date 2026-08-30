@@ -410,7 +410,11 @@ final class VcrClient implements ClientInterface
                 );
         }
 
-        if ($cassette->isRecording()) {
+        // With the host, because a `VCR_ERASE_TAPE=@provider` session records that API's
+        // traffic and leaves the rest of the cassette to the declared mode (§7 decision 76).
+        $host = parse_url($incoming->uri, PHP_URL_HOST);
+
+        if ($cassette->isRecording(is_string($host) ? $host : null)) {
             return $this->record($cassette, $request, $incoming);
         }
 
