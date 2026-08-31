@@ -9,6 +9,15 @@ so when it does.
 
 ## [Unreleased]
 
+### Changed
+
+- **Guzzle 8 is supported and tested.** The `Bridge/Guzzle/VcrMiddleware` handler-stack
+  bridge needed no change — `guzzlehttp/promises` 3.0 kept the signatures it uses — but the
+  development dependency pinned `^7.0`, so the bridge had never been run against Guzzle 8.
+  It is now `^7.0 || ^8.0`: the main CI legs resolve to Guzzle 8, and the lowest-dependencies
+  leg keeps Guzzle 7 covered. Nothing in `require` changed, because the library never
+  required Guzzle in the first place.
+
 ## [0.1.1] - 2026-08-31
 
 Documentation and package metadata only; nothing in `src/` changed. The Laravel material

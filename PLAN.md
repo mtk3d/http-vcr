@@ -971,6 +971,14 @@ Uwaga: pierwsza wersja szkieletu i kilku rozdziałów (`introduction`, `getting-
 
     Odrzucone: **`require` zamiast `suggest`** (projekt nie na Laravelu nie może nieść nic z tego — to jest cała treść decyzji 13, a `suggest` mieści ją bez kompromisu) i **poprawienie notki w wydanym wpisie 0.1.0 w `CHANGELOG.md`** (była prawdziwa w dniu wydania; changelog opisuje, co się stało, a nie stan świata w chwili czytania — korekta idzie do `[Unreleased]`).
 
+84. **`guzzlehttp/guzzle` w obu pakietach dostaje `^7.0 || ^8.0`; mostek laravelowy przestaje blokować instalację w aplikacji stojącej na Guzzle'u 8** (§3.9, §3.13). Guzzle 8 jest wydany (8.1.0), a `laravel/framework` 13.29 wymaga `^7.8.2 || ^8.0` — czyli bieżąca aplikacja na Laravelu 13 ma w locku Guzzle'a 8.1.0. `mtk3d/laravel-http-vcr` trzymał w `require` `guzzlehttp/guzzle: ^7.0`, więc `composer require --dev mtk3d/laravel-http-vcr` w takiej aplikacji kończył się konfliktem rozwiązywania zależności. To znowu ten rodzaj nieprawdy, który opisywała decyzja 81: polecenie z dokumentacji jest wykonalne i pada.
+
+    Nic w kodzie nie musiało się zmienić. Mostek rdzenia (`Bridge/Guzzle/VcrMiddleware`) dotyka trzech rzeczy z Guzzle'a — kształtu middleware'u handler-stacka, `GuzzleHttp\Promise\PromiseInterface` oraz `Create::promiseFor()`/`Create::rejectionFor()` — a pakiet laravelowy tylko `PromiseInterface`. Wszystkie przeżyły majora: `guzzlehttp/promises` 3.0.2 i `guzzlehttp/psr7` 3.1.0 zachowały te sygnatury. Sprawdzone przez podniesienie obu locków do 8.1.0 i przejechanie kompletu: 591 testów rdzenia i 25 mostka zielonych, PHPStan i Pint bez uwag.
+
+    Rdzeń trzymał Guzzle'a wyłącznie w `require-dev`, więc nikomu instalacji nie blokował — ale przez ten sam pin jego własny mostek guzzlowy nie był ani razu uruchomiony przeciwko 8, a to on wykonuje całą pracę pod pakietem laravelowym. Rozszerza się więc razem z tamtym. Macierz CI nie zmienia się: główne nogi i tak rozwiązują najnowsze, czyli od teraz jadą na Guzzle'u 8, a Guzzle 7 zostaje pokryty przez nogę `lowest-dependencies` — dokładnie po to tam jest (decyzje 77, 78).
+
+    Odrzucone: **`^8.0` zamiast sumy** (Laravel 12 dopuszcza Guzzle'a 7 i noga CI dla niego istnieje; wycięcie siódemki zabiera wsparcie połowie zadeklarowanego zakresu frameworka bez żadnego zysku, bo kod jest wspólny) i **odesłanie zgłaszającego do `composer require -W`, które podpowiada sam Composer** (`-W` rzeczywiście „zadziała": zdegraduje Guzzle'a w całej aplikacji do 7.x, bo Laravel to dopuszcza — czyli zależność deweloperska cofnęłaby wersję biblioteki produkcyjnej po to, żeby zmieścić się w pinie, którego nic nie uzasadnia).
+
 ## 8. Pomysły poza zakresem M1–M5 (nie planowane teraz, żeby nie zgubić)
 
 Zebrane z zewnętrznej recenzji planu — świadomie **nie** wchodzą do żadnej fazy M1–M5 powyżej, ale warto je trzymać w jednym miejscu zamiast gubić w historii dyskusji:
