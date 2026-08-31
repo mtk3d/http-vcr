@@ -60,7 +60,11 @@ jobs:
 
       - uses: ramsey/composer-install@v3
 
-      - run: vendor/bin/phpstan analyse --no-progress
+      # The limit is explicit because the default is ambient and the two environments
+      # disagree: a cold result cache needs a little over 128M per worker, which is what a
+      # stock php.ini gives, while the Ubuntu runner's CLI php.ini has no limit at all. So
+      # this passed here and failed on a developer's machine.
+      - run: vendor/bin/phpstan analyse --no-progress --memory-limit=512M
 
   coding-standards:
     name: Pint

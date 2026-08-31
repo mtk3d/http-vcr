@@ -438,7 +438,7 @@ the cassette format instead of JSON), `phpunit/phpunit` (the attribute and trait
 ```bash
 composer install
 vendor/bin/phpunit
-vendor/bin/phpstan analyse            # level max
+vendor/bin/phpstan analyse --memory-limit=512M   # level max
 vendor/bin/pint --test                # Laravel Pint, laravel preset
 ```
 

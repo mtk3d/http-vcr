@@ -116,9 +116,14 @@ Refactoring `Bridge/PHPUnit/` must preserve it.
 ```bash
 composer install                    # no vendor/ or lock file exists yet
 vendor/bin/phpunit
-vendor/bin/phpstan analyse          # level max, from the first commit
+vendor/bin/phpstan analyse --memory-limit=512M   # level max, from the first commit
 vendor/bin/pint --test              # Laravel Pint, laravel preset
 ```
+
+`--memory-limit` is not optional padding: a cold result cache needs a little over the
+128M a stock `php.ini` allows, and the run dies mid-worker rather than reporting anything.
+It went unnoticed because the Ubuntu runner's CLI `php.ini` sets no limit, so CI was green
+while a fresh clone was not.
 
 These three run in CI from the first commit, not from M5. The config files they need
 (`phpunit.xml.dist`, `phpstan.neon.dist`, `pint.json`) are part of M1
