@@ -9,6 +9,29 @@ so when it does.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-31
+
+Documentation and package metadata only; nothing in `src/` changed. The Laravel material
+shipped in 0.1.0 was written before the bridge existed, and building it showed three of its
+claims to be wrong.
+
+### Fixed
+
+- **The Laravel recipe did not work.** `examples/laravel-http-recipe.php` and the Laravel
+  page installed the middleware with `Http::globalOptions(['handler' => ...])`.
+  `PendingRequest::createClient()` hands its own stack to the Guzzle client as a constructor
+  option, and `handler` is not a per-request option, so the handler was never consulted — a
+  base test case copied from that recipe opened no cassettes and let every call reach the
+  real API, looking exactly like one that had. The hook is `Http::globalMiddleware()`, which
+  takes raw handler-stack middleware and appends to whatever the application registered.
+- **The configuration reference promised a `vendor:publish` that does not exist.** No
+  `config/http-vcr.php` is published by anything. A Laravel application uses the same
+  root-level `http-vcr.php` as any other project, and for the common case declares nothing:
+  the defaults already resolve to `base_path('tests/Cassettes')` and `base_path('tests')`.
+- **The documented Laravel range is 12-13, not 11-12.** Every 11.x release is covered by
+  advisory `PKSA-mdq4-51ck-6kdq` with no patched release, so Composer declines to install
+  that branch at all.
+
 ### Changed
 
 - **`mtk3d/laravel-http-vcr` is on Packagist**, so this package now `suggest`s it and the
@@ -75,5 +98,6 @@ First release.
 - The Laravel bridge (`mtk3d/laravel-http-vcr`) is not released yet; the manual recipe in
   the documentation covers Laravel in the meantime.
 
-[Unreleased]: https://github.com/mtk3d/http-vcr/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/mtk3d/http-vcr/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/mtk3d/http-vcr/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/mtk3d/http-vcr/releases/tag/v0.1.0
