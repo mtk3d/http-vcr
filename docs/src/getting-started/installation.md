@@ -23,7 +23,7 @@ Install these only if needed:
 | `symfony/http-client` | The `VcrHttpClient` bridge for Symfony's native `HttpClientInterface` — `Psr18Client` works without it |
 | `symfony/yaml` | Makes [YAML the cassette format](../advanced/storage-and-formats.md#serializers) instead of JSON. Already present in most Laravel and Symfony projects, in which case it is what you get |
 | `phpunit/phpunit` | The [`#[UseCassette]` attribute and `InteractsWithCassettes` trait](../integrations/phpunit.md). The attribute is built on the Extension API, so the bridge supports **PHPUnit 10 through 13** — http-vcr's own test suite runs on 11.5–13, but that's a separate matter from what the bridge supports in your project |
-| `mtk3d/laravel-http-vcr` | Zero-setup use in a Laravel app — auto-registered provider, `Http` facade interception, `artisan vcr:*` commands. A [separate package](../integrations/laravel.md) that depends on this one; needs **Laravel 12 or newer**. Built, but not published yet — until it is, the [recipe](../integrations/laravel.md) covers Laravel with no extra package |
+| `mtk3d/laravel-http-vcr` | Zero-setup use in a Laravel app — auto-registered provider, `Http` facade interception, `artisan vcr:*` commands. A [separate package](../integrations/laravel.md) that depends on this one; needs **Laravel 12 or newer**. The [manual recipe](../integrations/laravel.md#without-the-package-the-manual-recipe) covers Laravel without it |
 
 See [Framework Integration](../integrations/guzzle.md) for details on each.
 

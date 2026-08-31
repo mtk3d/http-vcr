@@ -9,6 +9,12 @@ so when it does.
 
 ## [Unreleased]
 
+### Changed
+
+- **`mtk3d/laravel-http-vcr` is on Packagist**, so this package now `suggest`s it and the
+  documentation points at it directly rather than sending every Laravel user to the manual
+  recipe. The recipe stays documented as the way to cover Laravel without the extra package.
+
 ## [0.1.0] - 2026-08-30
 
 First release.

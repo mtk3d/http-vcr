@@ -17,10 +17,11 @@ constructs them.
 Guzzle and Symfony bridges stay in `src/Bridge/`. Laravel goes to a separate package,
 `mtk3d/laravel-http-vcr`.
 
-That package is built but not published yet, so nothing here `suggest`s it until it is on
-Packagist. Laravel is served in the meantime by the recipe in
-[Laravel](../../integrations/laravel.md) — `Http::` goes through Guzzle, so the middleware
-bridge already covers it, at the cost of wiring the handler by hand.
+That package is on Packagist, and this one `suggest`s it — a suggestion rather than a
+dependency, because a project not on Laravel must carry none of it. Laravel is also served
+without it by the recipe in [Laravel](../../integrations/laravel.md) — `Http::` goes through
+Guzzle, so the middleware bridge already covers it, at the cost of wiring the handler by
+hand.
 
 Building it corrected three things this repository had written down in advance and could not
 check without the framework installed (`PLAN.md` §7 decision 82): the hook is

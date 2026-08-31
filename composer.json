@@ -28,7 +28,8 @@
         "symfony/http-client": "To use the native Symfony HttpClientInterface bridge (Bridge/Symfony/VcrHttpClient) — Psr18Client already works via PSR-18 without this",
         "symfony/yaml": "Makes YAML the cassette format instead of JSON — a recorded body with newlines in it stays readable in a diff",
         "nyholm/psr7": "A PSR-17 factory implementation, used to rebuild replayed responses — any PSR-17 implementation works (guzzlehttp/psr7 and laminas/laminas-diactoros are detected too)",
-        "phpunit/phpunit": "^10.0 || ^11.0 || ^12.0 || ^13.0 — to use the #[UseCassette] attribute and the InteractsWithCassettes trait (Bridge/PHPUnit); the attribute needs the Extension API, added in PHPUnit 10"
+        "phpunit/phpunit": "^10.0 || ^11.0 || ^12.0 || ^13.0 — to use the #[UseCassette] attribute and the InteractsWithCassettes trait (Bridge/PHPUnit); the attribute needs the Extension API, added in PHPUnit 10",
+        "mtk3d/laravel-http-vcr": "Zero-setup use in a Laravel application — an auto-registered service provider that intercepts the Http facade and exposes this CLI as artisan vcr:* commands; needs Laravel 12 or newer"
     },
     "bin": ["bin/http-vcr"],
     "autoload": {

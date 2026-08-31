@@ -2,8 +2,6 @@
 
 Laravel's `Http` facade is a thin wrapper around Guzzle — see [Guzzle](guzzle.md) for what that means for the decorator. So Guzzle handler-stack middleware covers every `Http::` call, and there are two ways to install it: the bridge package, which does it for the whole application, or the recipe, which does it by hand per test.
 
-> **`mtk3d/laravel-http-vcr` is built but not published yet.** Until it is on Packagist, use the recipe below — it is the same interception, wired manually.
-
 ## The bridge package
 
 ```bash

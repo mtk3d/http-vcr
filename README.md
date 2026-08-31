@@ -342,7 +342,7 @@ the confirmed ones in the file, one way.
 | **Guzzle** | `VcrMiddleware` on the `HandlerStack`, so `$client->get()` and friends are covered too — those bypass any decorator around the client |
 | **Symfony** | `VcrHttpClient` implements `HttpClientInterface`, the one a Symfony app injects into services. `Psr18Client` needs no bridge |
 | **PHPUnit** | `#[UseCassette]`, `#[CassetteDirectory]`, `InteractsWithCassettes`, `Extension`. PHPUnit 10–13 |
-| **Laravel** | [`mtk3d/laravel-http-vcr`](https://github.com/mtk3d/laravel-http-vcr) — a separate package: auto-registered provider, `Http` facade interception, `artisan vcr:*`. Laravel 12+. Built, not published yet; until then the [manual recipe](https://mtk3d.github.io/http-vcr/integrations/laravel.html) covers it |
+| **Laravel** | [`mtk3d/laravel-http-vcr`](https://github.com/mtk3d/laravel-http-vcr) — a separate package: auto-registered provider, `Http` facade interception, `artisan vcr:*`. Laravel 12+. The [manual recipe](https://mtk3d.github.io/http-vcr/integrations/laravel.html) covers it without the extra package |
 
 Runnable versions of each are in [`examples/`](./examples).
 
